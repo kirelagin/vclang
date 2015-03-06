@@ -45,4 +45,18 @@ public class PiExpression extends ParensExpression implements Abstract.PiExpress
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitPi(this);
   }
+
+  @Override
+  public PiExpression copy() {
+    PiExpression result = new PiExpression(parens);
+    result.isExplicit.set(isExplicit.get());
+    result.variable.set(variable.get());
+    if (domain.get() != null) {
+      result.domain.set(domain.get().copy());
+    }
+    if (codomain.get() != null) {
+      result.codomain.set(codomain.get().copy());
+    }
+    return result;
+  }
 }

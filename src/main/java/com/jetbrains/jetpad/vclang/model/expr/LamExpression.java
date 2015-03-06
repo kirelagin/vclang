@@ -33,4 +33,14 @@ public class LamExpression extends ParensExpression implements Abstract.LamExpre
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitLam(this);
   }
+
+  @Override
+  public LamExpression copy() {
+    LamExpression result = new LamExpression(parens);
+    result.variable.set(variable.get());
+    if (body.get() != null) {
+      result.body.set(body.get().copy());
+    }
+    return result;
+  }
 }

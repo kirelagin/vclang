@@ -32,7 +32,7 @@ public class PrettyPrintVisitor implements ExpressionVisitor<Void> {
     myContext.append(new ValueToken(expr, new ValueToken.ValueCloner<LamExpression>() {
       @Override
       public LamExpression clone(LamExpression val) {
-        return val;
+        return val; // .copy();
       }
     }));
     return null;

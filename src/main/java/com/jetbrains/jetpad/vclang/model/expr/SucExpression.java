@@ -14,4 +14,9 @@ public class SucExpression extends Expression implements Abstract.SucExpression 
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitSuc(this);
   }
+
+  @Override
+  public SucExpression copy() {
+    return this;
+  }
 }

@@ -23,4 +23,11 @@ public class VarExpression extends Expression implements Abstract.VarExpression 
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitVar(this);
   }
+
+  @Override
+  public VarExpression copy() {
+    VarExpression result = new VarExpression();
+    result.name.set(name.get());
+    return result;
+  }
 }

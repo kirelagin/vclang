@@ -14,4 +14,9 @@ public class ZeroExpression extends Expression implements Abstract.ZeroExpressio
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitZero(this);
   }
+
+  @Override
+  public ZeroExpression copy() {
+    return this;
+  }
 }

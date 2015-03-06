@@ -23,4 +23,11 @@ public class UniverseExpression extends Expression implements Abstract.UniverseE
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitUniverse(this);
   }
+
+  @Override
+  public UniverseExpression copy() {
+    UniverseExpression result = new UniverseExpression();
+    result.level.set(level.get());
+    return result;
+  }
 }

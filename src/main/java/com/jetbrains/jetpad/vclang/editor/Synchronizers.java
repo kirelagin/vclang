@@ -54,6 +54,7 @@ public class Synchronizers {
 
   public static Synchronizer forExpression(Mapper<? extends Node, ? extends Cell> mapper, Property<Expression> expression, Cell target, String placeholderText, RoleCompletion<Node, Expression> completion) {
     // ProjectionalRoleSynchronizer<Node, Expression> synchronizer = ProjectionalSynchronizers.forSingleRole(mapper, expression, target, ExpressionMapperFactory.getInstance());
+    // synchronizer.setPlaceholderText(placeholderText);
     // synchronizer.setCompletion(completion);
     HybridSynchronizer<Expression> synchronizer = new HybridSynchronizer<>(mapper, expression, target, new HybridExpressionSpec());
     synchronizer.setPlaceHolderText(placeholderText);

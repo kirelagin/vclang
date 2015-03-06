@@ -14,4 +14,9 @@ public class NelimExpression extends Expression implements Abstract.NelimExpress
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitNelim(this);
   }
+
+  @Override
+  public NelimExpression copy() {
+    return this;
+  }
 }

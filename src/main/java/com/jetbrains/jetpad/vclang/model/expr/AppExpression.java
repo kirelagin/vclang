@@ -33,4 +33,16 @@ public class AppExpression extends ParensExpression implements Abstract.AppExpre
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitApp(this);
   }
+
+  @Override
+  public AppExpression copy() {
+    AppExpression result = new AppExpression(parens);
+    if (function.get() != null) {
+      result.function.set(function.get().copy());
+    }
+    if (argument.get() != null) {
+      result.argument.set(argument.get().copy());
+    }
+    return result;
+  }
 }

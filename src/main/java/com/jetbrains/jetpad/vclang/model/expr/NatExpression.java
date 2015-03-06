@@ -14,4 +14,9 @@ public class NatExpression extends Expression implements Abstract.NatExpression 
   public <R> R accept(ExpressionVisitor<? extends R> visitor) {
     return visitor.visitNat(this);
   }
+
+  @Override
+  public NatExpression copy() {
+    return this;
+  }
 }
