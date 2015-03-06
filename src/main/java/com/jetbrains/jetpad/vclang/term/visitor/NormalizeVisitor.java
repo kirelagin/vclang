@@ -8,6 +8,10 @@ import static com.jetbrains.jetpad.vclang.term.expr.Expression.*;
 // TODO: Rewrite normalization using thunks
 // TODO: Add normalization to whnf
 public class NormalizeVisitor implements ExpressionVisitor<Expression> {
+  private static NormalizeVisitor INSTANCE = new NormalizeVisitor();
+
+  private NormalizeVisitor() {}
+
   @Override
   public Expression visitApp(AppExpression expr) {
     Expression function1 = expr.getFunction().accept(this);
@@ -90,5 +94,9 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
   @Override
   public Expression visitZero(ZeroExpression expr) {
     return expr;
+  }
+
+  public static NormalizeVisitor getInstance() {
+    return INSTANCE;
   }
 }

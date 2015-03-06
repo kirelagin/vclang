@@ -5,13 +5,13 @@ import jetbrains.jetpad.cell.Cell;
 import jetbrains.jetpad.mapper.Mapper;
 import jetbrains.jetpad.mapper.MapperFactory;
 
-public class ExpressionMapperFactory implements MapperFactory<Expression, Cell> {
+public class ExpressionMapperFactory implements MapperFactory<Object, Cell> {
   private final static ExpressionMapperFactory INSTANCE = new ExpressionMapperFactory();
 
   private ExpressionMapperFactory() {}
 
   @Override
-  public Mapper<? extends Expression, ? extends Cell> createMapper(Expression source) {
+  public Mapper<?, ? extends Cell> createMapper(Object source) {
     if (source instanceof LamExpression) {
       return new LamExpressionMapper((LamExpression)source);
     }

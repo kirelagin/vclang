@@ -26,7 +26,7 @@ public abstract class Expression implements PrettyPrintable, Abstract.Expression
   }
 
   public final Expression normalize() {
-    return accept(new NormalizeVisitor());
+    return accept(NormalizeVisitor.getInstance());
   }
 
   public final void prettyPrint(PrintStream stream, List<String> names, int prec) {

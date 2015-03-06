@@ -14,10 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExpressionCompletion implements RoleCompletion<Node, Expression> {
-  private final int myPrec;
   private static ExpressionCompletion GLOBAL_INSTANCE = new ExpressionCompletion(0);
   private static ExpressionCompletion APP_FUN_INSTANCE = new ExpressionCompletion(Abstract.AppExpression.PREC);
   private static ExpressionCompletion APP_ARG_INSTANCE = new ExpressionCompletion(Abstract.AppExpression.PREC + 1);
+  private static ExpressionCompletion PI_DOM_INSTANCE = new ExpressionCompletion(Abstract.PiExpression.PREC + 1);
+  private static ExpressionCompletion PI_COD_INSTANCE = new ExpressionCompletion(Abstract.PiExpression.PREC);
+
+  private final int myPrec;
 
   private ExpressionCompletion(int prec) {
     myPrec = prec;
@@ -89,6 +92,14 @@ public class ExpressionCompletion implements RoleCompletion<Node, Expression> {
 
   public static ExpressionCompletion getAppArgInstance() {
     return APP_ARG_INSTANCE;
+  }
+
+  public static ExpressionCompletion getPiDomInstance() {
+    return PI_DOM_INSTANCE;
+  }
+
+  public static ExpressionCompletion getPiCodInstance() {
+    return PI_COD_INSTANCE;
   }
 
   public static ExpressionCompletion getGlobalInstance() {
