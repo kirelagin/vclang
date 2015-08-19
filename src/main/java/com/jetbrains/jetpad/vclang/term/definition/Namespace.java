@@ -36,10 +36,6 @@ public class Namespace implements NamespaceMember {
     myParent = parent;
   }
 
-  public boolean isLocal() {
-    return myParent == null ? myName == null : myParent.isLocal();
-  }
-
   public Collection<Definition> getMembers() {
     return myMembers == null ? Collections.<Definition>emptyList() : myMembers.values();
   }
@@ -91,6 +87,20 @@ public class Namespace implements NamespaceMember {
 
   public Definition getMember(String name) {
     return myMembers == null ? null : myMembers.get(name);
+  }
+
+  public NamespaceMember locateName(String name) {
+    for (Namespace namespace = this; namespace != null; namespace = namespace.getParent()) {
+      Definition member = namespace.getMember(name);
+      if (member != null) {
+        return member;
+      }
+      Namespace child = namespace.findChild(name);
+      if (child != null) {
+        return child;
+      }
+    }
+    return null;
   }
 
   public Definition addMember(Definition member) {
