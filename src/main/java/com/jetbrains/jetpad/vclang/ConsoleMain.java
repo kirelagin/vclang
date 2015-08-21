@@ -1,10 +1,16 @@
 package com.jetbrains.jetpad.vclang;
 
-import com.jetbrains.jetpad.vclang.module.*;
+import com.jetbrains.jetpad.vclang.module.ModuleLoader;
+import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.module.RootModule;
+import com.jetbrains.jetpad.vclang.module.SynchronousModuleLoader;
+import com.jetbrains.jetpad.vclang.module.output.FileOutputSupplier;
+import com.jetbrains.jetpad.vclang.module.source.FileSourceSupplier;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
-import com.jetbrains.jetpad.vclang.term.definition.Namespace;
-import com.jetbrains.jetpad.vclang.term.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
+import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
 import org.apache.commons.cli.*;
 
 import java.io.File;
@@ -61,12 +67,21 @@ public class ConsoleMain {
       libDirs.add(new File(workingPath, "lib"));
     }
 
-    final ModuleLoader moduleLoader = new ModuleLoader();
+    final RootModule rootModule = new RootModule();
+    final ListErrorReporter errorReporter = new ListErrorReporter();
+    final SynchronousModuleLoader moduleLoader = new SynchronousModuleLoader(errorReporter, recompile) {
+      @Override
+      public void loadingSucceeded(Namespace namespace, ClassDefinition classDefinition, boolean compiled) {
+        if (compiled) {
+          System.out.println("[OK] " + namespace.getFullName());
+        } else {
+          System.out.println("[Loaded] " + namespace.getFullName());
+        }
+      }
+    };
     ModuleDeserialization moduleDeserialization = new ModuleDeserialization(moduleLoader);
-    List<SourceSupplier> sourceSuppliers = new ArrayList<>(2);
-    sourceSuppliers.add(new FileSourceSupplier(moduleLoader, sourceDir));
-    sourceSuppliers.add(new DirectorySourceSupplier(sourceDir));
-    moduleLoader.init(new CompositeSourceSupplier(sourceSuppliers), new FileOutputSupplier(moduleDeserialization, outputDir, libDirs), recompile);
+    moduleLoader.setSourceSupplier(new FileSourceSupplier(moduleLoader, sourceDir));
+    moduleLoader.setOutputSupplier(new FileOutputSupplier(moduleDeserialization, outputDir, libDirs));
 
     if (cmdLine.getArgList().isEmpty()) {
       if (sourceDirStr == null) return;
@@ -75,23 +90,23 @@ public class ConsoleMain {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
             if (path.getFileName().toString().endsWith(".vc")) {
-              processFile(moduleLoader, path, sourceDir);
+              processFile(moduleLoader, errorReporter, rootModule, path, sourceDir);
             }
             return FileVisitResult.CONTINUE;
           }
 
           @Override
           public FileVisitResult visitFileFailed(Path path, IOException e) throws IOException {
-            System.err.println(ModuleError.ioError(e));
+            System.err.println(GeneralError.ioError(e));
             return FileVisitResult.CONTINUE;
           }
         });
       } catch (IOException e) {
-        System.err.println(ModuleError.ioError(e));
+        System.err.println(GeneralError.ioError(e));
       }
     } else {
       for (String fileName : cmdLine.getArgList()) {
-        processFile(moduleLoader, Paths.get(fileName), sourceDir);
+        processFile(moduleLoader, errorReporter, rootModule, Paths.get(fileName), sourceDir);
       }
     }
   }
@@ -116,7 +131,7 @@ public class ConsoleMain {
     return names;
   }
 
-  static private void processFile(ModuleLoader moduleLoader, Path fileName, File sourceDir) {
+  static private void processFile(ModuleLoader moduleLoader, ListErrorReporter errorReporter, RootModule rootModule, Path fileName, File sourceDir) {
     Path relativePath = sourceDir != null && fileName.startsWith(sourceDir.toPath()) ? sourceDir.toPath().relativize(fileName) : fileName.getFileName();
     List<String> moduleNames = getModule(relativePath);
     if (moduleNames == null) {
@@ -124,23 +139,16 @@ public class ConsoleMain {
       return;
     }
 
-    Namespace namespace = moduleLoader.getRoot();
-    for (int i = 0; i < moduleNames.size(); ++i) {
-      moduleLoader.loadModule(new Module(namespace, moduleNames.get(i)), false);
-      if (i < moduleNames.size() - 1) {
-        namespace = namespace.getChild(new Utils.Name(moduleNames.get(i)));
-      }
+    Namespace namespace = rootModule.getRoot();
+    for (String moduleName : moduleNames) {
+      namespace = namespace.getChild(new Utils.Name(moduleName));
+      moduleLoader.load(namespace);
     }
 
-    for (ModuleError moduleError : moduleLoader.getErrors()) {
-      System.err.println(moduleError);
-    }
-
-    for (TypeCheckingError error : moduleLoader.getTypeCheckingErrors()) {
+    for (GeneralError error : errorReporter.getErrorList()) {
       System.err.println(error);
     }
 
-    moduleLoader.getErrors().clear();
-    moduleLoader.getTypeCheckingErrors().clear();
+    errorReporter.getErrorList().clear();
   }
 }

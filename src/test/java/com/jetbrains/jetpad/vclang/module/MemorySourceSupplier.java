@@ -1,5 +1,7 @@
 package com.jetbrains.jetpad.vclang.module;
 
+import com.jetbrains.jetpad.vclang.module.source.SourceSupplier;
+
 import java.util.HashMap;
 import java.util.Map;
 

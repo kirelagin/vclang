@@ -1,8 +1,8 @@
 package com.jetbrains.jetpad.vclang.typechecking;
 
-import com.jetbrains.jetpad.vclang.module.DummyOutputSupplier;
-import com.jetbrains.jetpad.vclang.module.DummySourceSupplier;
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
+import com.jetbrains.jetpad.vclang.module.output.DummyOutputSupplier;
+import com.jetbrains.jetpad.vclang.module.source.DummySourceSupplier;
 import org.junit.Test;
 
 import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDef;

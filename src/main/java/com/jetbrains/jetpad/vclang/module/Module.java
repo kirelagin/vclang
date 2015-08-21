@@ -1,8 +1,5 @@
 package com.jetbrains.jetpad.vclang.module;
 
-import com.jetbrains.jetpad.vclang.term.definition.Namespace;
-
-import java.io.File;
 import java.util.Arrays;
 
 public class Module {
@@ -12,14 +9,6 @@ public class Module {
   public Module(Namespace parent, String name) {
     myParent = parent;
     myName = name;
-  }
-
-  private File getFile(File dir, Namespace namespace) {
-    return namespace == null || namespace.getParent() == null ? dir : new File(getFile(dir, namespace.getParent()), namespace.getName().name);
-  }
-
-  public File getFile(File dir, String ext) {
-    return new File(getFile(dir, myParent), myName + ext);
   }
 
   public Namespace getParent() {

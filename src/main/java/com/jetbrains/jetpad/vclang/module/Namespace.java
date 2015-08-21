@@ -1,0 +1,169 @@
+package com.jetbrains.jetpad.vclang.module;
+
+import com.jetbrains.jetpad.vclang.term.definition.Definition;
+import com.jetbrains.jetpad.vclang.term.definition.NamespaceMember;
+import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+
+import java.util.*;
+
+public class Namespace implements NamespaceMember {
+  final private Utils.Name myName;
+  private Namespace myParent;
+  private Map<String, Namespace> myChildren;
+  private Map<String, Definition> myMembers;
+
+  public Namespace(Utils.Name name, Namespace parent) {
+    myName = name;
+    myParent = parent;
+  }
+
+  @Override
+  public Utils.Name getName() {
+    return myName;
+  }
+
+  public String getFullName() {
+    return myParent == null || myParent.getParent() == null ? myName.name : myParent.getFullName() + "." + myName.name;
+  }
+
+  @Override
+  public Namespace getParent() {
+    return myParent;
+  }
+
+  public void setParent(Namespace parent) {
+    myParent = parent;
+  }
+
+  public Collection<Definition> getMembers() {
+    return myMembers == null ? Collections.<Definition>emptyList() : myMembers.values();
+  }
+
+  public Collection<Namespace> getChildren() {
+    return myChildren == null ? Collections.<Namespace>emptyList() : myChildren.values();
+  }
+
+  public Namespace getChild(Utils.Name name) {
+    if (myChildren != null) {
+      Namespace child = myChildren.get(name.name);
+      if (child != null) {
+        return child;
+      }
+    } else {
+      myChildren = new HashMap<>();
+    }
+
+    Namespace child = new Namespace(name, this);
+    myChildren.put(name.name, child);
+    return child;
+  }
+
+  public Namespace findChild(String name) {
+    return myChildren == null ? null : myChildren.get(name);
+  }
+
+  public void removeChild(String name) {
+    if (myChildren != null) {
+      myChildren.remove(name);
+    }
+  }
+
+  public Namespace addChild(Namespace child) {
+    if (myChildren == null) {
+      myChildren = new HashMap<>();
+      myChildren.put(child.myName.name, child);
+      return null;
+    } else {
+      Namespace oldChild = myChildren.get(child.myName.name);
+      if (oldChild != null) {
+        return oldChild;
+      } else {
+        myChildren.put(child.myName.name, child);
+        return null;
+      }
+    }
+  }
+
+  public Definition getMember(String name) {
+    return myMembers == null ? null : myMembers.get(name);
+  }
+
+  public NamespaceMember locateName(String name) {
+    for (Namespace namespace = this; namespace != null; namespace = namespace.getParent()) {
+      Definition member = namespace.getMember(name);
+      if (member != null) {
+        return member;
+      }
+      Namespace child = namespace.findChild(name);
+      if (child != null) {
+        return child;
+      }
+    }
+    return null;
+  }
+
+  public Definition addMember(Definition member) {
+    if (myMembers == null) {
+      myMembers = new HashMap<>();
+      myMembers.put(member.getName().name, member);
+      return null;
+    } else {
+      Definition oldMember = myMembers.get(member.getName().name);
+      if (oldMember != null) {
+        return oldMember;
+      } else {
+        myMembers.put(member.getName().name, member);
+        return null;
+      }
+    }
+  }
+
+  public void removeMember(Definition member) {
+    if (myMembers != null) {
+      Definition removed = myMembers.remove(member.getName().name);
+      if (removed != member) {
+        myMembers.put(member.getName().name, removed);
+      }
+    }
+  }
+
+  public NamespaceMember addMember(NamespaceMember member) {
+    if (member instanceof Namespace) {
+      return addChild((Namespace) member);
+    }
+    if (member instanceof Definition) {
+      return addMember((Definition) member);
+    }
+    throw new IllegalStateException();
+  }
+
+  public void removeMember(NamespaceMember member) {
+    if (member instanceof Namespace) {
+      removeChild(member.getName().name);
+    } else
+    if (member instanceof Definition) {
+      removeMember((Definition) member);
+    } else {
+      throw new IllegalStateException();
+    }
+  }
+
+  @Override
+  public String toString() {
+    return getFullName();
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (!(other instanceof Namespace)) return false;
+    if (myParent != ((Namespace) other).myParent) return false;
+    if (myName == null) return ((Namespace) other).myName == null;
+    return myName.name.equals(((Namespace) other).myName.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(new Object[]{myParent, myName.name});
+  }
+}

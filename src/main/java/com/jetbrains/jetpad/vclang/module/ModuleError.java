@@ -1,7 +1,5 @@
 package com.jetbrains.jetpad.vclang.module;
 
-import java.io.IOException;
-
 public class ModuleError {
   private final Module myModule;
   private final String myMessage;
@@ -17,10 +15,6 @@ public class ModuleError {
 
   public String getMessage() {
     return myMessage;
-  }
-
-  public static String ioError(IOException e) {
-    return "I/O error: " + e.getMessage();
   }
 
   @Override

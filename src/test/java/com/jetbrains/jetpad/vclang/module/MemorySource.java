@@ -1,5 +1,7 @@
 package com.jetbrains.jetpad.vclang.module;
 
+import com.jetbrains.jetpad.vclang.module.source.ParseSource;
+
 import java.io.ByteArrayInputStream;
 
 public class MemorySource extends ParseSource {
