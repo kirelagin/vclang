@@ -1,9 +1,6 @@
 package com.jetbrains.jetpad.vclang;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
-import com.jetbrains.jetpad.vclang.module.Namespace;
-import com.jetbrains.jetpad.vclang.module.RootModule;
-import com.jetbrains.jetpad.vclang.module.SynchronousModuleLoader;
+import com.jetbrains.jetpad.vclang.module.*;
 import com.jetbrains.jetpad.vclang.module.output.FileOutputSupplier;
 import com.jetbrains.jetpad.vclang.module.source.FileSourceSupplier;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
@@ -68,8 +65,12 @@ public class ConsoleMain {
     }
 
     final RootModule rootModule = new RootModule();
-    final ListErrorReporter errorReporter = new ListErrorReporter();
-    final SynchronousModuleLoader moduleLoader = new SynchronousModuleLoader(errorReporter, recompile) {
+    final BaseModuleLoader moduleLoader = new BaseModuleLoader(recompile) {
+      @Override
+      public void loadingError(GeneralError error) {
+        System.err.println(error);
+      }
+
       @Override
       public void loadingSucceeded(Namespace namespace, ClassDefinition classDefinition, boolean compiled) {
         if (compiled) {
@@ -79,8 +80,10 @@ public class ConsoleMain {
         }
       }
     };
+
+    final ListErrorReporter errorReporter = new ListErrorReporter();
     ModuleDeserialization moduleDeserialization = new ModuleDeserialization(moduleLoader);
-    moduleLoader.setSourceSupplier(new FileSourceSupplier(moduleLoader, sourceDir));
+    moduleLoader.setSourceSupplier(new FileSourceSupplier(moduleLoader, errorReporter, sourceDir));
     moduleLoader.setOutputSupplier(new FileOutputSupplier(moduleDeserialization, outputDir, libDirs));
 
     if (cmdLine.getArgList().isEmpty()) {
@@ -89,7 +92,7 @@ public class ConsoleMain {
         Files.walkFileTree(sourceDir.toPath(), new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
-            if (path.getFileName().toString().endsWith(".vc")) {
+            if (path.getFileName().toString().endsWith(FileOperations.EXTENSION)) {
               processFile(moduleLoader, errorReporter, rootModule, path, sourceDir);
             }
             return FileVisitResult.CONTINUE;
@@ -118,7 +121,7 @@ public class ConsoleMain {
     for (int i = 0; i < nameCount; ++i) {
       String name = file.getName(i).toString();
       if (i == nameCount - 1) {
-        if (!name.endsWith(".vc")) return null;
+        if (!name.endsWith(FileOperations.EXTENSION)) return null;
         name = name.substring(0, name.length() - 3);
       }
 
@@ -142,7 +145,7 @@ public class ConsoleMain {
     Namespace namespace = rootModule.getRoot();
     for (String moduleName : moduleNames) {
       namespace = namespace.getChild(new Utils.Name(moduleName));
-      moduleLoader.load(namespace);
+      moduleLoader.load(namespace, false);
     }
 
     for (GeneralError error : errorReporter.getErrorList()) {

@@ -22,7 +22,7 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
   }
 
   public Definition getField(String name) {
-    return myLocalNamespace.getMember(name);
+    return myLocalNamespace.getDefinition(name);
   }
 
   public Namespace getLocalNamespace() {
@@ -35,7 +35,7 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
 
   @Override
   public Collection<Definition> getFields() {
-    return myLocalNamespace.getMembers();
+    return myLocalNamespace.getDefinitions();
   }
 
   @Override

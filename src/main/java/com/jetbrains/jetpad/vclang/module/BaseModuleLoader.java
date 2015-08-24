@@ -10,7 +10,6 @@ import com.jetbrains.jetpad.vclang.module.source.Source;
 import com.jetbrains.jetpad.vclang.module.source.SourceSupplier;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
 
 import java.io.EOFException;
@@ -20,18 +19,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class SynchronousModuleLoader implements ModuleLoader {
+public abstract class BaseModuleLoader implements ModuleLoader {
   private final List<Namespace> myLoadingModules = new ArrayList<>();
   private SourceSupplier mySourceSupplier;
   private OutputSupplier myOutputSupplier;
   private final boolean myRecompile;
   private final Set<Namespace> myLoadedModules = new HashSet<>();
-  private final ErrorReporter myErrorReporter;
 
-  public SynchronousModuleLoader(ErrorReporter errorReporter, boolean recompile) {
+  public BaseModuleLoader(boolean recompile) {
     mySourceSupplier = DummySourceSupplier.getInstance();
     myOutputSupplier = DummyOutputSupplier.getInstance();
-    myErrorReporter = errorReporter;
     myRecompile = true; // recompile; // TODO: Fix serialization.
   }
 
@@ -44,16 +41,17 @@ public abstract class SynchronousModuleLoader implements ModuleLoader {
   }
 
   @Override
-  public boolean load(Namespace module) {
-    if (myLoadedModules.contains(module)) {
-      return false;
-    }
-
+  public ModuleLoadingResult load(Namespace module, boolean tryLoad) {
     int index = myLoadingModules.indexOf(module);
     if (index != -1) {
       loadingError(new CycleError(module, new ArrayList<>(myLoadingModules.subList(index, myLoadedModules.size()))));
-      return false;
+      return null;
     }
+
+    if (myLoadedModules.contains(module)) {
+      return null;
+    }
+    myLoadedModules.add(module);
 
     Source source = mySourceSupplier.getSource(module);
     Output output = myOutputSupplier.getOutput(module);
@@ -63,16 +61,20 @@ public abstract class SynchronousModuleLoader implements ModuleLoader {
     } else {
       output = myOutputSupplier.locateOutput(module);
       if (!output.canRead()) {
-        loadingError(new ModuleNotFoundError(module));
+        if (!tryLoad) {
+          loadingError(new ModuleNotFoundError(module));
+        }
+        return null;
       }
       compile = false;
     }
 
     myLoadingModules.add(module);
     ClassDefinition classDefinition = null;
-    if (module.getParent().getMember(module.getName().name) == null) {
+    if (module.getParent().getDefinition(module.getName().name) == null) {
       classDefinition = new ClassDefinition(module);
     }
+
     try {
       if (compile) {
         if (source.load(module, classDefinition)) {
@@ -83,6 +85,10 @@ public abstract class SynchronousModuleLoader implements ModuleLoader {
             output.write(module, classDefinition);
           }
           loadingSucceeded(module, classDefinition, true);
+          return new ModuleLoadingResult(classDefinition, true);
+        } else {
+          classDefinition = null;
+          return null;
         }
       } else {
         int errorsNumber = output.read(module, classDefinition);
@@ -94,25 +100,22 @@ public abstract class SynchronousModuleLoader implements ModuleLoader {
         } else {
           loadingSucceeded(module, classDefinition, false);
         }
+        return new ModuleLoadingResult(classDefinition, false);
       }
     } catch (EOFException e) {
       loadingError(new GeneralError(module, "Incorrect format: Unexpected EOF"));
+      return null;
     } catch (ModuleDeserialization.DeserializationException e) {
       loadingError(new GeneralError(module, e.toString()));
+      return null;
     } catch (IOException e) {
       loadingError(new GeneralError(module, GeneralError.ioError(e)));
+      return null;
+    } finally {
+      myLoadingModules.remove(myLoadingModules.size() - 1);
+      if (classDefinition != null) {
+        module.getParent().addDefinition(classDefinition);
+      }
     }
-    myLoadingModules.remove(myLoadingModules.size() - 1);
-    myLoadedModules.add(module);
-
-    if (classDefinition != null) {
-      module.getParent().addMember(classDefinition);
-    }
-    return true;
-  }
-
-  @Override
-  public void loadingError(GeneralError error) {
-    myErrorReporter.report(error);
   }
 }

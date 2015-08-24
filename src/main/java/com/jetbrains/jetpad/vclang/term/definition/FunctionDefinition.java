@@ -36,7 +36,7 @@ public class FunctionDefinition extends Definition implements Abstract.FunctionD
 
   @Override
   public Collection<Definition> getFields() {
-    return getNamespace().getMembers();
+    return getNamespace().getDefinitions();
   }
 
   @Override

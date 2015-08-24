@@ -4,14 +4,11 @@ import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 
 public class RootModule {
-  private final Namespace myRoot = new Namespace(new Utils.Name("\\root"), null);
+  public static Namespace ROOT = new Namespace(new Utils.Name("\\root"), null);
 
-  public RootModule() {
-    Prelude.PRELUDE.setParent(myRoot);
-    myRoot.addChild(Prelude.PRELUDE);
-  }
-
-  public Namespace getRoot() {
-    return myRoot;
+  public static void initialize() {
+    Prelude.PRELUDE.setParent(ROOT);
+    ROOT.clear();
+    ROOT.addChild(Prelude.PRELUDE);
   }
 }

@@ -1,11 +1,12 @@
 package com.jetbrains.jetpad.vclang.typechecking.nameresolver;
 
-import com.jetbrains.jetpad.vclang.module.Module;
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
+import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
 import com.jetbrains.jetpad.vclang.module.Namespace;
-import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
+import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.NamespaceMember;
+import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 
 public class LoadingNameResolver implements NameResolver {
   private final ModuleLoader myModuleLoader;
@@ -18,21 +19,38 @@ public class LoadingNameResolver implements NameResolver {
 
   @Override
   public NamespaceMember locateName(String name) {
-    NamespaceMember result = myNameResolver.locateName(name);
-    if (result instanceof Definition) {
-      return result;
+    NamespaceMember member = myNameResolver.locateName(name);
+    if (member instanceof Definition) {
+      return member;
     }
 
-    if (result != null) {
-      ClassDefinition classDefinition = myModuleLoader.loadModule(new Module(result.getParent(), result.getName().name), true);
-      return classDefinition != null ? classDefinition : result;
+    ModuleLoadingResult result;
+    if (member instanceof Namespace) {
+      result = myModuleLoader.load((Namespace) member, true);
     } else {
-      return myModuleLoader.loadModule(new Module(myModuleLoader.getRoot(), name), true);
+      result = myModuleLoader.load(RootModule.ROOT.getChild(new Utils.Name(name)), true);
+    }
+
+    if (result != null && result.classDefinition != null) {
+      return result.classDefinition;
+    } else {
+      return member;
     }
   }
 
   @Override
   public NamespaceMember getMember(Namespace parent, String name) {
-    return null;
+    Definition definition = parent.getDefinition(name);
+    if (definition != null) {
+      return definition;
+    }
+
+    Namespace child = parent.getChild(new Utils.Name(name));
+    ModuleLoadingResult result = myModuleLoader.load(child, true);
+    if (result != null && result.classDefinition != null) {
+      return result.classDefinition;
+    } else {
+      return child;
+    }
   }
 }

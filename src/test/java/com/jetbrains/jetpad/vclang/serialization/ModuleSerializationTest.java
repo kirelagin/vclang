@@ -38,7 +38,7 @@ public class ModuleSerializationTest {
     ClassDefinition def = new ClassDefinition(moduleLoader.getRoot().getChild(new Utils.Name("test")));
     Expression term = Lam(lamArgs(Tele(false, vars("x", "y"), Nat()), Tele(vars("z"), Pi(Nat(), Nat()))), Pi(args(Tele(vars("A"), Universe()), TypeArg(false, Index(0))), Index(1)));
     FunctionDefinition functionDefinition = new FunctionDefinition(def.getLocalNamespace().getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), Abstract.Definition.Arrow.RIGHT, term);
-    def.getLocalNamespace().addMember(functionDefinition);
+    def.getLocalNamespace().addDefinition(functionDefinition);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
@@ -48,7 +48,7 @@ public class ModuleSerializationTest {
     moduleLoader.getRoot().addMember(newDef);
     int errors = moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace(), newDef);
     assertEquals(0, errors);
-    assertEquals(CompareVisitor.CMP.EQUALS, compare(((FunctionDefinition) def.getLocalNamespace().getMember("f")).getTerm(), ((FunctionDefinition) newDef.getLocalNamespace().getMember("f")).getTerm(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
+    assertEquals(CompareVisitor.CMP.EQUALS, compare(((FunctionDefinition) def.getLocalNamespace().getDefinition("f")).getTerm(), ((FunctionDefinition) newDef.getLocalNamespace().getDefinition("f")).getTerm(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
     assertEquals(0, moduleLoader.getErrors().size());
     assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
   }
@@ -67,7 +67,7 @@ public class ModuleSerializationTest {
     clauses2.add(new Clause(Prelude.ZERO, nameArgs(), Abstract.Definition.Arrow.RIGHT, Index(0), term2));
     clauses2.add(new Clause(Prelude.SUC, nameArgs(Name("x")), Abstract.Definition.Arrow.LEFT, Suc(Index(0)), term2));
     FunctionDefinition functionDefinition = new FunctionDefinition(def.getLocalNamespace().getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(Tele(vars("x", "y"), Nat())), Nat(), Abstract.Definition.Arrow.LEFT, term1);
-    def.getLocalNamespace().addMember(functionDefinition);
+    def.getLocalNamespace().addDefinition(functionDefinition);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
@@ -77,7 +77,7 @@ public class ModuleSerializationTest {
     moduleLoader.getRoot().addMember(newDef);
     int errors = moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace(), newDef);
     assertEquals(0, errors);
-    assertEquals(CompareVisitor.CMP.EQUALS, compare(((FunctionDefinition) def.getLocalNamespace().getMember("f")).getTerm(), ((FunctionDefinition) newDef.getLocalNamespace().getMember("f")).getTerm(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
+    assertEquals(CompareVisitor.CMP.EQUALS, compare(((FunctionDefinition) def.getLocalNamespace().getDefinition("f")).getTerm(), ((FunctionDefinition) newDef.getLocalNamespace().getDefinition("f")).getTerm(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
     assertEquals(0, moduleLoader.getErrors().size());
     assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
   }
@@ -88,9 +88,9 @@ public class ModuleSerializationTest {
     moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
     ClassDefinition def = new ClassDefinition(moduleLoader.getRoot().getChild(new Utils.Name("test")));
     ClassDefinition aClass = new ClassDefinition(def.getNamespace().getChild(new Utils.Name("A")));
-    def.getNamespace().addMember(aClass);
+    def.getNamespace().addDefinition(aClass);
     FunctionDefinition functionDefinition = new FunctionDefinition(aClass.getLocalNamespace().getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), null, null);
-    aClass.getLocalNamespace().addMember(functionDefinition);
+    aClass.getLocalNamespace().addDefinition(functionDefinition);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
@@ -101,8 +101,8 @@ public class ModuleSerializationTest {
     ClassDefinition newDef = new ClassDefinition(moduleLoader2.getRoot().getChild(new Utils.Name("test")));
     moduleLoader2.getRoot().addMember(newDef);
     ClassDefinition bClass = new ClassDefinition(newDef.getNamespace().getChild(new Utils.Name("A")));
-    newDef.getNamespace().addMember(bClass);
-    bClass.getLocalNamespace().addMember(new FunctionDefinition(aClass.getNamespace().getChild(new Utils.Name("g")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), null, null));
+    newDef.getNamespace().addDefinition(bClass);
+    bClass.getLocalNamespace().addDefinition(new FunctionDefinition(aClass.getNamespace().getChild(new Utils.Name("g")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), null, null));
     moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace(), newDef);
   }
 
@@ -112,9 +112,9 @@ public class ModuleSerializationTest {
     DataDefinition dataDefinition = new DataDefinition(def.getNamespace().getChild(new Utils.Name("D")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0), args(Tele(vars("A"), Universe(0))));
     dataDefinition.addConstructor(new Constructor(0, dataDefinition.getNamespace().getChild(new Utils.Name("con1")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0), args(TypeArg(Index(0))), dataDefinition));
     dataDefinition.addConstructor(new Constructor(1, dataDefinition.getNamespace().getChild(new Utils.Name("con2")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0), args(TypeArg(Nat()), TypeArg(Index(1))), dataDefinition));
-    def.getNamespace().addMember(dataDefinition);
-    def.getNamespace().addMember(dataDefinition.getConstructors().get(0));
-    def.getNamespace().addMember(dataDefinition.getConstructors().get(1));
+    def.getNamespace().addDefinition(dataDefinition);
+    def.getNamespace().addDefinition(dataDefinition.getConstructors().get(0));
+    def.getNamespace().addDefinition(dataDefinition.getConstructors().get(1));
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
@@ -127,8 +127,8 @@ public class ModuleSerializationTest {
     int errors = moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace(), newDef);
     assertEquals(0, errors);
     assertEquals(def.getFields().size(), newDef.getFields().size());
-    assertEquals(def.getNamespace().getMembers().size(), newDef.getNamespace().getMembers().size());
-    assertEquals(CompareVisitor.CMP.EQUALS, compare(dataDefinition.getType(), newDef.getNamespace().getMember("D").getType(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
+    assertEquals(def.getNamespace().getDefinitions().size(), newDef.getNamespace().getDefinitions().size());
+    assertEquals(CompareVisitor.CMP.EQUALS, compare(dataDefinition.getType(), newDef.getNamespace().getDefinition("D").getType(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
     assertEquals(0, moduleLoader.getErrors().size());
     assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
   }
@@ -140,9 +140,9 @@ public class ModuleSerializationTest {
     ClassDefinition def = new ClassDefinition(moduleLoader.getRoot().getChild(new Utils.Name("test")));
     FunctionDefinition funcDef = new FunctionDefinition(def.getNamespace().getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), Abstract.Definition.Arrow.RIGHT, null);
     FunctionDefinition innerFunc = new FunctionDefinition(funcDef.getNamespace().getChild(new Utils.Name("g")), Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(), Nat(), Abstract.Definition.Arrow.RIGHT, Zero());
-    funcDef.getNamespace().addMember(innerFunc);
+    funcDef.getNamespace().addDefinition(innerFunc);
     funcDef.setTerm(DefCall(innerFunc));
-    def.getNamespace().addMember(funcDef);
+    def.getNamespace().addDefinition(funcDef);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
@@ -155,8 +155,8 @@ public class ModuleSerializationTest {
     int errors = moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace(), newDef);
     assertEquals(0, errors);
     assertEquals(1, newDef.getNamespace().getChildren().size());
-    assertEquals(1, newDef.getNamespace().getMembers().size());
-    assertEquals(1, newDef.getNamespace().getMember("f").getNamespace().getMembers().size());
+    assertEquals(1, newDef.getNamespace().getDefinitions().size());
+    assertEquals(1, newDef.getNamespace().getDefinition("f").getNamespace().getDefinitions().size());
     assertEquals(0, moduleLoader2.getErrors().size());
     assertEquals(0, moduleLoader2.getTypeCheckingErrors().size());
   }

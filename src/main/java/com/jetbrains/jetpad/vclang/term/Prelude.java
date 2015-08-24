@@ -44,9 +44,9 @@ public class Prelude {
     NAT.addConstructor(ZERO);
     NAT.addConstructor(SUC);
 
-    PRELUDE.addMember(NAT);
-    PRELUDE.addMember(ZERO);
-    PRELUDE.addMember(SUC);
+    PRELUDE.addDefinition(NAT);
+    PRELUDE.addDefinition(ZERO);
+    PRELUDE.addDefinition(SUC);
 
     INTERVAL = new DataDefinition(PRELUDE.getChild(new Utils.Name("I")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0, Universe.Type.PROP), new ArrayList<TypeArgument>());
     LEFT = new Constructor(0, INTERVAL.getNamespace().getChild(new Utils.Name("left")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0, Universe.Type.PROP), new ArrayList<TypeArgument>(), INTERVAL);
@@ -55,9 +55,9 @@ public class Prelude {
     INTERVAL.addConstructor(RIGHT);
     INTERVAL.addConstructor(new Constructor(2, INTERVAL.getNamespace().getChild(new Utils.Name("<abstract>")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0, Universe.Type.PROP), new ArrayList<TypeArgument>(), INTERVAL));
 
-    PRELUDE.addMember(INTERVAL);
-    PRELUDE.addMember(LEFT);
-    PRELUDE.addMember(RIGHT);
+    PRELUDE.addDefinition(INTERVAL);
+    PRELUDE.addDefinition(LEFT);
+    PRELUDE.addDefinition(RIGHT);
 
     List<Argument> coerceArguments = new ArrayList<>(3);
     coerceArguments.add(Tele(vars("type"), Pi(DefCall(INTERVAL), Universe(Universe.NO_LEVEL))));
@@ -68,7 +68,7 @@ public class Prelude {
     coerceClauses.add(new Clause(LEFT, new ArrayList<NameArgument>(), Abstract.Definition.Arrow.RIGHT, Index(0), coerceTerm));
     COERCE = new FunctionDefinition(PRELUDE.getChild(new Utils.Name("coe")), Abstract.Definition.DEFAULT_PRECEDENCE, coerceArguments, Apps(Index(2), Index(0)), Abstract.Definition.Arrow.LEFT, coerceTerm);
 
-    PRELUDE.addMember(COERCE);
+    PRELUDE.addDefinition(COERCE);
 
     List<TypeArgument> PathParameters = new ArrayList<>(3);
     PathParameters.add(Tele(vars("A"), Pi(DefCall(INTERVAL), Universe(Universe.NO_LEVEL, Universe.Type.NOT_TRUNCATED))));
@@ -80,8 +80,8 @@ public class Prelude {
     PATH_CON = new Constructor(0, PATH.getNamespace().getChild(new Utils.Name("path")), Abstract.Definition.DEFAULT_PRECEDENCE, new Universe.Type(0, Universe.Type.NOT_TRUNCATED), pathArguments, PATH);
     PATH.addConstructor(PATH_CON);
 
-    PRELUDE.addMember(PATH);
-    PRELUDE.addMember(PATH_CON);
+    PRELUDE.addDefinition(PATH);
+    PRELUDE.addDefinition(PATH_CON);
 
     List<Argument> pathInfixArguments = new ArrayList<>(3);
     pathInfixArguments.add(Tele(false, vars("A"), Universe(0)));
@@ -89,7 +89,7 @@ public class Prelude {
     Expression pathInfixTerm = Apps(DefCall(PATH), Lam(lamArgs(Tele(vars("_"), DefCall(INTERVAL))), Index(3)), Index(1), Index(0));
     PATH_INFIX = new FunctionDefinition(PRELUDE.getChild(new Utils.Name("=", Abstract.Definition.Fixity.INFIX)), new Abstract.Definition.Precedence(Abstract.Definition.Associativity.NON_ASSOC, (byte) 0), pathInfixArguments, Universe(0), Abstract.Definition.Arrow.RIGHT, pathInfixTerm);
 
-    PRELUDE.addMember(PATH_INFIX);
+    PRELUDE.addDefinition(PATH_INFIX);
 
     List<Argument> atArguments = new ArrayList<>(5);
     atArguments.add(Tele(false, vars("A"), PathParameters.get(0).getType()));
@@ -109,6 +109,6 @@ public class Prelude {
     atClauses.add(new Clause(RIGHT, new ArrayList<NameArgument>(), Abstract.Definition.Arrow.RIGHT, Index(1), atTerm));
     AT = new FunctionDefinition(PRELUDE.getChild(new Utils.Name("@", Abstract.Definition.Fixity.INFIX)), new Abstract.Definition.Precedence(Abstract.Definition.Associativity.LEFT_ASSOC, (byte) 9), atArguments, atResultType, Abstract.Definition.Arrow.LEFT, atTerm);
 
-    PRELUDE.addMember(AT);
+    PRELUDE.addDefinition(AT);
   }
 }

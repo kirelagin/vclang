@@ -1,8 +1,8 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.Module;
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
@@ -10,13 +10,17 @@ import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
+import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
 import org.antlr.v4.runtime.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 public class ParserTestCase {
-  public static VcgrammarParser parse(final ModuleLoader moduleLoader, String text) {
+  public static VcgrammarParser parse(final ErrorReporter errorReporter, String text) {
     ANTLRInputStream input = new ANTLRInputStream(text);
     VcgrammarLexer lexer = new VcgrammarLexer(input);
     CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -25,16 +29,16 @@ public class ParserTestCase {
     parser.addErrorListener(new BaseErrorListener() {
       @Override
       public void syntaxError(Recognizer<?, ?> recognizer, Object o, int line, int pos, String msg, RecognitionException e) {
-        moduleLoader.getErrors().add(new ParserError(new Module(moduleLoader.getRoot(), "test"), new Concrete.Position(line, pos), msg));
+        errorReporter.report(new ParserError(RootModule.ROOT.getChild(new Utils.Name("test")), new Concrete.Position(line, pos), msg));
       }
     });
     return parser;
   }
 
-  public static Concrete.Expression parseExpr(ModuleLoader moduleLoader, String text, int errors) {
-    Namespace namespace = moduleLoader.getRoot().getChild(new Utils.Name("test"));
-    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(null, null), moduleLoader).visitExpr(parse(moduleLoader, text).expr());
-    assertEquals(errors, moduleLoader.getErrors().size());
+  public static Concrete.Expression parseExpr(ListErrorReporter errorReporter, String text, int errors) {
+    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
+    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(null, null), moduleLoader, errorReporter).visitExpr(parse(errorReporter, text).expr());
+    assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
 
@@ -63,7 +67,7 @@ public class ParserTestCase {
   }
 
   public static ClassDefinition parseDefs(ModuleLoader moduleLoader, String text, int moduleErrors, int errors) {
-    Namespace namespace = moduleLoader.getRoot().getChild(new Utils.Name("test"));
+    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ClassDefinition result = new ClassDefinition(namespace);
     new BuildVisitor(namespace, result.getLocalNamespace(), moduleLoader).visitDefs(parse(moduleLoader, text).defs());
     assertEquals(moduleErrors, moduleLoader.getErrors().size());

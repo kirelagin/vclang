@@ -1,6 +1,7 @@
 package com.jetbrains.jetpad.vclang.typechecking;
 
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
+import com.jetbrains.jetpad.vclang.module.SimpleModuleLoader;
 import com.jetbrains.jetpad.vclang.module.output.DummyOutputSupplier;
 import com.jetbrains.jetpad.vclang.module.source.DummySourceSupplier;
 import org.junit.Test;
@@ -11,8 +12,7 @@ import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
 public class PathsTest {
   @Test
   public void squeezeTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
+    ModuleLoader moduleLoader = new SimpleModuleLoader(false);
     parseDefs(moduleLoader,
       "\\static \\function squeeze1 (i j : I) <= coe (\\lam x => left = x) (path (\\lam _ => left)) j @ i\n" +
       "\\static \\function squeeze (i j : I) <= coe (\\lam i => Path (\\lam j => left = squeeze1 i j) (path (\\lam _ => left)) (path (\\lam j => squeeze1 i j))) (path (\\lam _ => path (\\lam _ => left))) right @ i @ j"

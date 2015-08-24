@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.module.source;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.parser.BuildVisitor;
 import com.jetbrains.jetpad.vclang.parser.ParserError;
@@ -11,19 +10,20 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class ParseSource implements Source {
-  private final ModuleLoader myModuleLoader;
+  private final NameResolver myNameResolver;
   private final ErrorReporter myErrorReporter;
   private final Namespace myModule;
   private InputStream myStream;
 
-  public ParseSource(ModuleLoader moduleLoader, ErrorReporter errorReporter, Namespace module) {
-    myModuleLoader = moduleLoader;
+  public ParseSource(NameResolver nameResolver, ErrorReporter errorReporter, Namespace module) {
+    myNameResolver = nameResolver;
     myErrorReporter = errorReporter;
     myModule = module;
   }
@@ -64,7 +64,7 @@ public abstract class ParseSource implements Source {
     int errorsCount = countingErrorReporter.getErrorsNumber();
     VcgrammarParser.DefsContext tree = parser.defs();
     if (tree == null || errorsCount != countingErrorReporter.getErrorsNumber()) return false;
-    new BuildVisitor(namespace, classDefinition.getLocalNamespace(), myModuleLoader).visitDefs(tree);
+    new BuildVisitor(namespace, classDefinition.getLocalNamespace(), myNameResolver, myErrorReporter).visitDefs(tree);
     return errorsCount == countingErrorReporter.getErrorsNumber();
   }
 }

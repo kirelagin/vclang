@@ -100,7 +100,7 @@ public class ParserTest {
     ClassDefinition result = parseDefs(dummyModuleLoader,
       "\\static \\function x : Nat => zero\n" +
       "\\static \\function y : Nat => x");
-    assertEquals(2, result.getNamespace().getMembers().size());
+    assertEquals(2, result.getNamespace().getDefinitions().size());
   }
 
   @Test
@@ -108,7 +108,7 @@ public class ParserTest {
     ClassDefinition result = parseDefs(dummyModuleLoader,
       "\\static \\function x : \\Type0 => Nat\n" +
       "\\static \\function y : x => zero");
-    assertEquals(2, result.getNamespace().getMembers().size());
+    assertEquals(2, result.getNamespace().getDefinitions().size());
   }
 
   @Test
@@ -163,7 +163,7 @@ public class ParserTest {
     ClassDefinition result = parseDefs(dummyModuleLoader,
       "\\static \\function (+) : Nat -> Nat -> Nat => \\lam x y => x\n" +
       "\\static \\function (*) : Nat -> Nat => \\lam x => x + zero");
-    assertEquals(2, result.getNamespace().getMembers().size());
+    assertEquals(2, result.getNamespace().getDefinitions().size());
   }
 
   @Test
