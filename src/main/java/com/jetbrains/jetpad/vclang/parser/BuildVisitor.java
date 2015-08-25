@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.Module;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
@@ -203,7 +202,6 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     boolean remove = ctx.nsCmd() instanceof CloseCmdContext;
     boolean export = ctx.nsCmd() instanceof ExportCmdContext;
 
-    myErrorReporter.report(namespace.getParent(), namespace.getName().name), true);
     if (ctx.name().size() > 1) {
       for (int i = 1; i < ctx.name().size(); ++i) {
         String name = ctx.name(i) instanceof NameBinOpContext ? ((NameBinOpContext) ctx.name(i)).BIN_OP().getText() : ((NameIdContext) ctx.name(i)).ID().getText();
@@ -642,28 +640,15 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       }
     }
 
-    for (Namespace namespace = myLocalNamespace; namespace != null; namespace = namespace.getParent()) {
-      Definition member = namespace.getDefinition(name);
-      if (member != null) {
-        return new Concrete.DefCallExpression(position, null, member);
-      }
+    NamespaceMember member = myNameResolver.locateName(name);
+    if (member instanceof Definition) {
+      return new Concrete.DefCallExpression(position, null, (Definition) member);
+    } else
+    if (member != null) {
+      myErrorReporter.report(new ParserError(myNamespace, position, "'" + name + "' is not a definition"));
+    } else {
+      myErrorReporter.report(new ParserError(myNamespace, position, "Not in scope: " + name));
     }
-
-    for (Namespace namespace = myNamespace; namespace != null; namespace = namespace.getParent()) {
-      Definition member = namespace.getDefinition(name);
-      if (member != null) {
-        return new Concrete.DefCallExpression(position, null, member);
-      }
-    }
-
-    if (!binOp) {
-      Definition definition = myModuleLoader.loadModule(new Module(myModuleLoader.getRoot(), name), true);
-      if (definition != null) {
-        return new Concrete.DefCallExpression(position, null, definition);
-      }
-    }
-
-    myErrorReporter.report(new ParserError(myNamespace, position, "Not in scope: " + name));
     return null;
   }
 
@@ -794,7 +779,10 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
           Definition definition = ((Concrete.DefCallExpression) expr).getDefinition();
           Definition classField = definition.getNamespace().getDefinition(name.name);
           if (classField == null) {
-            classField = myModuleLoader.loadModule(new Module(definition.getNamespace(), name.name), true);
+            NamespaceMember member = myNameResolver.getMember(definition.getNamespace(), name.name);
+            if (member instanceof Definition) {
+              classField = (Definition) member;
+            }
           }
           if (classField == null && definition instanceof FunctionDefinition) {
             FunctionDefinition functionDefinition = (FunctionDefinition) definition;
@@ -976,37 +964,15 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     boolean binOp = nameCtx instanceof NameBinOpContext;
     String name = binOp ? ((NameBinOpContext) nameCtx).BIN_OP().getText() : ((NameIdContext) nameCtx).ID().getText();
     if (isNamespace || !fieldAccCtx.isEmpty()) {
-      Namespace namespace = null;
-      for (Namespace parent = myLocalNamespace; parent != null; parent = parent.getParent()) {
-        namespace = parent.findChild(name);
-        if (namespace != null) {
-          break;
-        }
-      }
-
-      if (namespace == null) {
-        for (Namespace parent = myNamespace; parent != null; parent = parent.getParent()) {
-          namespace = parent.findChild(name);
-          if (namespace != null) {
-            break;
-          }
-        }
-      }
-
-      if (namespace == null) {
-        ClassDefinition definition = myModuleLoader.loadModule(new Module(myModuleLoader.getRoot(), name), true);
-        if (definition != null) {
-          namespace = definition.getNamespace();
-        }
-      }
-
-      if (namespace == null) {
+      NamespaceMember member = myNamespace.locateName(name);
+      if (member == null) {
         if (reportErrors) {
           myErrorReporter.report(new ParserError(myNamespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name));
         }
         return null;
       }
 
+      Namespace namespace = member.getNamespace();
       for (int i = 0; i < fieldAccCtx.size() ; ++i) {
         if (!(fieldAccCtx.get(i) instanceof ClassFieldContext)) {
           if (reportErrors) {
@@ -1023,12 +989,19 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         if (i == fieldAccCtx.size() - 1 && !isNamespace) {
           Definition definition = namespace.getDefinition(name1.name);
           if (definition == null && reportErrors) {
-            myErrorReporter.report(new ParserError(new Module(namespace.getParent(), namespace.getName().name), tokenPosition(nameCtx.getStart()), "Not in scope: " + name1.name));
+            myErrorReporter.report(new ParserError(namespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name1.name));
           }
           return definition;
         } else {
-          namespace = namespace.getChild(name1);
-          myModuleLoader.loadModule(new Module(namespace.getParent(), namespace.getName().name), true);
+          NamespaceMember member1 = myNameResolver.getMember(namespace, name1.name);
+          if (member1 != null) {
+            namespace = member1.getNamespace();
+          } else {
+            if (reportErrors) {
+              myErrorReporter.report(new ParserError(namespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name1.name));
+            }
+            return null;
+          }
         }
       }
       return namespace;

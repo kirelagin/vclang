@@ -25,11 +25,6 @@ public abstract class Definition extends Binding implements Abstract.Definition,
   }
 
   @Override
-  public Namespace getParent() {
-    return myNamespace.getParent();
-  }
-
-  @Override
   public Precedence getPrecedence() {
     return myPrecedence;
   }

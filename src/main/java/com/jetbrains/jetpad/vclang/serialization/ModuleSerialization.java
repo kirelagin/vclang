@@ -61,13 +61,13 @@ public class ModuleSerialization {
 
     size = 0;
     for (Definition member : namespace.getDefinitions()) {
-      if (!(member instanceof Constructor) && member.getParent() == namespace) {
+      if (!(member instanceof Constructor) && member.getNamespace().getParent() == namespace) {
         ++size;
       }
     }
     visitor.getDataStream().writeInt(size);
     for (Definition member : namespace.getDefinitions()) {
-      if (!(member instanceof Constructor) && member.getParent() == namespace) {
+      if (!(member instanceof Constructor) && member.getNamespace().getParent() == namespace) {
         visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(member, true));
         errors += serializeDefinition(visitor, member);
       }

@@ -3,6 +3,7 @@ package com.jetbrains.jetpad.vclang.serialization;
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
 import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 import com.jetbrains.jetpad.vclang.term.expr.*;
@@ -23,11 +24,11 @@ public class ModuleDeserialization {
     myModuleLoader = moduleLoader;
   }
 
-  public int readFile(File file, Namespace namespace, ClassDefinition classDefinition, Namespace root) throws IOException {
-    return readStream(new DataInputStream(new BufferedInputStream(new FileInputStream(file))), namespace, classDefinition, root);
+  public int readFile(File file, Namespace namespace, ClassDefinition classDefinition) throws IOException {
+    return readStream(new DataInputStream(new BufferedInputStream(new FileInputStream(file))), namespace, classDefinition);
   }
 
-  public int readStream(DataInputStream stream, Namespace namespace, ClassDefinition classDefinition, Namespace root) throws IOException {
+  public int readStream(DataInputStream stream, Namespace namespace, ClassDefinition classDefinition) throws IOException {
     myParent = namespace;
     byte[] signature = new byte[4];
     stream.readFully(signature);
@@ -41,14 +42,14 @@ public class ModuleDeserialization {
     int errorsNumber = stream.readInt();
 
     Map<Integer, NamespaceMember> definitionMap = new HashMap<>();
-    definitionMap.put(0, root);
+    definitionMap.put(0, RootModule.ROOT);
     int size = stream.readInt();
     for (int i = 0; i < size; ++i) {
       int index = stream.readInt();
       int parentIndex = stream.readInt();
       NamespaceMember child;
       if (parentIndex == 0) {
-        child = index == 1 ? root : new Namespace(null, null);
+        child = index == 1 ? RootModule.ROOT : new Namespace(null, null);
       } else {
         Abstract.Definition.Fixity fixity = stream.readBoolean() ? Abstract.Definition.Fixity.PREFIX : Abstract.Definition.Fixity.INFIX;
         String name = stream.readUTF();
@@ -155,7 +156,7 @@ public class ModuleDeserialization {
         }
 
         dataDefinition.addConstructor(constructor);
-        dataDefinition.getParent().addDefinition(constructor);
+        dataDefinition.getNamespace().getParent().addDefinition(constructor);
       }
     } else
     if (code == ModuleSerialization.CLASS_CODE) {
@@ -395,7 +396,7 @@ public class ModuleDeserialization {
           if (!(overridden instanceof FunctionDefinition)) {
             throw new IncorrectFormat();
           }
-          OverriddenDefinition overriding = (OverriddenDefinition) newDefinition(ModuleSerialization.OVERRIDDEN_CODE, overridden.getName(), overridden.getParent());
+          OverriddenDefinition overriding = (OverriddenDefinition) newDefinition(ModuleSerialization.OVERRIDDEN_CODE, overridden.getName(), overridden.getNamespace().getParent());
           deserializeDefinition(stream, definitionMap, overriding);
           map.put((FunctionDefinition) overridden, overriding);
         }

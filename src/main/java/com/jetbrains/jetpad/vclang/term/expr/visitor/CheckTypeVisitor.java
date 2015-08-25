@@ -139,7 +139,17 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     }
   }
 
-  private int solveEquations(int size, Arg[] argsImp, Result[] resultArgs, List<CompareVisitor.Equation> equations, List<CompareVisitor.Equation> resultEquations, Abstract.Expression fun) {
+  private static class SolveEquationsResult {
+    int index;
+    TypeCheckingError error;
+
+    public SolveEquationsResult(int index, TypeCheckingError error) {
+      this.index = index;
+      this.error = error;
+    }
+  }
+
+  private SolveEquationsResult solveEquations(int size, Arg[] argsImp, Result[] resultArgs, List<CompareVisitor.Equation> equations, List<CompareVisitor.Equation> resultEquations, Abstract.Expression fun) {
     int found = size;
     for (CompareVisitor.Equation equation : equations) {
       for (int i = 0; i < size; ++i) {
@@ -172,8 +182,9 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
                     }
                   }
                 }
-                myErrorReporter.report(new InferredArgumentsMismatch(myNamespace, i + 1, options, fun, getNames(myLocalContext)));
-                return -1;
+                TypeCheckingError error = new InferredArgumentsMismatch(myNamespace, i + 1, options, fun, getNames(myLocalContext));
+                myErrorReporter.report(error);
+                return new SolveEquationsResult(-1, error);
               }
             } else {
               break;
@@ -187,7 +198,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       }
       resultEquations.add(equation);
     }
-    return found;
+    return new SolveEquationsResult(found, null);
   }
 
   private boolean typeCheckArgs(Arg[] argsImp, Result[] resultArgs, List<TypeArgument> signature, List<CompareVisitor.Equation> resultEquations, int startIndex, int parametersNumber, Abstract.Expression fun) {
@@ -239,10 +250,10 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       }
 
       if (resultArgs[i].equations == null) continue;
-      int found = solveEquations(i, argsImp, resultArgs, resultArgs[i].equations, resultEquations, fun);
-      if (found < 0) return false;
-      if (found != i) {
-        i = found - 1;
+      SolveEquationsResult result1 = solveEquations(i, argsImp, resultArgs, resultArgs[i].equations, resultEquations, fun);
+      if (result1.index < 0) return false;
+      if (result1.index != i) {
+        i = result1.index - 1;
       }
     }
     return true;
@@ -394,7 +405,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     Result[] resultArgs = new Result[argsNumber];
     List<CompareVisitor.Equation> resultEquations = new ArrayList<>();
     if (!typeCheckArgs(argsImp, resultArgs, signatureArguments, resultEquations, 0, parametersNumber, fun)) {
-      expression.setWellTyped(Error(null, myErrorReporter.report(myModuleLoader.getTypeCheckingErrors().size() - 1)));
+      expression.setWellTyped(Error(null, null)); // TODO
       return null;
     }
 
@@ -441,13 +452,13 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
         return null;
       }
 
-      int found = solveEquations(argsNumber, argsImp, resultArgs, equations, resultEquations, fun);
-      if (found < 0 || (found != argsNumber && !typeCheckArgs(argsImp, resultArgs, signatureArguments, resultEquations, found, parametersNumber, fun))) {
+      SolveEquationsResult result1 = solveEquations(argsNumber, argsImp, resultArgs, equations, resultEquations, fun);
+      if (result1.index < 0 || (result1.index != argsNumber && !typeCheckArgs(argsImp, resultArgs, signatureArguments, resultEquations, result1.index, parametersNumber, fun))) {
         Expression resultExpr = okFunction.expression;
         for (i = parametersNumber; i < argsNumber; ++i) {
           resultExpr = Apps(resultExpr, new ArgumentExpression(resultArgs[i] == null ? new InferHoleExpression(null) : resultArgs[i].expression, signatureArguments.get(i).getExplicit(), argsImp[i].isExplicit));
         }
-        expression.setWellTyped(Error(resultExpr, myErrorReporter.report(myModuleLoader.getTypeCheckingErrors().size() - 1)));
+        expression.setWellTyped(Error(resultExpr, result1.error));
         return null;
       }
 

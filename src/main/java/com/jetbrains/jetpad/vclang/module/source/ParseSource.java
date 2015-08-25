@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.module.source;
 
+import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.parser.BuildVisitor;
 import com.jetbrains.jetpad.vclang.parser.ParserError;
@@ -10,20 +11,23 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class ParseSource implements Source {
-  private final NameResolver myNameResolver;
+  private final ModuleLoader myModuleLoader;
   private final ErrorReporter myErrorReporter;
   private final Namespace myModule;
   private InputStream myStream;
 
-  public ParseSource(NameResolver nameResolver, ErrorReporter errorReporter, Namespace module) {
-    myNameResolver = nameResolver;
+  public ParseSource(ModuleLoader moduleLoader, ErrorReporter errorReporter, Namespace module) {
+    myModuleLoader = moduleLoader;
     myErrorReporter = errorReporter;
     myModule = module;
   }
@@ -64,7 +68,16 @@ public abstract class ParseSource implements Source {
     int errorsCount = countingErrorReporter.getErrorsNumber();
     VcgrammarParser.DefsContext tree = parser.defs();
     if (tree == null || errorsCount != countingErrorReporter.getErrorsNumber()) return false;
-    new BuildVisitor(namespace, classDefinition.getLocalNamespace(), myNameResolver, myErrorReporter).visitDefs(tree);
+
+    NameResolver namespaceNameResolver = new NamespaceNameResolver(namespace);
+    if (classDefinition != null) {
+      CompositeNameResolver compositeNameResolver = new CompositeNameResolver();
+      compositeNameResolver.addNameResolver(namespaceNameResolver);
+      compositeNameResolver.addNameResolver(new NamespaceNameResolver(classDefinition.getLocalNamespace()));
+      namespaceNameResolver = compositeNameResolver;
+    }
+    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, namespaceNameResolver);
+    new BuildVisitor(namespace, classDefinition == null ? null : classDefinition.getLocalNamespace(), nameResolver, myErrorReporter).visitDefs(tree);
     return errorsCount == countingErrorReporter.getErrorsNumber();
   }
 }

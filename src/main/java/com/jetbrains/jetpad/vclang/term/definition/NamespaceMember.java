@@ -4,6 +4,6 @@ import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 
 public interface NamespaceMember {
-  Namespace getParent();
+  Namespace getNamespace();
   Utils.Name getName();
 }

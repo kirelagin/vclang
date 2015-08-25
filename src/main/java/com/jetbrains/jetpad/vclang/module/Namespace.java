@@ -18,6 +18,11 @@ public class Namespace implements NamespaceMember {
   }
 
   @Override
+  public Namespace getNamespace() {
+    return this;
+  }
+
+  @Override
   public Utils.Name getName() {
     return myName;
   }
@@ -26,7 +31,6 @@ public class Namespace implements NamespaceMember {
     return myParent == null || myParent.getParent() == null ? myName.name : myParent.getFullName() + "." + myName.name;
   }
 
-  @Override
   public Namespace getParent() {
     return myParent;
   }

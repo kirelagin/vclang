@@ -64,7 +64,7 @@ public class ConsoleMain {
       libDirs.add(new File(workingPath, "lib"));
     }
 
-    final RootModule rootModule = new RootModule();
+    RootModule.initialize();
     final BaseModuleLoader moduleLoader = new BaseModuleLoader(recompile) {
       @Override
       public void loadingError(GeneralError error) {
@@ -93,7 +93,7 @@ public class ConsoleMain {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
             if (path.getFileName().toString().endsWith(FileOperations.EXTENSION)) {
-              processFile(moduleLoader, errorReporter, rootModule, path, sourceDir);
+              processFile(moduleLoader, errorReporter, path, sourceDir);
             }
             return FileVisitResult.CONTINUE;
           }
@@ -109,7 +109,7 @@ public class ConsoleMain {
       }
     } else {
       for (String fileName : cmdLine.getArgList()) {
-        processFile(moduleLoader, errorReporter, rootModule, Paths.get(fileName), sourceDir);
+        processFile(moduleLoader, errorReporter, Paths.get(fileName), sourceDir);
       }
     }
   }
@@ -134,7 +134,7 @@ public class ConsoleMain {
     return names;
   }
 
-  static private void processFile(ModuleLoader moduleLoader, ListErrorReporter errorReporter, RootModule rootModule, Path fileName, File sourceDir) {
+  static private void processFile(ModuleLoader moduleLoader, ListErrorReporter errorReporter, Path fileName, File sourceDir) {
     Path relativePath = sourceDir != null && fileName.startsWith(sourceDir.toPath()) ? sourceDir.toPath().relativize(fileName) : fileName.getFileName();
     List<String> moduleNames = getModule(relativePath);
     if (moduleNames == null) {
@@ -142,7 +142,7 @@ public class ConsoleMain {
       return;
     }
 
-    Namespace namespace = rootModule.getRoot();
+    Namespace namespace = RootModule.ROOT;
     for (String moduleName : moduleNames) {
       namespace = namespace.getChild(new Utils.Name(moduleName));
       moduleLoader.load(namespace, false);

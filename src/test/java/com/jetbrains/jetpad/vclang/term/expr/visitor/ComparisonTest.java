@@ -1,8 +1,7 @@
 package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
-import com.jetbrains.jetpad.vclang.module.output.DummyOutputSupplier;
-import com.jetbrains.jetpad.vclang.module.source.DummySourceSupplier;
+import com.jetbrains.jetpad.vclang.module.SimpleModuleLoader;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
@@ -148,8 +147,7 @@ public class ComparisonTest {
 
   @Test
   public void letsNested() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
+    ModuleLoader moduleLoader = new SimpleModuleLoader(false);
     Definition def1 = parseDef(moduleLoader, "\\function test => \\let | x => 0 \\in \\let  | y => 1 \\in zero");
     Definition def2 = parseDef(moduleLoader, "\\function test => \\let | x => 0 | y => 1 \\in zero");
     assertEquals(((FunctionDefinition) def1).getTerm(), ((FunctionDefinition) def2).getTerm());

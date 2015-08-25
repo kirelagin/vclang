@@ -2,8 +2,6 @@ package com.jetbrains.jetpad.vclang.module;
 
 import com.jetbrains.jetpad.vclang.module.source.SourceSupplier;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +22,6 @@ public class MemorySourceSupplier implements SourceSupplier {
 
   @Override
   public MemorySource getSource(Namespace module) {
-    return new MemorySource(new LoadingNameResolver(myModuleLoader, new NamespaceNameResolver(module)), myErrorReporter, module, myMap.get(module));
+    return new MemorySource(myModuleLoader, myErrorReporter, module, myMap.get(module));
   }
 }
