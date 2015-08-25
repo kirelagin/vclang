@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.module;
 
-import com.jetbrains.jetpad.vclang.module.output.DummyOutputSupplier;
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import org.junit.Before;
@@ -80,53 +79,51 @@ public class ModuleLoaderTest {
 
   @Test
   public void moduleTest() {
-    Module moduleA = new Module(moduleLoader.getRoot(), "A");
+    Namespace moduleA = RootModule.ROOT.getChild(new Utils.Name("A"));
     sourceSupplier.add(moduleA, "\\function f : Nat \\static \\class C { \\function g : Nat \\function h => g }");
-
-    moduleLoader.init(sourceSupplier, DummyOutputSupplier.getInstance(), true);
-    moduleLoader.loadModule(moduleA, false);
-    assertEquals(0, moduleLoader.getErrors().size());
-    assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
-    assertEquals(1, moduleLoader.getRoot().getChild(new Utils.Name("A")).getMembers().size());
-    assertEquals(1, ((ClassDefinition) moduleLoader.getRoot().getMember("A")).getLocalNamespace().getDefinitions().size());
-    assertEquals(0, moduleLoader.getRoot().getMember("A").getNamespace().getMember("C").getNamespace().getMembers().size());
-    assertEquals(2, ((ClassDefinition) moduleLoader.getRoot().getMember("A").getNamespace().getMember("C")).getLocalNamespace().getDefinitions().size());
+    moduleLoader.setSourceSupplier(sourceSupplier);
+    moduleLoader.load(moduleA, false);
+    assertEquals(0, moduleLoader.getErrorReporter().getErrorList().size());
+    assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getDefinitions().size());
+    assertEquals(1, ((ClassDefinition) RootModule.ROOT.getDefinition("A")).getLocalNamespace().getDefinitions().size());
+    assertEquals(0, RootModule.ROOT.getDefinition("A").getNamespace().getDefinition("C").getNamespace().getDefinitions().size());
+    assertEquals(2, ((ClassDefinition) RootModule.ROOT.getDefinition("A").getNamespace().getDefinition("C")).getLocalNamespace().getDefinitions().size());
   }
 
   @Test
   public void nonStaticTest() {
-    Module moduleA = new Module(moduleLoader.getRoot(), "A");
-    Module moduleB = new Module(moduleLoader.getRoot(), "B");
+    Namespace moduleA = RootModule.ROOT.getChild(new Utils.Name("A"));
+    Namespace moduleB = RootModule.ROOT.getChild(new Utils.Name("B"));
     sourceSupplier.add(moduleA, "\\function f : Nat \\static \\class B { \\function g : Nat \\function h => g }");
     sourceSupplier.add(moduleB, "\\static \\function f (p : A.B) => p.h");
 
-    moduleLoader.init(sourceSupplier, DummyOutputSupplier.getInstance(), true);
-    moduleLoader.loadModule(moduleB, false);
-    assertEquals(0, moduleLoader.getErrors().size());
-    assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
+    moduleLoader.setSourceSupplier(sourceSupplier);
+    moduleLoader.load(moduleB, false);
+    assertEquals(0, moduleLoader.getErrorReporter().getErrorList().size());
   }
 
   @Test
   public void nonStaticTestError2() {
-    Module moduleA = new Module(moduleLoader.getRoot(), "A");
-    Module moduleB = new Module(moduleLoader.getRoot(), "B");
+    Namespace moduleA = RootModule.ROOT.getChild(new Utils.Name("A"));
+    Namespace moduleB = RootModule.ROOT.getChild(new Utils.Name("B"));
+    sourceSupplier.add(moduleA, "\\function f : Nat \\static \\class B { \\function g : Nat \\function h => g }");
     sourceSupplier.add(moduleA, "\\function f : Nat \\class B { \\function g : Nat \\static \\function (+) (f g : Nat) => f \\function h => f + g }");
     sourceSupplier.add(moduleB, "\\static \\function f (p : A.B) => p.h");
 
-    moduleLoader.init(sourceSupplier, DummyOutputSupplier.getInstance(), true);
-    moduleLoader.loadModule(moduleB, false);
-    assertEquals(1, moduleLoader.getErrors().size());
+    moduleLoader.setSourceSupplier(sourceSupplier);
+    moduleLoader.load(moduleB, false);
+    assertEquals(1, moduleLoader.getErrorReporter().getErrorList().size());
   }
 
   @Test
   public void abstractNonStaticTestError() {
-    Module moduleA = new Module(moduleLoader.getRoot(), "A");
-    Module moduleB = new Module(moduleLoader.getRoot(), "B");
+    Namespace moduleA = RootModule.ROOT.getChild(new Utils.Name("A"));
+    Namespace moduleB = RootModule.ROOT.getChild(new Utils.Name("B"));
     sourceSupplier.add(moduleA, "\\function f : Nat");
     sourceSupplier.add(moduleB, "\\function g => A.f");
 
-    moduleLoader.init(sourceSupplier, DummyOutputSupplier.getInstance(), true);
-    moduleLoader.loadModule(moduleB, false);
-    assertEquals(1, moduleLoader.getErrors().size());
+    moduleLoader.setSourceSupplier(sourceSupplier);
+    moduleLoader.load(moduleB, false);
+    assertEquals(1, moduleLoader.getErrorReporter().getErrorList().size());
   }
 }

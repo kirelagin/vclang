@@ -1,8 +1,5 @@
 package com.jetbrains.jetpad.vclang.record;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
-import com.jetbrains.jetpad.vclang.module.output.DummyOutputSupplier;
-import com.jetbrains.jetpad.vclang.module.source.DummySourceSupplier;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
@@ -23,51 +20,37 @@ import static org.junit.Assert.assertTrue;
 public class RecordsTest {
   @Test
   public void recordTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class B { \\function f : Nat -> \\Type0 \\function g : f 0 } \\static \\function f (p : B) : p.f 0 => p.g ");
+    parseDefs("\\static \\class B { \\function f : Nat -> \\Type0 \\function g : f 0 } \\static \\function f (p : B) : p.f 0 => p.g ");
   }
 
   @Test
   public void unknownExtTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => 0 \\override z => 0 \\override y => 0 }", 1);
+    parseDefs("\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => 0 \\override z => 0 \\override y => 0 }", 1);
   }
 
   @Test
   public void typeMismatchMoreTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x (a : Nat) => a }", 1);
+    parseDefs("\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x (a : Nat) => a }", 1);
   }
 
   @Test
   public void typeMismatchLessTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class C { \\function f (x y z : Nat) : Nat } \\static \\function D => C { \\override f a => \\lam z w => z }");
+    parseDefs("\\static \\class C { \\function f (x y z : Nat) : Nat } \\static \\function D => C { \\override f a => \\lam z w => z }");
   }
 
   @Test
   public void argTypeMismatchTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class C { \\function f (a : Nat) : Nat } \\static \\function D => C { \\override f (a : Nat -> Nat) => 0 }", 1);
+    parseDefs("\\static \\class C { \\function f (a : Nat) : Nat } \\static \\function D => C { \\override f (a : Nat -> Nat) => 0 }", 1);
   }
 
   @Test
   public void resultTypeMismatchTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => \\lam (t : Nat) => t }", 1);
+    parseDefs("\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => \\lam (t : Nat) => t }", 1);
   }
 
   @Test
   public void parentCallTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader,
+    parseDefs(
         "\\static \\class A {\n" +
           "\\function c : Nat -> Nat -> Nat\n" +
           "\\function f : Nat -> Nat\n" +
@@ -79,30 +62,23 @@ public class RecordsTest {
 
   @Test
   public void recursiveTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    parseDefs(moduleLoader, "\\static \\class A { \\function f : Nat -> Nat } \\static \\function B => A { \\override f n <= \\elim n | zero => zero | suc n' => f (suc n') }", 1);
+    parseDefs("\\static \\class A { \\function f : Nat -> Nat } \\static \\function B => A { \\override f n <= \\elim n | zero => zero | suc n' => f (suc n') }", 1);
   }
 
   @Test
   public void duplicateNameTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class A {\n" +
           "\\function f : Nat -> Nat\n" +
         "}\n" +
         "\\static \\function B => A {\n" +
           "\\function f (n : Nat) <= n\n" +
-        "}";
-    parseDefs(moduleLoader, text, 1, 0);
+        "}", 1);
   }
 
   @Test
   public void overriddenFieldAccTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class Point {\n" +
           "\\function x : Nat\n" +
           "\\function y : Nat\n" +
@@ -111,15 +87,12 @@ public class RecordsTest {
           "\\override x => d\n" +
           "\\override y => d\n" +
         "}\n" +
-        "\\static \\function test (p : diagonal 0) : p.x = 0 => path (\\lam _ => 0)";
-    parseDefs(moduleLoader, text);
+        "\\static \\function test (p : diagonal 0) : p.x = 0 => path (\\lam _ => 0)");
   }
 
   @Test
   public void newAbstractTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class Point {\n" +
           "\\function x : Nat\n" +
           "\\function y : Nat\n" +
@@ -127,15 +100,12 @@ public class RecordsTest {
         "\\static \\function diagonal => Point {\n" +
           "\\override y => x\n" +
         "}\n" +
-        "\\static \\function test => \\new diagonal";
-    parseDefs(moduleLoader, text, 1);
+        "\\static \\function test => \\new diagonal", 1);
   }
 
   @Test
   public void newTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class Point {\n" +
           "\\function x : Nat\n" +
           "\\function y : Nat\n" +
@@ -148,15 +118,12 @@ public class RecordsTest {
           "\\override x => 0\n" +
           "\\override y => x\n" +
         "}\n" +
-        "\\static \\function test : \\new diagonal1 = \\new diagonal 0 => path (\\lam _ => \\new diagonal 0)";
-    parseDefs(moduleLoader, text);
+        "\\static \\function test : \\new diagonal1 = \\new diagonal 0 => path (\\lam _ => \\new diagonal 0)");
   }
 
   @Test
   public void mutualRecursionTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class Point {\n" +
           "\\function x : Nat\n" +
           "\\function y : Nat\n" +
@@ -164,38 +131,30 @@ public class RecordsTest {
         "\\static \\function test => Point {\n" +
           "\\override x => y\n" +
           "\\override y => x\n" +
-        "}";
-    parseDefs(moduleLoader, text, 1);
+        "}", 1);
   }
 
   @Test
   public void splitClassTestError() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    String text =
+    parseDefs(
         "\\static \\class A {\n" +
           "\\static \\function x => 0\n" +
         "}\n" +
         "\\static \\class A {\n" +
           "\\static \\function y => 0\n" +
-        "}";
-    parseDefs(moduleLoader, text, 1, 0);
+        "}", 1);
   }
 
   @Test
   public void recordUniverseTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    ClassDefinition result = parseDefs(moduleLoader, "\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => 0 }");
+    ClassDefinition result = parseDefs("\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => 0 }");
     assertEquals(new Universe.Type(0, Universe.Type.SET), result.getNamespace().getDefinition("Point").getUniverse());
     assertEquals(new Universe.Type(0, Universe.Type.SET), result.getNamespace().getDefinition("C").getUniverse());
   }
 
   @Test
   public void recordConstructorsTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    ClassDefinition classDef = parseDefs(moduleLoader, "\\static \\class A { \\function x : Nat \\data Foo | foo (x = 0) \\function y : foo = foo } \\static \\function test (p : A) => p.y");
+    ClassDefinition classDef = parseDefs("\\static \\class A { \\function x : Nat \\data Foo | foo (x = 0) \\function y : foo = foo } \\static \\function test (p : A) => p.y");
     Expression resultType = ((FunctionDefinition) classDef.getNamespace().getDefinition("test")).getResultType();
     List<Expression> arguments = new ArrayList<>(3);
     Expression function = resultType.normalize(NormalizeVisitor.Mode.WHNF).getFunction(arguments);
@@ -231,9 +190,7 @@ public class RecordsTest {
 
   @Test
   public void recordConstructorsParametersTest() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    moduleLoader.init(DummySourceSupplier.getInstance(), DummyOutputSupplier.getInstance(), false);
-    ClassDefinition classDef = parseDefs(moduleLoader,
+    ClassDefinition classDef = parseDefs(
       "\\static \\class A {\n" +
         "\\function x : Nat\n" +
         "\\data Foo (p : x = x) | foo (p = p)\n" +

@@ -1,7 +1,7 @@
 package com.jetbrains.jetpad.vclang.typechecking;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.TypeChecking;
@@ -12,6 +12,7 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.NameArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -19,8 +20,7 @@ import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class ElimTest {
   @Test
@@ -73,21 +73,20 @@ public class ElimTest {
     clauses4.add(new Clause(dataType.getConstructor("con1"), arguments11, Abstract.Definition.Arrow.RIGHT, Apps(Index(3), Index(2)), term4));
     clauses4.add(new Clause(dataType.getConstructor("con2"), arguments12, Abstract.Definition.Arrow.RIGHT, Index(7), term4));
 
-    ModuleLoader moduleLoader = new ModuleLoader();
-    FunctionDefinition function = new FunctionDefinition(moduleLoader.getRoot().getChild(new Utils.Name("test")).getChild(new Utils.Name("fun")), Abstract.Definition.DEFAULT_PRECEDENCE, arguments, resultType, Abstract.Definition.Arrow.LEFT, term2);
+    RootModule.initialize();
+    ListErrorReporter errorReporter = new ListErrorReporter();
+    FunctionDefinition function = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("fun")), Abstract.Definition.DEFAULT_PRECEDENCE, arguments, resultType, Abstract.Definition.Arrow.LEFT, term2);
     List<Binding> localContext = new ArrayList<>();
-    FunctionDefinition typedFun = TypeChecking.typeCheckFunctionBegin(moduleLoader, function.getParent(), null, function, localContext, null);
+    FunctionDefinition typedFun = TypeChecking.typeCheckFunctionBegin(errorReporter, function.getNamespace().getParent(), null, function, localContext, null);
     assertNotNull(typedFun);
-    TypeChecking.typeCheckFunctionEnd(moduleLoader, function.getParent(), function.getTerm(), typedFun, localContext, null);
-    assertEquals(0, moduleLoader.getTypeCheckingErrors().size());
-    assertEquals(0, moduleLoader.getErrors().size());
+    TypeChecking.typeCheckFunctionEnd(errorReporter, function.getNamespace().getParent(), function.getTerm(), typedFun, localContext, null);
+    assertEquals(0, errorReporter.getErrorList().size());
     assertFalse(typedFun.hasErrors());
   }
 
   @Test
   public void elim2() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    parseDefs(moduleLoader,
+    parseDefs(
         "\\static \\data D Nat (x y : Nat) | con1 Nat | con2 (Nat -> Nat) (a b c : Nat)\n" +
         "\\static \\function P (a1 b1 c1 : Nat) (d1 : D a1 b1 c1) (a2 b2 c2 : Nat) (d2 : D a2 b2 c2) : \\Type0 <= \\elim d1\n" +
             "| con2 _ _ _ _ => Nat -> Nat\n" +
@@ -104,8 +103,7 @@ public class ElimTest {
 
   @Test
   public void elim3() {
-    ModuleLoader moduleLoader = new ModuleLoader();
-    parseDefs(moduleLoader,
+    parseDefs(
         "\\static \\data D (x : Nat -> Nat) (y : Nat) | con1 {Nat} Nat | con2 (Nat -> Nat) {a b c : Nat}\n" +
         "\\static \\function test (q : Nat -> Nat) (e : D q 0) (r : D (\\lam x => x) (q 1)) : Nat <= \\elim r\n" +
           "| con1 s <= \\elim e\n" +

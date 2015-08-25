@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
@@ -12,12 +11,17 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DummyNameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ParserTestCase {
   public static VcgrammarParser parse(final ErrorReporter errorReporter, String text) {
@@ -35,43 +39,54 @@ public class ParserTestCase {
     return parser;
   }
 
-  public static Concrete.Expression parseExpr(ListErrorReporter errorReporter, String text, int errors) {
+  public static Concrete.Expression parseExpr(NameResolver nameResolver, String text, int errors) {
+    RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
-    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(null, null), moduleLoader, errorReporter).visitExpr(parse(errorReporter, text).expr());
+    ListErrorReporter errorReporter = new ListErrorReporter();
+    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(null, null), nameResolver, errorReporter).visitExpr(parse(errorReporter, text).expr());
+    if (errors < 0) {
+      assertTrue(!errorReporter.getErrorList().isEmpty());
+    } else {
+      assertEquals(errors, errorReporter.getErrorList().size());
+    }
+    return result;
+  }
+
+  public static Concrete.Expression parseExpr(String text, int errors) {
+    return parseExpr(DummyNameResolver.getInstance(), text, errors);
+  }
+
+  public static Concrete.Expression parseExpr(String text) {
+    return parseExpr(text, 0);
+  }
+
+  public static Definition parseDef(String text) {
+    return parseDef(text, 0);
+  }
+
+  public static Definition parseDef(String text, int errors) {
+    RootModule.initialize();
+    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
+    ListErrorReporter errorReporter = new ListErrorReporter();
+    Definition result = new BuildVisitor(namespace, new Namespace(null, null), new NamespaceNameResolver(namespace), errorReporter).visitDef(parse(errorReporter, text).def());
     assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
 
-  public static Concrete.Expression parseExpr(ModuleLoader moduleLoader, String text) {
-    return parseExpr(moduleLoader, text, 0);
+  public static ClassDefinition parseDefs(String text) {
+    return parseDefs(text, 0);
   }
 
-  public static Definition parseDef(ModuleLoader moduleLoader, String text) {
-    return parseDef(moduleLoader, text, 0);
-  }
-
-  public static Definition parseDef(ModuleLoader moduleLoader, String text, int errors) {
-    Namespace namespace = moduleLoader.getRoot().getChild(new Utils.Name("test"));
-    Definition result = new BuildVisitor(namespace, new Namespace(null, null), moduleLoader).visitDef(parse(moduleLoader, text).def());
-    assertEquals(0, moduleLoader.getErrors().size());
-    assertEquals(errors, moduleLoader.getTypeCheckingErrors().size());
-    return result;
-  }
-
-  public static ClassDefinition parseDefs(ModuleLoader moduleLoader, String text) {
-    return parseDefs(moduleLoader, text, 0);
-  }
-
-  public static ClassDefinition parseDefs(ModuleLoader moduleLoader, String text, int errors) {
-    return parseDefs(moduleLoader, text, 0, errors);
-  }
-
-  public static ClassDefinition parseDefs(ModuleLoader moduleLoader, String text, int moduleErrors, int errors) {
+  public static ClassDefinition parseDefs(String text, int errors) {
+    RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ClassDefinition result = new ClassDefinition(namespace);
-    new BuildVisitor(namespace, result.getLocalNamespace(), moduleLoader).visitDefs(parse(moduleLoader, text).defs());
-    assertEquals(moduleErrors, moduleLoader.getErrors().size());
-    assertEquals(errors, moduleLoader.getTypeCheckingErrors().size());
+    CompositeNameResolver nameResolver = new CompositeNameResolver();
+    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
+    nameResolver.addNameResolver(new NamespaceNameResolver(result.getLocalNamespace()));
+    ListErrorReporter errorReporter = new ListErrorReporter();
+    new BuildVisitor(namespace, result.getLocalNamespace(), nameResolver, errorReporter).visitDefs(parse(errorReporter, text).defs());
+    assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
 
