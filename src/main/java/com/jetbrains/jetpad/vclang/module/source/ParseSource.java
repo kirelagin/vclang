@@ -72,8 +72,8 @@ public abstract class ParseSource implements Source {
     NameResolver namespaceNameResolver = new NamespaceNameResolver(namespace);
     if (classDefinition != null) {
       CompositeNameResolver compositeNameResolver = new CompositeNameResolver();
-      compositeNameResolver.addNameResolver(namespaceNameResolver);
       compositeNameResolver.addNameResolver(new NamespaceNameResolver(classDefinition.getLocalNamespace()));
+      compositeNameResolver.addNameResolver(namespaceNameResolver);
       namespaceNameResolver = compositeNameResolver;
     }
     NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, namespaceNameResolver);

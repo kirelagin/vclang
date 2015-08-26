@@ -177,6 +177,6 @@ public class Namespace implements NamespaceMember {
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(new Object[]{myParent, myName.name});
+    return Arrays.hashCode(new Object[]{myParent, myName == null ? null : myName.name});
   }
 }

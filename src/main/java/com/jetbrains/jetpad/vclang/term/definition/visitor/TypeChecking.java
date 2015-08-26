@@ -346,10 +346,6 @@ public class TypeChecking {
     }
 
     typedDef.getNamespace().getParent().addDefinition(typedDef);
-    if (expectedType == null) {
-      typedDef.typeHasErrors(true);
-    }
-
     return true;
   }
 
@@ -383,6 +379,9 @@ public class TypeChecking {
     } */
 
     definition.typeHasErrors(definition.getResultType() == null);
+    if (definition.typeHasErrors()) {
+      definition.hasErrors(true);
+    }
     Expression type = definition.getType();
     if (type != null) {
       type = type.getType(new ArrayList<Binding>(2));

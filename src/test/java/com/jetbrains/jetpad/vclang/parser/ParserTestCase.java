@@ -67,8 +67,12 @@ public class ParserTestCase {
   public static Definition parseDef(String text, int errors) {
     RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
+    Namespace localNamespace = new Namespace(null, null);
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Definition result = new BuildVisitor(namespace, new Namespace(null, null), new NamespaceNameResolver(namespace), errorReporter).visitDef(parse(errorReporter, text).def());
+    CompositeNameResolver nameResolver = new CompositeNameResolver();
+    nameResolver.addNameResolver(new NamespaceNameResolver(localNamespace));
+    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
+    Definition result = new BuildVisitor(namespace, localNamespace, nameResolver, errorReporter).visitDef(parse(errorReporter, text).def());
     assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
@@ -82,8 +86,8 @@ public class ParserTestCase {
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ClassDefinition result = new ClassDefinition(namespace);
     CompositeNameResolver nameResolver = new CompositeNameResolver();
-    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
     nameResolver.addNameResolver(new NamespaceNameResolver(result.getLocalNamespace()));
+    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
     ListErrorReporter errorReporter = new ListErrorReporter();
     new BuildVisitor(namespace, result.getLocalNamespace(), nameResolver, errorReporter).visitDefs(parse(errorReporter, text).defs());
     assertEquals(errors, errorReporter.getErrorList().size());

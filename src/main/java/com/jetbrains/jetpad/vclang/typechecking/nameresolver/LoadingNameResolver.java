@@ -28,7 +28,7 @@ public class LoadingNameResolver implements NameResolver {
     if (member instanceof Namespace) {
       result = myModuleLoader.load((Namespace) member, true);
     } else {
-      result = myModuleLoader.load(RootModule.ROOT.getChild(new Utils.Name(name)), true);
+      result = myModuleLoader.load(RootModule.ROOT.getChild(new Utils.Name(name)), true); // TODO: Replace with findChild.
     }
 
     if (result != null && result.classDefinition != null) {
@@ -45,7 +45,7 @@ public class LoadingNameResolver implements NameResolver {
       return definition;
     }
 
-    Namespace child = parent.getChild(new Utils.Name(name));
+    Namespace child = parent.getChild(new Utils.Name(name)); // TODO: Replace with findChild.
     ModuleLoadingResult result = myModuleLoader.load(child, true);
     if (result != null && result.classDefinition != null) {
       return result.classDefinition;

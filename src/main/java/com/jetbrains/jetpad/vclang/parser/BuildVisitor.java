@@ -280,7 +280,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     return visitDefFunction(false, true, ctx.getStart(), ctx.name().size() == 1 ? null : ctx.name(0), null, ctx.name().size() == 1 ? ctx.name(0) : ctx.name(1), ctx.tele(), (FunctionContext) visit(ctx.typeTermOpt()), ctx.where() == null ? null : ctx.where().def());
   }
 
-  private FunctionDefinition visitDefFunction(boolean isStatic, boolean overridden, Token token, NameContext originalName, PrecedenceContext precCtx, NameContext nameCtx, List<TeleContext> teleCtx, FunctionContext functionCtx, List<DefContext> defs) {FunctionDefinition typedDef;
+  private FunctionDefinition visitDefFunction(boolean isStatic, boolean overridden, Token token, NameContext originalName, PrecedenceContext precCtx, NameContext nameCtx, List<TeleContext> teleCtx, FunctionContext functionCtx, List<DefContext> defs) {
     if (isStatic && functionCtx.termCtx == null) {
       myErrorReporter.report(new ParserError(myNamespace, tokenPosition(token), "Non-static abstract definition"));
       return null;
@@ -293,6 +293,8 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     Namespace parentNamespace = isStatic ? myNamespace : myLocalNamespace;
     Name name = getName(nameCtx);
     if (name == null) return null;
+
+    FunctionDefinition typedDef;
     if (overridden) {
       typedDef = new OverriddenDefinition(parentNamespace.getChild(name), visitPrecedence(precCtx), null, null, visitArrow(functionCtx.arrowCtx), null, null);
     } else {
@@ -302,7 +304,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     Namespace oldNamespace = myNamespace;
     Namespace oldLocalNamespace = myLocalNamespace;
     Namespace oldPrivateNamespace = myPrivateNamespace;
-    myNamespace = myNamespace.getChild(name);
+    myNamespace = parentNamespace.getChild(name);
     myLocalNamespace = isStatic ? null : typedDef.getNamespace();
     myPrivateNamespace = new Namespace(null, myPrivateNamespace);
 
