@@ -5,8 +5,7 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import org.junit.Test;
 
 import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class DefinitionsTest {
   @Test
@@ -16,6 +15,21 @@ public class DefinitionsTest {
     assertEquals(0, result.getLocalNamespace().getDefinitions().size());
     assertEquals(0, result.getNamespace().getChild(new Utils.Name("Point")).getDefinitions().size());
     assertEquals(2, ((ClassDefinition) result.getNamespace().getDefinition("Point")).getLocalNamespace().getDefinitions().size());
+  }
+
+  @Test
+  public void numberOfFieldsTest2() {
+    ClassDefinition result = parseDefs("\\function f : Nat \\static \\function g => 0 \\class B { \\function h => 0 \\static \\function k => 0 } \\static \\class C { \\function h => 0 \\static \\function k => 0 }");
+    assertEquals(2, result.getNamespace().getDefinitions().size());
+    assertNotNull(result.getNamespace().getDefinition("g"));
+    assertTrue(result.getNamespace().getDefinition("C") instanceof ClassDefinition);
+    assertEquals(1, result.getNamespace().getDefinition("C").getNamespace().getDefinitions().size());
+    assertEquals(1, ((ClassDefinition) result.getNamespace().getDefinition("C")).getLocalNamespace().getDefinitions().size());
+    assertEquals(2, result.getLocalNamespace().getDefinitions().size());
+    assertNotNull(result.getLocalNamespace().getDefinition("f"));
+    assertTrue(result.getLocalNamespace().getDefinition("B") instanceof ClassDefinition);
+    assertEquals(1, result.getNamespace().getDefinition("B").getNamespace().getDefinitions().size());
+    assertEquals(1, ((ClassDefinition) result.getNamespace().getDefinition("B")).getLocalNamespace().getDefinitions().size());
   }
 
   @Test
