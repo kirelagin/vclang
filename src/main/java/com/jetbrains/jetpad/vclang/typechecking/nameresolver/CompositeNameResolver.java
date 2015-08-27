@@ -17,8 +17,12 @@ public class CompositeNameResolver implements NameResolver {
     myNameResolvers = nameResolvers;
   }
 
-  public void addNameResolver(NameResolver nameResolver) {
+  public void pushNameResolver(NameResolver nameResolver) {
     myNameResolvers.add(nameResolver);
+  }
+
+  public void popNameResolver() {
+    myNameResolvers.remove(myNameResolvers.size() - 1);
   }
 
   @Override

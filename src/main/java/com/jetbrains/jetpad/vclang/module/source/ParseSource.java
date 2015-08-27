@@ -11,7 +11,6 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
@@ -69,14 +68,7 @@ public abstract class ParseSource implements Source {
     VcgrammarParser.DefsContext tree = parser.defs();
     if (tree == null || errorsCount != countingErrorReporter.getErrorsNumber()) return false;
 
-    NameResolver namespaceNameResolver = new NamespaceNameResolver(namespace);
-    if (classDefinition != null) {
-      CompositeNameResolver compositeNameResolver = new CompositeNameResolver();
-      compositeNameResolver.addNameResolver(new NamespaceNameResolver(classDefinition.getLocalNamespace()));
-      compositeNameResolver.addNameResolver(namespaceNameResolver);
-      namespaceNameResolver = compositeNameResolver;
-    }
-    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, namespaceNameResolver);
+    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new NamespaceNameResolver(namespace.getParent()));
     new BuildVisitor(namespace, classDefinition == null ? null : classDefinition.getLocalNamespace(), nameResolver, myErrorReporter).visitDefs(tree);
     return errorsCount == countingErrorReporter.getErrorsNumber();
   }

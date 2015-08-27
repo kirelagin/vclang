@@ -12,11 +12,11 @@ public class NamespaceNameResolver implements NameResolver {
 
   @Override
   public NamespaceMember locateName(String name) {
-    return myNamespace.locateName(name);
+    return myNamespace.getMember(name);
   }
 
   @Override
   public NamespaceMember getMember(Namespace parent, String name) {
-    return parent.getMember(name);
+    return parent.getDefinition(name);
   }
 }

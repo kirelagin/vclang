@@ -82,12 +82,12 @@ public class ModuleLoaderTest {
     Namespace moduleA = RootModule.ROOT.getChild(new Utils.Name("A"));
     sourceSupplier.add(moduleA, "\\function f : Nat \\static \\class C { \\function g : Nat \\function h => g }");
     moduleLoader.setSourceSupplier(sourceSupplier);
-    moduleLoader.load(moduleA, false);
+    ModuleLoadingResult result = moduleLoader.load(moduleA, false);
     assertEquals(0, moduleLoader.getErrorReporter().getErrorList().size());
     assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getDefinitions().size());
-    assertEquals(1, ((ClassDefinition) RootModule.ROOT.getDefinition("A")).getLocalNamespace().getDefinitions().size());
-    assertEquals(0, RootModule.ROOT.getDefinition("A").getNamespace().getDefinition("C").getNamespace().getDefinitions().size());
-    assertEquals(2, ((ClassDefinition) RootModule.ROOT.getDefinition("A").getNamespace().getDefinition("C")).getLocalNamespace().getDefinitions().size());
+    assertEquals(1, result.classDefinition.getLocalNamespace().getDefinitions().size());
+    assertEquals(0, result.classDefinition.getNamespace().getDefinition("C").getNamespace().getDefinitions().size());
+    assertEquals(2, ((ClassDefinition) result.classDefinition.getNamespace().getDefinition("C")).getLocalNamespace().getDefinitions().size());
   }
 
   @Test

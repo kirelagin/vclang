@@ -11,10 +11,8 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DummyNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.util.ArrayList;
@@ -69,10 +67,7 @@ public class ParserTestCase {
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     Namespace localNamespace = new Namespace(null, null);
     ListErrorReporter errorReporter = new ListErrorReporter();
-    CompositeNameResolver nameResolver = new CompositeNameResolver();
-    nameResolver.addNameResolver(new NamespaceNameResolver(localNamespace));
-    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
-    Definition result = new BuildVisitor(namespace, localNamespace, nameResolver, errorReporter).visitDef(parse(errorReporter, text).def());
+    Definition result = new BuildVisitor(namespace, localNamespace, DummyNameResolver.getInstance(), errorReporter).visitDef(parse(errorReporter, text).def());
     assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
@@ -85,11 +80,8 @@ public class ParserTestCase {
     RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ClassDefinition result = new ClassDefinition(namespace);
-    CompositeNameResolver nameResolver = new CompositeNameResolver();
-    nameResolver.addNameResolver(new NamespaceNameResolver(result.getLocalNamespace()));
-    nameResolver.addNameResolver(new NamespaceNameResolver(namespace));
     ListErrorReporter errorReporter = new ListErrorReporter();
-    new BuildVisitor(namespace, result.getLocalNamespace(), nameResolver, errorReporter).visitDefs(parse(errorReporter, text).defs());
+    new BuildVisitor(namespace, result.getLocalNamespace(), DummyNameResolver.getInstance(), errorReporter).visitDefs(parse(errorReporter, text).defs());
     assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }

@@ -28,8 +28,8 @@ public class DefinitionsTest {
     assertEquals(2, result.getLocalNamespace().getDefinitions().size());
     assertNotNull(result.getLocalNamespace().getDefinition("f"));
     assertTrue(result.getLocalNamespace().getDefinition("B") instanceof ClassDefinition);
-    assertEquals(1, result.getNamespace().getDefinition("B").getNamespace().getDefinitions().size());
-    assertEquals(1, ((ClassDefinition) result.getNamespace().getDefinition("B")).getLocalNamespace().getDefinitions().size());
+    assertEquals(1, result.getLocalNamespace().getDefinition("B").getNamespace().getDefinitions().size());
+    assertEquals(1, ((ClassDefinition) result.getLocalNamespace().getDefinition("B")).getLocalNamespace().getDefinitions().size());
   }
 
   @Test

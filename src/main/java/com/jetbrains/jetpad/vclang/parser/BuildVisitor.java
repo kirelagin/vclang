@@ -10,7 +10,9 @@ import com.jetbrains.jetpad.vclang.term.expr.DefCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
@@ -24,13 +26,19 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   private Namespace myLocalNamespace;
   private Namespace myPrivateNamespace = new Namespace(null, null);
   private List<String> myContext = new ArrayList<>();
-  private final NameResolver myNameResolver;
+  private CompositeNameResolver myLocalNameResolver;
+  private CompositeNameResolver myNameResolver;
   private final ErrorReporter myErrorReporter;
 
   public BuildVisitor(Namespace namespace, Namespace localNamespace, NameResolver nameResolver, ErrorReporter errorReporter) {
     myNamespace = namespace;
     myLocalNamespace = localNamespace;
-    myNameResolver = nameResolver;
+    myNameResolver = new CompositeNameResolver();
+    myNameResolver.pushNameResolver(nameResolver);
+    myNameResolver.pushNameResolver(new NamespaceNameResolver(namespace));
+    myNameResolver.pushNameResolver(new NamespaceNameResolver(myPrivateNamespace));
+    myLocalNameResolver = new CompositeNameResolver();
+    myLocalNameResolver.pushNameResolver(new NamespaceNameResolver(myLocalNamespace));
     myErrorReporter = errorReporter;
   }
 
@@ -170,10 +178,21 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       myNamespace = newNamespace;
       myLocalNamespace = result.getLocalNamespace();
       myPrivateNamespace = new Namespace(null, myPrivateNamespace);
+      CompositeNameResolver oldLocalNameResolver = myLocalNameResolver;
+      if (isStatic) {
+        myLocalNameResolver = new CompositeNameResolver();
+      }
+      myLocalNameResolver.pushNameResolver(new NamespaceNameResolver(myLocalNamespace));
+      myNameResolver.pushNameResolver(new NamespaceNameResolver(myNamespace));
+      myNameResolver.pushNameResolver(new NamespaceNameResolver(myPrivateNamespace));
       visitDefClass((DefClassContext) ctx);
       myNamespace = oldNamespace;
       myLocalNamespace = oldLocalNamespace;
       myPrivateNamespace = oldPrivateNamespace;
+      myNameResolver.popNameResolver();
+      myNameResolver.popNameResolver();
+      myLocalNameResolver.popNameResolver();
+      myLocalNameResolver = oldLocalNameResolver;
 
       parentNamespace.addDefinition(result);
       return result;
@@ -307,6 +326,12 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     myNamespace = parentNamespace.getChild(name);
     myLocalNamespace = isStatic ? null : typedDef.getNamespace();
     myPrivateNamespace = new Namespace(null, myPrivateNamespace);
+    CompositeNameResolver oldLocalNameResolver = myLocalNameResolver;
+    if (isStatic) {
+      myLocalNameResolver = new CompositeNameResolver(new ArrayList<NameResolver>(0));
+    }
+    myNameResolver.pushNameResolver(new NamespaceNameResolver(myNamespace));
+    myNameResolver.pushNameResolver(new NamespaceNameResolver(myPrivateNamespace));
 
     if (defs != null) {
       visitDefList(defs);
@@ -317,6 +342,9 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       myNamespace = oldNamespace;
       myLocalNamespace = oldLocalNamespace;
       myPrivateNamespace = oldPrivateNamespace;
+      myNameResolver.popNameResolver();
+      myNameResolver.popNameResolver();
+      myLocalNameResolver = oldLocalNameResolver;
       return null;
     }
 
@@ -331,6 +359,9 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     myNamespace = oldNamespace;
     myLocalNamespace = oldLocalNamespace;
     myPrivateNamespace = oldPrivateNamespace;
+    myNameResolver.popNameResolver();
+    myNameResolver.popNameResolver();
+    myLocalNameResolver = oldLocalNameResolver;
     visitFunctionRawEnd(def);
     return typedDef;
   }
@@ -635,14 +666,10 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       return new Concrete.VarExpression(position, name);
     }
 
-    for (Namespace namespace = myPrivateNamespace; namespace != null; namespace = namespace.getParent()) {
-      Definition member = namespace.getDefinition(name);
-      if (member != null) {
-        return new Concrete.DefCallExpression(position, null, member);
-      }
-    }
-
     NamespaceMember member = myNameResolver.locateName(name);
+    if (member == null) {
+      member = myLocalNameResolver.locateName(name);
+    }
     if (member instanceof Definition) {
       return new Concrete.DefCallExpression(position, null, (Definition) member);
     } else
@@ -841,6 +868,8 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       myNamespace = oldNamespace;
       myLocalNamespace = oldLocalNamespace;
       myPrivateNamespace = oldPrivateNamespace;
+
+      // TODO: Modify NameResolvers?
 
       expr = new Concrete.ClassExtExpression(tokenPosition(ctx.getStart()), parent, definitions);
     }

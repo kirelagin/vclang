@@ -44,7 +44,7 @@ public abstract class BaseModuleLoader implements ModuleLoader {
   public ModuleLoadingResult load(Namespace module, boolean tryLoad) {
     int index = myLoadingModules.indexOf(module);
     if (index != -1) {
-      loadingError(new CycleError(module, new ArrayList<>(myLoadingModules.subList(index, myLoadedModules.size()))));
+      loadingError(new CycleError(module, new ArrayList<>(myLoadingModules.subList(index, myLoadingModules.size()))));
       return null;
     }
 

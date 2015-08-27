@@ -366,9 +366,6 @@ public class TypeChecking {
 
       if (termResult == null) {
         definition.setTerm(null);
-        if (!definition.isAbstract()) {
-          definition.hasErrors(true);
-        }
       }
     } /* TODO
       else {
@@ -377,6 +374,10 @@ public class TypeChecking {
         return false;
       }
     } */
+
+    if (definition.getTerm() == null && !definition.isAbstract()) {
+      definition.hasErrors(true);
+    }
 
     definition.typeHasErrors(definition.getResultType() == null);
     if (definition.typeHasErrors()) {
