@@ -78,7 +78,7 @@ public abstract class BaseModuleLoader implements ModuleLoader {
     try {
       if (compile) {
         if (source.load(module, classDefinition)) {
-          if (classDefinition != null && !classDefinition.getFields().isEmpty()) {
+          if (classDefinition != null && classDefinition.getFields().isEmpty()) {
             classDefinition = null;
           }
           if (output.canWrite()) {

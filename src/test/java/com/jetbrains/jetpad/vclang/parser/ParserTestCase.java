@@ -41,7 +41,7 @@ public class ParserTestCase {
     RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(null, null), nameResolver, errorReporter).visitExpr(parse(errorReporter, text).expr());
+    Concrete.Expression result = new BuildVisitor(namespace, new Namespace(namespace.getName(), null), nameResolver, errorReporter).visitExpr(parse(errorReporter, text).expr());
     if (errors < 0) {
       assertTrue(!errorReporter.getErrorList().isEmpty());
     } else {
@@ -65,7 +65,7 @@ public class ParserTestCase {
   public static Definition parseDef(String text, int errors) {
     RootModule.initialize();
     Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
-    Namespace localNamespace = new Namespace(null, null);
+    Namespace localNamespace = new Namespace(namespace.getName(), null);
     ListErrorReporter errorReporter = new ListErrorReporter();
     Definition result = new BuildVisitor(namespace, localNamespace, DummyNameResolver.getInstance(), errorReporter).visitDef(parse(errorReporter, text).def());
     assertEquals(errors, errorReporter.getErrorList().size());

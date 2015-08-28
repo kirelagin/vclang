@@ -11,9 +11,9 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DeepNamespaceNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
@@ -68,8 +68,8 @@ public abstract class ParseSource implements Source {
     VcgrammarParser.DefsContext tree = parser.defs();
     if (tree == null || errorsCount != countingErrorReporter.getErrorsNumber()) return false;
 
-    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new NamespaceNameResolver(namespace.getParent()));
-    new BuildVisitor(namespace, classDefinition == null ? null : classDefinition.getLocalNamespace(), nameResolver, myErrorReporter).visitDefs(tree);
+    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(namespace.getParent()));
+    new BuildVisitor(namespace, classDefinition == null ? null : classDefinition.getLocalNamespace(), nameResolver, errorReporter).visitDefs(tree);
     return errorsCount == countingErrorReporter.getErrorsNumber();
   }
 }

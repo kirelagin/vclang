@@ -38,12 +38,15 @@ public class TypeCheckingError extends GeneralError {
 
   @Override
   public String printPosition() {
-    String msg = super.printPosition();
+    String msg = getNamespace() == null ? "" : getNamespace().getFullName();
     if (myExpression instanceof Concrete.SourceNode) {
       Concrete.Position position = ((Concrete.SourceNode) myExpression).getPosition();
-      msg += ":" + position.line + ":" + position.column;
+      if (!msg.isEmpty()) {
+        msg += ":";
+      }
+      msg += position.line + ":" + position.column;
     }
-    return msg;
+    return msg + ": ";
   }
 
   @Override

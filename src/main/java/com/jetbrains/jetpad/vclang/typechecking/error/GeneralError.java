@@ -22,7 +22,7 @@ public class GeneralError {
   }
 
   public String printPosition() {
-    return myNamespace == null ? "" : myNamespace.getFullName();
+    return myNamespace == null ? "" : myNamespace.getFullName() + ": ";
   }
 
   public static String ioError(IOException e) {
@@ -31,10 +31,6 @@ public class GeneralError {
 
   @Override
   public String toString() {
-    String msg = printPosition();
-    if (!msg.isEmpty()) {
-      msg += ": ";
-    }
-    return msg + (myMessage == null ? "Unknown error" : myMessage);
+    return printPosition() + (myMessage == null ? "Unknown error" : myMessage);
   }
 }

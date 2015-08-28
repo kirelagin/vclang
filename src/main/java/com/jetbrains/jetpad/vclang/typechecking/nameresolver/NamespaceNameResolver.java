@@ -10,6 +10,10 @@ public class NamespaceNameResolver implements NameResolver {
     myNamespace = namespace;
   }
 
+  protected Namespace getNamespace() {
+    return myNamespace;
+  }
+
   @Override
   public NamespaceMember locateName(String name) {
     return myNamespace.getMember(name);

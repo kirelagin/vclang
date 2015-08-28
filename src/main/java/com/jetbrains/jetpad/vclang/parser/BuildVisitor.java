@@ -24,7 +24,7 @@ import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.trimToSize;
 public class BuildVisitor extends VcgrammarBaseVisitor {
   private Namespace myNamespace;
   private Namespace myLocalNamespace;
-  private Namespace myPrivateNamespace = new Namespace(null, null);
+  private Namespace myPrivateNamespace;
   private List<String> myContext = new ArrayList<>();
   private CompositeNameResolver myLocalNameResolver;
   private CompositeNameResolver myNameResolver;
@@ -33,6 +33,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   public BuildVisitor(Namespace namespace, Namespace localNamespace, NameResolver nameResolver, ErrorReporter errorReporter) {
     myNamespace = namespace;
     myLocalNamespace = localNamespace;
+    myPrivateNamespace = new Namespace(myNamespace.getName(), null);
     myNameResolver = new CompositeNameResolver();
     myNameResolver.pushNameResolver(nameResolver);
     myNameResolver.pushNameResolver(new NamespaceNameResolver(namespace));
@@ -177,7 +178,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       Namespace oldPrivateNamespace = myPrivateNamespace;
       myNamespace = newNamespace;
       myLocalNamespace = result.getLocalNamespace();
-      myPrivateNamespace = new Namespace(null, myPrivateNamespace);
+      myPrivateNamespace = new Namespace(myPrivateNamespace.getName(), null);
       CompositeNameResolver oldLocalNameResolver = myLocalNameResolver;
       if (isStatic) {
         myLocalNameResolver = new CompositeNameResolver();
@@ -224,11 +225,16 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     if (ctx.name().size() > 1) {
       for (int i = 1; i < ctx.name().size(); ++i) {
         String name = ctx.name(i) instanceof NameBinOpContext ? ((NameBinOpContext) ctx.name(i)).BIN_OP().getText() : ((NameIdContext) ctx.name(i)).ID().getText();
-        NamespaceMember member = namespace.getDefinition(name);
-        if (member != null) {
-          processDefCmd(member, export, remove);
-        } else {
+        Definition definition = namespace.getDefinition(name);
+        Namespace child = namespace.findChild(name);
+        if (definition == null && child == null) {
           myErrorReporter.report(new ParserError(myNamespace, tokenPosition(ctx.name(i).getStart()), name + " is not a static field of " + namespace.getFullName()));
+        }
+        if (definition != null) {
+          processDefCmd(definition, export, remove);
+        }
+        if (child != null) {
+          processDefCmd(child, export, remove);
         }
       }
     } else {
@@ -325,7 +331,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     Namespace oldPrivateNamespace = myPrivateNamespace;
     myNamespace = parentNamespace.getChild(name);
     myLocalNamespace = isStatic ? null : typedDef.getNamespace();
-    myPrivateNamespace = new Namespace(null, myPrivateNamespace);
+    myPrivateNamespace = new Namespace(myPrivateNamespace.getName(), null);
     CompositeNameResolver oldLocalNameResolver = myLocalNameResolver;
     if (isStatic) {
       myLocalNameResolver = new CompositeNameResolver(new ArrayList<NameResolver>(0));
@@ -666,15 +672,15 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       return new Concrete.VarExpression(position, name);
     }
 
-    NamespaceMember member = myNameResolver.locateName(name);
+    NamespaceMember member = myLocalNameResolver.locateName(name);
     if (member == null) {
-      member = myLocalNameResolver.locateName(name);
+      member = myNameResolver.locateName(name);
     }
     if (member instanceof Definition) {
       return new Concrete.DefCallExpression(position, null, (Definition) member);
     } else
     if (member != null) {
-      myErrorReporter.report(new ParserError(myNamespace, position, "'" + name + "' is not a definition"));
+      myErrorReporter.report(new ParserError(myNamespace, position, "Cannot find '" + name + "'"));
     } else {
       myErrorReporter.report(new ParserError(myNamespace, position, "Not in scope: " + name));
     }
@@ -863,7 +869,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       Namespace oldPrivateNamespace = myPrivateNamespace;
       myNamespace = parent.getNamespace();
       myLocalNamespace = parent.getLocalNamespace();
-      myPrivateNamespace = new Namespace(null, myPrivateNamespace);
+      myPrivateNamespace = new Namespace(myPrivateNamespace.getName(), null);
       List<Concrete.FunctionDefinition> definitions = visitDefsRaw(ctx.classFields().defs());
       myNamespace = oldNamespace;
       myLocalNamespace = oldLocalNamespace;
@@ -995,7 +1001,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     boolean binOp = nameCtx instanceof NameBinOpContext;
     String name = binOp ? ((NameBinOpContext) nameCtx).BIN_OP().getText() : ((NameIdContext) nameCtx).ID().getText();
     if (isNamespace || !fieldAccCtx.isEmpty()) {
-      NamespaceMember member = myNamespace.locateName(name);
+      NamespaceMember member = myNameResolver.locateName(name);
       if (member == null) {
         if (reportErrors) {
           myErrorReporter.report(new ParserError(myNamespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name));
@@ -1020,7 +1026,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         if (i == fieldAccCtx.size() - 1 && !isNamespace) {
           Definition definition = namespace.getDefinition(name1.name);
           if (definition == null && reportErrors) {
-            myErrorReporter.report(new ParserError(namespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name1.name));
+            myErrorReporter.report(new ParserError(myNamespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + namespace + "." + name1.name));
           }
           return definition;
         } else {
@@ -1029,7 +1035,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
             namespace = member1.getNamespace();
           } else {
             if (reportErrors) {
-              myErrorReporter.report(new ParserError(namespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + name1.name));
+              myErrorReporter.report(new ParserError(myNamespace, tokenPosition(nameCtx.getStart()), "Not in scope: " + namespace + "." + name1.name));
             }
             return null;
           }

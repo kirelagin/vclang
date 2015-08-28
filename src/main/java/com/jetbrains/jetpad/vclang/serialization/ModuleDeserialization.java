@@ -49,7 +49,7 @@ public class ModuleDeserialization {
       int parentIndex = stream.readInt();
       NamespaceMember child;
       if (parentIndex == 0) {
-        child = index == 1 ? RootModule.ROOT : new Namespace(null, null);
+        child = index == 1 ? RootModule.ROOT : new Namespace(new Utils.Name("<local>"), null);
       } else {
         Abstract.Definition.Fixity fixity = stream.readBoolean() ? Abstract.Definition.Fixity.PREFIX : Abstract.Definition.Fixity.INFIX;
         String name = stream.readUTF();

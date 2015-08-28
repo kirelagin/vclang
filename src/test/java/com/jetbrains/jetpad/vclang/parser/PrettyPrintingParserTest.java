@@ -13,6 +13,8 @@ import com.jetbrains.jetpad.vclang.term.expr.ElimExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
@@ -35,7 +37,13 @@ public class PrettyPrintingParserTest {
     StringBuilder builder = new StringBuilder();
     builder.append("\\static ");
     def.accept(new DefinitionPrettyPrintVisitor(builder, new ArrayList<String>(), 0), null);
-    FunctionDefinition result = (FunctionDefinition) parseDef(builder.toString());
+
+    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
+    Namespace localNamespace = new Namespace(namespace.getName(), null);
+    ListErrorReporter errorReporter = new ListErrorReporter();
+    FunctionDefinition result = (FunctionDefinition) new BuildVisitor(namespace, localNamespace, new NamespaceNameResolver(RootModule.ROOT), errorReporter).visitDef(parse(errorReporter, builder.toString()).def());
+    assertEquals(0, errorReporter.getErrorList().size());
+
     assertEquals(expected.getArguments().size(), result.getArguments().size());
     for (int i = 0; i < expected.getArguments().size(); ++i) {
       assertTrue(compare(((TypeArgument) expected.getArguments().get(i)).getType(), ((TypeArgument) result.getArguments().get(i)).getType()));

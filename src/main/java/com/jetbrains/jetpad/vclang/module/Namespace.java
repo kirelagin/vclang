@@ -28,7 +28,7 @@ public class Namespace implements NamespaceMember {
   }
 
   public String getFullName() {
-    return myParent == null || myParent.getParent() == null ? myName.name : myParent.getFullName() + "." + myName.name;
+    return myParent == null || myParent == RootModule.ROOT ? myName.name : myParent.getFullName() + "." + myName.name;
   }
 
   public Namespace getParent() {
@@ -60,6 +60,13 @@ public class Namespace implements NamespaceMember {
     Namespace child = new Namespace(name, this);
     myChildren.put(name.name, child);
     return child;
+  }
+
+  // TODO: remove this method
+  public void removeChild(Namespace child) {
+    if (myChildren != null) {
+      myChildren.remove(child.getName().name);
+    }
   }
 
   public Namespace findChild(String name) {

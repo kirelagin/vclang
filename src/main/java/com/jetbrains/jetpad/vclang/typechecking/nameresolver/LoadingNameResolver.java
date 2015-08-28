@@ -20,21 +20,20 @@ public class LoadingNameResolver implements NameResolver {
   @Override
   public NamespaceMember locateName(String name) {
     NamespaceMember member = myNameResolver.locateName(name);
-    if (member instanceof Definition) {
+    if (member != null) {
+      if (member instanceof Namespace) {
+        myModuleLoader.load((Namespace) member, true);
+      }
       return member;
     }
 
-    ModuleLoadingResult result;
-    if (member instanceof Namespace) {
-      result = myModuleLoader.load((Namespace) member, true);
+    member = RootModule.ROOT.getChild(new Utils.Name(name)); // TODO: Do not use getChild.
+    ModuleLoadingResult result = myModuleLoader.load((Namespace) member, true);
+    if (result == null) {
+      RootModule.ROOT.removeChild((Namespace) member);
+      return null;
     } else {
-      result = myModuleLoader.load(RootModule.ROOT.getChild(new Utils.Name(name)), true); // TODO: Replace with findChild.
-    }
-
-    if (result != null && result.classDefinition != null) {
-      return result.classDefinition;
-    } else {
-      return member;
+      return result.classDefinition != null ? result.classDefinition : member;
     }
   }
 
@@ -45,12 +44,20 @@ public class LoadingNameResolver implements NameResolver {
       return definition;
     }
 
-    Namespace child = parent.getChild(new Utils.Name(name)); // TODO: Replace with findChild.
-    ModuleLoadingResult result = myModuleLoader.load(child, true);
-    if (result != null && result.classDefinition != null) {
-      return result.classDefinition;
+    boolean found;
+    Namespace child = parent.findChild(name);
+    if (child == null) {
+      child = parent.getChild(new Utils.Name(name)); // TODO: Do not use getChild.
+      found = false;
     } else {
-      return child;
+      found = true;
+    }
+    ModuleLoadingResult result = myModuleLoader.load(child, true);
+    if (result == null && !found) {
+      parent.removeChild(child);
+      return null;
+    } else {
+      return result != null && result.classDefinition != null ? result.classDefinition : child;
     }
   }
 }

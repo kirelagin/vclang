@@ -9,11 +9,12 @@ import com.jetbrains.jetpad.vclang.term.expr.UniverseExpression;
 import java.util.Collection;
 
 public class ClassDefinition extends Definition implements Abstract.ClassDefinition {
-  private Namespace myLocalNamespace = new Namespace(null, null);
+  private Namespace myLocalNamespace;
 
   public ClassDefinition(Namespace namespace) {
     super(namespace, DEFAULT_PRECEDENCE);
     super.hasErrors(false);
+    myLocalNamespace = new Namespace(namespace.getName(), null);
   }
 
   @Override

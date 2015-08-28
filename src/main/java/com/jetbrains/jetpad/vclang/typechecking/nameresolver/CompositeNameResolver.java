@@ -27,8 +27,8 @@ public class CompositeNameResolver implements NameResolver {
 
   @Override
   public NamespaceMember locateName(String name) {
-    for (NameResolver nameResolver : myNameResolvers) {
-      NamespaceMember result = nameResolver.locateName(name);
+    for (int i = myNameResolvers.size() - 1; i >= 0; --i) {
+      NamespaceMember result = myNameResolvers.get(i).locateName(name);
       if (result != null) {
         return result;
       }
@@ -38,8 +38,8 @@ public class CompositeNameResolver implements NameResolver {
 
   @Override
   public NamespaceMember getMember(Namespace parent, String name) {
-    for (NameResolver nameResolver : myNameResolvers) {
-      NamespaceMember result = nameResolver.getMember(parent, name);
+    for (int i = myNameResolvers.size() - 1; i >= 0; --i) {
+      NamespaceMember result = myNameResolvers.get(i).getMember(parent, name);
       if (result != null) {
         return result;
       }
