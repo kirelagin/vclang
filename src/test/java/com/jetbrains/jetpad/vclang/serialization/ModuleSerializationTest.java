@@ -121,7 +121,7 @@ public class ModuleSerializationTest {
     assertNotNull(result);
     assertNotNull(result.classDefinition);
     assertEquals(0, result.errorsNumber);
-    assertEquals(def.getFields().size(), result.classDefinition.getFields().size());
+    assertEquals(def.getItems().size(), result.classDefinition.getItems().size());
     assertEquals(def.getNamespace().getDefinitions().size(), result.classDefinition.getNamespace().getDefinitions().size());
     assertEquals(CompareVisitor.CMP.EQUALS, compare(dataDefinition.getType(), result.classDefinition.getNamespace().getDefinition("D").getType(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
     assertEquals(0, errorReporter.getErrorList().size());

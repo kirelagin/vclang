@@ -3,13 +3,14 @@ package com.jetbrains.jetpad.vclang.term;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionPrettyPrintVisitor;
+import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.AbstractExpressionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.PrettyPrintVisitor;
+import com.jetbrains.jetpad.vclang.term.statement.visitor.AbstractStatementVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.*;
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.prettyPrintPattern;
 
 public final class Concrete {
@@ -34,6 +35,20 @@ public final class Concrete {
 
     public Position getPosition() {
       return myPosition;
+    }
+  }
+
+  public static class Identifier extends SourceNode implements Abstract.Identifier {
+    private final Utils.Name myName;
+
+    public Identifier(Position position, String name, Abstract.Definition.Fixity fixity) {
+      super(position);
+      myName = new Utils.Name(name, fixity);
+    }
+
+    @Override
+    public Utils.Name getName() {
+      return myName;
     }
   }
 
@@ -78,7 +93,7 @@ public final class Concrete {
 
     @Override
     public void prettyPrint(StringBuilder builder, List<String> names, byte prec) {
-      prettyPrintArgument(this, builder, names, prec, 0);
+      Utils.prettyPrintArgument(this, builder, names, prec, 0);
     }
   }
 
@@ -220,18 +235,16 @@ public final class Concrete {
   }
 
   public static class DefCallExpression extends Expression implements Abstract.DefCallExpression {
-    private final Expression myExpression;
     private final com.jetbrains.jetpad.vclang.term.definition.Definition myDefinition;
 
-    public DefCallExpression(Position position, Expression expression, com.jetbrains.jetpad.vclang.term.definition.Definition definition) {
+    public DefCallExpression(Position position, com.jetbrains.jetpad.vclang.term.definition.Definition definition) {
       super(position);
-      myExpression = expression;
       myDefinition = definition;
     }
 
     @Override
     public Expression getExpression() {
-      return myExpression;
+      return null;
     }
 
     @Override
@@ -240,7 +253,7 @@ public final class Concrete {
     }
 
     @Override
-    public Name getName() {
+    public Utils.Name getName() {
       return myDefinition.getName();
     }
 
@@ -252,9 +265,9 @@ public final class Concrete {
 
   public static class DefCallNameExpression extends Expression implements Abstract.DefCallExpression {
     private final Expression myExpression;
-    private final Name myName;
+    private final Utils.Name myName;
 
-    public DefCallNameExpression(Position position, Expression expression, Name name) {
+    public DefCallNameExpression(Position position, Expression expression, Utils.Name name) {
       super(position);
       myExpression = expression;
       myName = name;
@@ -271,7 +284,7 @@ public final class Concrete {
     }
 
     @Override
-    public Name getName() {
+    public Utils.Name getName() {
       return myName;
     }
 
@@ -282,22 +295,22 @@ public final class Concrete {
   }
 
   public static class ClassExtExpression extends Expression implements Abstract.ClassExtExpression {
-    private final com.jetbrains.jetpad.vclang.term.definition.ClassDefinition myBaseClass;
-    private final List<FunctionDefinition> myDefinitions;
+    private final Expression myBaseClassExpression;
+    private final List<Definition> myDefinitions;
 
-    public ClassExtExpression(Position position, com.jetbrains.jetpad.vclang.term.definition.ClassDefinition baseClass, List<FunctionDefinition> definitions) {
+    public ClassExtExpression(Position position, Expression baseClassExpression, List<Definition> definitions) {
       super(position);
-      myBaseClass = baseClass;
+      myBaseClassExpression = baseClassExpression;
       myDefinitions = definitions;
     }
 
     @Override
-    public com.jetbrains.jetpad.vclang.term.definition.ClassDefinition getBaseClass() {
-      return myBaseClass;
+    public Expression getBaseClassExpression() {
+      return myBaseClassExpression;
     }
 
     @Override
-    public List<FunctionDefinition> getDefinitions() {
+    public List<Definition> getDefinitions() {
       return myDefinitions;
     }
 
@@ -395,7 +408,7 @@ public final class Concrete {
 
     @Override
     public void prettyPrint(StringBuilder builder, List<String> names, byte prec) {
-      prettyPrintLetClause(this, builder, names, 0);
+      Utils.prettyPrintLetClause(this, builder, names, 0);
     }
 
     @Override
@@ -529,15 +542,15 @@ public final class Concrete {
   }
 
   public static class VarExpression extends Expression implements Abstract.VarExpression {
-    private final String myName;
+    private final Utils.Name myName;
 
-    public VarExpression(Position position, String name) {
+    public VarExpression(Position position, Utils.Name name) {
       super(position);
       myName = name;
     }
 
     @Override
-    public String getName() {
+    public Utils.Name getName() {
       return myName;
     }
 
@@ -614,7 +627,6 @@ public final class Concrete {
   }
 
   public static class ElimExpression extends ElimCaseExpression implements Abstract.ElimExpression {
-
     public ElimExpression(Position position, Expression expression, List<Clause> clauses) {
       super(position, expression, clauses);
     }
@@ -626,7 +638,6 @@ public final class Concrete {
   }
 
   public static class CaseExpression extends ElimCaseExpression implements Abstract.CaseExpression {
-
     public CaseExpression(Position position, Expression expression, List<Clause> clauses) {
       super(position, expression, clauses);
     }
@@ -641,18 +652,12 @@ public final class Concrete {
     private final Pattern myPattern;
     private final Definition.Arrow myArrow;
     private final Expression myExpression;
-    private Abstract.ElimCaseExpression myElimCaseExpression;
 
-    public Clause(Position position, Pattern pattern, Abstract.Definition.Arrow arrow, Expression expression, ElimExpression elimExpression) {
+    public Clause(Position position, Pattern pattern, Abstract.Definition.Arrow arrow, Expression expression) {
       super(position);
       myPattern = pattern;
       myArrow = arrow;
       myExpression = expression;
-      myElimCaseExpression = elimExpression;
-    }
-
-    public void setElimExpression(Abstract.ElimCaseExpression elimCaseExpression) {
-      myElimCaseExpression = elimCaseExpression;
     }
 
     @Override
@@ -672,37 +677,62 @@ public final class Concrete {
 
     @Override
     public void prettyPrint(StringBuilder builder, List<String> names, byte prec) {
-      prettyPrintClause(myElimCaseExpression, this, builder, names, 0);
+      Utils.prettyPrintClause(null, this, builder, names, 0);
     }
   }
 
   public static abstract class Binding extends SourceNode implements Abstract.Binding {
-    private final Name myName;
+    private final Utils.Name myName;
 
-    public Binding(Position position, Name name) {
+    public Binding(Position position, Utils.Name name) {
       super(position);
       myName = name;
     }
 
     public Binding(Position position, String name) {
       super(position);
-      myName = new Name(name, Abstract.Definition.Fixity.PREFIX);
+      myName = new Utils.Name(name, Abstract.Definition.Fixity.PREFIX);
     }
 
     @Override
-    public Name getName() {
+    public Utils.Name getName() {
       return myName;
+    }
+  }
+
+  public static abstract class Statement extends SourceNode implements Abstract.Statement {
+    public Statement(Position position) {
+      super(position);
+    }
+  }
+
+  public static class DefineStatement extends Statement implements Abstract.DefineStatement {
+    private final Definition myDefinition;
+
+    public DefineStatement(Position position, Definition definition) {
+      super(position);
+      myDefinition = definition;
+    }
+
+    @Override
+    public Definition getDefinition() {
+      return myDefinition;
+    }
+
+    @Override
+    public <P, R> R accept(AbstractStatementVisitor<? super P, ? extends R> visitor, P params) {
+      return visitor.visitDefine(this, params);
     }
   }
 
   public static abstract class Definition extends Binding implements Abstract.Definition {
     private final Precedence myPrecedence;
-    private final Universe myUniverse;
+    private final boolean myStatic;
 
-    public Definition(Position position, Name name, Precedence precedence, Universe universe) {
+    public Definition(Position position, boolean isStatic, Utils.Name name, Precedence precedence) {
       super(position, name);
       myPrecedence = precedence;
-      myUniverse = universe;
+      myStatic = isStatic;
     }
 
     @Override
@@ -711,8 +741,8 @@ public final class Concrete {
     }
 
     @Override
-    public Universe getUniverse() {
-      return myUniverse;
+    public boolean isStatic() {
+      return myStatic;
     }
 
     @Override
@@ -728,17 +758,19 @@ public final class Concrete {
     private final List<Argument> myArguments;
     private final Expression myResultType;
     private final boolean myOverridden;
-    private final Name myOriginalName;
-    private Expression myTerm;
+    private final Utils.Name myOriginalName;
+    private final Expression myTerm;
+    private final List<Statement> myStatements;
 
-    public FunctionDefinition(Position position, Name name, Precedence precedence, List<Argument> arguments, Expression resultType, Abstract.Definition.Arrow arrow, Expression term, boolean overridden, Name originalName) {
-      super(position, name, precedence, null);
+    public FunctionDefinition(Position position, boolean isStatic, Utils.Name name, Precedence precedence, List<Argument> arguments, Expression resultType, Abstract.Definition.Arrow arrow, Expression term, boolean overridden, Utils.Name originalName, List<Statement> statements) {
+      super(position, isStatic, name, precedence);
       myArguments = arguments;
       myResultType = resultType;
       myArrow = arrow;
       myTerm = term;
       myOverridden = overridden;
       myOriginalName = originalName;
+      myStatements = statements;
     }
 
     @Override
@@ -757,22 +789,18 @@ public final class Concrete {
     }
 
     @Override
-    public Name getOriginalName() {
+    public Utils.Name getOriginalName() {
       return myOriginalName;
     }
 
     @Override
-    public List<Definition> getFields() {
-      return null;
+    public List<Statement> getStatements() {
+      return myStatements;
     }
 
     @Override
     public Expression getTerm() {
       return myTerm;
-    }
-
-    public void setTerm(Expression term) {
-      myTerm = term;
     }
 
     @Override
@@ -794,11 +822,13 @@ public final class Concrete {
   public static class DataDefinition extends Definition implements Abstract.DataDefinition {
     private final List<Constructor> myConstructors;
     private final List<TypeArgument> myParameters;
+    private final Universe myUniverse;
 
-    public DataDefinition(Position position, Name name, Precedence precedence, Universe universe, List<TypeArgument> parameters) {
-      super(position, name, precedence, universe);
+    public DataDefinition(Position position, boolean isStatic, Utils.Name name, Precedence precedence, List<TypeArgument> parameters, Universe universe, List<Concrete.Constructor> constructors) {
+      super(position, isStatic, name, precedence);
       myParameters = parameters;
-      myConstructors = new ArrayList<>();
+      myConstructors = constructors;
+      myUniverse = universe;
     }
 
     @Override
@@ -812,16 +842,21 @@ public final class Concrete {
     }
 
     @Override
+    public Universe getUniverse() {
+      return myUniverse;
+    }
+
+    @Override
     public <P, R> R accept(AbstractDefinitionVisitor<? super P, ? extends R> visitor, P params) {
       return visitor.visitData(this, params);
     }
   }
 
   public static class ClassDefinition extends Definition implements Abstract.ClassDefinition {
-    private final List<Definition> myFields;
+    private final List<Statement> myFields;
 
-    public ClassDefinition(Position position, String name, Universe universe, List<Definition> fields) {
-      super(position, new Name(name, Fixity.PREFIX), DEFAULT_PRECEDENCE, universe);
+    public ClassDefinition(Position position, boolean isStatic, String name, List<Statement> fields) {
+      super(position, isStatic, new Utils.Name(name, Fixity.PREFIX), DEFAULT_PRECEDENCE);
       myFields = fields;
     }
 
@@ -831,7 +866,7 @@ public final class Concrete {
     }
 
     @Override
-    public List<Definition> getFields() {
+    public List<Statement> getStatements() {
       return myFields;
     }
   }
@@ -873,10 +908,10 @@ public final class Concrete {
   }
 
   public static class ConstructorPattern extends Pattern implements Abstract.ConstructorPattern {
-    private final Name myConstructorName;
+    private final Utils.Name myConstructorName;
     private final List<Pattern> myArguments;
 
-    public ConstructorPattern(Position position, Name constructorName, List<Pattern> arguments) {
+    public ConstructorPattern(Position position, Utils.Name constructorName, List<Pattern> arguments) {
       super(position);
       myConstructorName = constructorName;
       myArguments = arguments;
@@ -884,7 +919,7 @@ public final class Concrete {
 
 
     @Override
-    public Name getConstructorName() {
+    public Utils.Name getConstructorName() {
       return myConstructorName;
     }
 
@@ -899,8 +934,8 @@ public final class Concrete {
     private final List<TypeArgument> myArguments;
     private final List<Pattern> myPatterns;
 
-    public Constructor(Position position, Name name, Precedence precedence, Universe universe, List<TypeArgument> arguments, DataDefinition dataType, List<Pattern> patterns) {
-      super(position, name, precedence, universe);
+    public Constructor(Position position, Utils.Name name, Precedence precedence, List<TypeArgument> arguments, DataDefinition dataType, List<Pattern> patterns) {
+      super(position, dataType.isStatic(), name, precedence);
       myArguments = arguments;
       myDataType = dataType;
       myPatterns = patterns;
@@ -924,6 +959,39 @@ public final class Concrete {
     @Override
     public <P, R> R accept(AbstractDefinitionVisitor<? super P, ? extends R> visitor, P params) {
       return visitor.visitConstructor(this, params);
+    }
+  }
+
+  public static class NamespaceCommandStatement extends Statement implements Abstract.NamespaceCommandStatement {
+    private final Kind myKind;
+    private final List<Identifier> myPath;
+    private final List<Identifier> myNames;
+
+    public NamespaceCommandStatement(Position position, Kind kind, List<Identifier> path, List<Identifier> names) {
+      super(position);
+      myKind = kind;
+      myPath = path;
+      myNames = names;
+    }
+
+    @Override
+    public Kind getKind() {
+      return myKind;
+    }
+
+    @Override
+    public List<Identifier> getPath() {
+      return myPath;
+    }
+
+    @Override
+    public List<Identifier> getNames() {
+      return myNames;
+    }
+
+    @Override
+    public <P, R> R accept(AbstractStatementVisitor<? super P, ? extends R> visitor, P params) {
+      return visitor.visitNamespaceCommand(this, params);
     }
   }
 }

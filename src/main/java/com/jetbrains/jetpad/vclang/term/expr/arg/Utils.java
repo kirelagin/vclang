@@ -209,7 +209,7 @@ public class Utils {
     prettyPrintPattern(clause.getPattern(), builder, names, true);
 
     List<String> newNames = names;
-    if (expr.getExpression() instanceof Abstract.IndexExpression) {
+    if (expr != null && expr.getExpression() instanceof Abstract.IndexExpression) {
       int varIndex = ((Abstract.IndexExpression) expr.getExpression()).getIndex();
       newNames = new ArrayList<>(names.subList(0, startIndex - varIndex - 1 > 0 ? startIndex - varIndex - 1 : 0));
       newNames.addAll(names.subList(startIndex, names.size()));

@@ -35,7 +35,7 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
   }
 
   @Override
-  public Collection<Definition> getFields() {
+  public Collection<Definition> getItems() {
     return myLocalNamespace.getDefinitions();
   }
 

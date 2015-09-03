@@ -1531,7 +1531,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
     // TODO
     Map<String, FunctionDefinition> abstracts = new HashMap<>();
-    for (Definition definition : expr.getBaseClass().getFields()) {
+    for (Definition definition : expr.getBaseClass().getItems()) {
       if (definition instanceof FunctionDefinition && definition.isAbstract()) {
         abstracts.put(definition.getName().name, (FunctionDefinition) definition);
       }

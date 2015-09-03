@@ -4,6 +4,7 @@ import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.AbstractExpressionVisitor;
+import com.jetbrains.jetpad.vclang.term.statement.visitor.AbstractStatementVisitor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,10 @@ public final class Abstract {
 
   public interface SourceNode {}
   public interface PrettyPrintableSourceNode extends SourceNode, PrettyPrintable {}
+
+  public interface Identifier extends SourceNode {
+    Utils.Name getName();
+  }
 
   public interface Expression extends PrettyPrintableSourceNode {
     byte PREC = -12;
@@ -67,8 +72,8 @@ public final class Abstract {
 
   public interface ClassExtExpression extends Expression {
     byte PREC = 12;
-    com.jetbrains.jetpad.vclang.term.definition.ClassDefinition getBaseClass();
-    Collection<? extends FunctionDefinition> getDefinitions();
+    Expression getBaseClassExpression();
+    Collection<? extends Definition> getDefinitions();
   }
 
   public interface NewExpression extends Expression {
@@ -79,7 +84,6 @@ public final class Abstract {
   public interface IndexExpression extends Expression {
     byte PREC = 12;
     int getIndex();
-
   }
 
   public interface LamExpression extends Expression {
@@ -127,7 +131,7 @@ public final class Abstract {
 
   public interface VarExpression extends Expression {
     byte PREC = 12;
-    String getName();
+    Utils.Name getName();
   }
 
   public interface InferHoleExpression extends Expression {
@@ -167,6 +171,14 @@ public final class Abstract {
     Utils.Name getName();
   }
 
+  public interface Statement extends SourceNode {
+    <P, R> R accept(AbstractStatementVisitor<? super P, ? extends R> visitor, P params);
+  }
+
+  public interface DefineStatement extends Statement {
+    Definition getDefinition();
+  }
+
   public interface Definition extends Binding {
     enum Arrow { LEFT, RIGHT }
     enum Fixity { PREFIX, INFIX }
@@ -201,7 +213,7 @@ public final class Abstract {
 
     Precedence DEFAULT_PRECEDENCE = new Precedence(Associativity.RIGHT_ASSOC, (byte) 10);
 
-    Universe getUniverse();
+    boolean isStatic();
     Precedence getPrecedence();
     <P, R> R accept(AbstractDefinitionVisitor<? super P, ? extends R> visitor, P params);
   }
@@ -217,16 +229,17 @@ public final class Abstract {
     boolean isAbstract();
     boolean isOverridden();
     Utils.Name getOriginalName();
-    Collection<? extends Definition> getFields();
+    Collection<? extends Statement> getStatements();
   }
 
   public interface DataDefinition extends Definition {
     List<? extends TypeArgument> getParameters();
     List<? extends Constructor> getConstructors();
+    Universe getUniverse();
   }
 
   public interface ClassDefinition extends Definition {
-    Collection<? extends Definition> getFields();
+    Collection<? extends Statement> getStatements();
   }
 
   public interface Pattern extends PrettyPrintableSourceNode {
@@ -246,5 +259,13 @@ public final class Abstract {
     List<? extends TypeArgument> getArguments();
     DataDefinition getDataType();
     List<? extends Pattern> getPatterns();
+  }
+
+  public interface NamespaceCommandStatement extends Statement {
+    enum Kind { OPEN, CLOSE, EXPORT }
+
+    Kind getKind();
+    List<? extends Identifier> getPath();
+    List<? extends Identifier> getNames();
   }
 }

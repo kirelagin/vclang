@@ -65,7 +65,7 @@ public abstract class ParseSource implements Source {
       }
     });
 
-    VcgrammarParser.DefsContext tree = parser.defs();
+    VcgrammarParser.StatementsContext tree = parser.statements();
     if (tree == null || countingErrorReporter.getErrorsNumber() != 0) {
       return new ModuleLoadingResult(namespace, null, true, countingErrorReporter.getErrorsNumber());
     }

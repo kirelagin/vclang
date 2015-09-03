@@ -55,9 +55,9 @@ public class DefinitionsTest {
   @Test
   public void exportPublicFieldsTest() {
     ClassDefinition result = parseDefs("\\static \\class A { \\function x : Nat \\class B { \\static \\function y => x } \\export B } \\static \\function f (a : A) => a.y");
-    assertEquals(2, result.getFields().size());
+    assertEquals(2, result.getItems().size());
     assertTrue(result.getField("A") instanceof ClassDefinition);
-    assertEquals(3, ((ClassDefinition) result.getField("A")).getFields().size());
+    assertEquals(3, ((ClassDefinition) result.getField("A")).getItems().size());
     assertTrue(result.getField("A").getNamespace().getChildren().isEmpty());
   }
 
@@ -83,23 +83,23 @@ public class DefinitionsTest {
             "\\class D { \\export B }\n" +
             "\\function f (b : B) : b.C.z = x + b.y => path (\\lam _ => x + b.y)\n" +
             "}");
-    assertEquals(2, result.getFields().size());
+    assertEquals(2, result.getItems().size());
     assertTrue(result.getField("A") instanceof ClassDefinition);
     ClassDefinition classA = (ClassDefinition) result.getField("A");
-    assertEquals(4, classA.getFields().size());
+    assertEquals(4, classA.getItems().size());
     assertTrue(classA.getNamespace().getChildren().isEmpty());
     assertTrue(classA.getField("B") instanceof ClassDefinition);
     ClassDefinition classB = (ClassDefinition) classA.getField("B");
-    assertEquals(4, classB.getFields().size());
+    assertEquals(4, classB.getItems().size());
     assertEquals(1, classB.getNamespace().getChildren().size());
     assertTrue(classB.getField("C") instanceof ClassDefinition);
     ClassDefinition classC = (ClassDefinition) classB.getField("C");
-    assertEquals(2, classC.getFields().size());
+    assertEquals(2, classC.getItems().size());
     assertEquals(2, classC.getNamespace().getChildren().size());
     assertEquals(classC.getField("w"), classB.getNamespace().getDefinition("w"));
     assertTrue(classA.getField("D") instanceof ClassDefinition);
     ClassDefinition classD = (ClassDefinition) classA.getField("D");
-    assertEquals(1, classD.getFields().size());
+    assertEquals(1, classD.getItems().size());
     assertEquals(1, classD.getNamespace().getChildren().size());
     assertEquals(classC.getField("w"), classD.getNamespace().getDefinition("w"));
     assertEquals(classC.getField("w"), classD.getField("w"));
