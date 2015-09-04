@@ -2,6 +2,7 @@ package com.jetbrains.jetpad.vclang.term.definition.visitor;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.PrettyPrintVisitor;
+import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementPrettyPrintVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class DefinitionPrettyPrintVisitor implements AbstractDefinitionVisitor<V
       for (Abstract.Statement statement : def.getStatements()) {
         if (!isFirst)
           PrettyPrintVisitor.printIndent(myBuilder, myIndent);
-        statement.accept(this, null);
+        statement.accept(new StatementPrettyPrintVisitor(myBuilder, myNames, myIndent), null);
         myBuilder.append("\n");
         isFirst = false;
       }
@@ -149,10 +150,11 @@ public class DefinitionPrettyPrintVisitor implements AbstractDefinitionVisitor<V
     myBuilder.append("\\class ").append(def.getName()).append(" {");
     if (def.getStatements() != null) {
       ++myIndent;
+      StatementPrettyPrintVisitor visitor = new StatementPrettyPrintVisitor(myBuilder, myNames, myIndent);
       for (Abstract.Statement statement : def.getStatements()) {
         myBuilder.append('\n');
         PrettyPrintVisitor.printIndent(myBuilder, myIndent);
-        statement.accept(this, null);
+        statement.accept(visitor, null);
         myBuilder.append('\n');
       }
       --myIndent;

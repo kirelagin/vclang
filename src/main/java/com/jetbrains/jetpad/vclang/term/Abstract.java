@@ -134,6 +134,7 @@ public final class Abstract {
   }
 
   public interface BinOpSequenceExpression extends Expression {
+    byte PREC = 0;
     Expression getLeft();
     List<BinOpSequenceElem> getSequence();
   }

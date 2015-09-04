@@ -236,11 +236,23 @@ public class PrettyPrintVisitor implements AbstractExpressionVisitor<Byte, Void>
 
     expr.getLeft().accept(this, (byte) (expr.getBinOp().getPrecedence().priority + (expr.getBinOp().getPrecedence().associativity == Definition.Associativity.LEFT_ASSOC ? 0 : 1)));
 
-    myBuilder.append(' ').append(expr.getBinOp().getName()).append(' ');
+    myBuilder.append(' ').append(expr.getBinOp().getName().getInfixName()).append(' ');
 
     expr.getRight().accept(this, (byte) (expr.getBinOp().getPrecedence().priority + (expr.getBinOp().getPrecedence().associativity == Definition.Associativity.RIGHT_ASSOC ? 0 : 1)));
 
     if (prec > expr.getBinOp().getPrecedence().priority) myBuilder.append(')');
+    return null;
+  }
+
+  @Override
+  public Void visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Byte prec) {
+    if (prec > Abstract.BinOpSequenceExpression.PREC) myBuilder.append('(');
+    expr.getLeft().accept(this, (byte) 10);
+    for (Abstract.BinOpSequenceElem elem : expr.getSequence()) {
+      myBuilder.append(' ').append(elem.binOp.getName().getInfixName()).append(' ');
+      elem.argument.accept(this, (byte) 10);
+    }
+    if (prec > Abstract.BinOpSequenceExpression.PREC) myBuilder.append(')');
     return null;
   }
 
@@ -284,11 +296,12 @@ public class PrettyPrintVisitor implements AbstractExpressionVisitor<Byte, Void>
   @Override
   public Void visitClassExt(Abstract.ClassExtExpression expr, Byte prec) {
     if (prec > Abstract.ClassExtExpression.PREC) myBuilder.append('(');
-    myBuilder.append(expr.getBaseClass().getName()).append(" {\n");
+    expr.getBaseClassExpression().accept(this, (byte) -Abstract.ClassExtExpression.PREC);
+    myBuilder.append(" {\n");
     myIndent += INDENT;
     DefinitionPrettyPrintVisitor visitor = new DefinitionPrettyPrintVisitor(myBuilder, myNames, myIndent);
-    for (Abstract.FunctionDefinition definition : expr.getDefinitions()) {
-      visitor.visitFunction(definition, null);
+    for (Abstract.Definition definition : expr.getDefinitions()) {
+      definition.accept(visitor, null);
       myBuilder.append("\n");
     }
     myIndent -= INDENT;
