@@ -5,14 +5,16 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
-import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.parser.VcgrammarParser.*;
+import static com.jetbrains.jetpad.vclang.term.pattern.Utils.ProcessImplicitResult;
+import static com.jetbrains.jetpad.vclang.term.pattern.Utils.processImplicit;
 
 public class BuildVisitor extends VcgrammarBaseVisitor {
   private Namespace myNamespace;
@@ -127,10 +129,10 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     if (ctx == null) return null;
     Abstract.NamespaceCommandStatement.Kind kind = (Abstract.NamespaceCommandStatement.Kind) visit(ctx.nsCmd());
     List<Concrete.Identifier> path = new ArrayList<>();
-    path.add(getName(ctx.name(0)));
+    path.add(visitName(ctx.name(0)));
     for (FieldAccContext fieldAccContext : ctx.fieldAcc()) {
       if (fieldAccContext instanceof ClassFieldContext) {
-        Concrete.Identifier identifier = getName(((ClassFieldContext) fieldAccContext).name());
+        Concrete.Identifier identifier = visitName(((ClassFieldContext) fieldAccContext).name());
         if (identifier == null) {
           return null;
         }
@@ -144,7 +146,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     if (ctx.name().size() > 1) {
       names = new ArrayList<>(ctx.name().size() - 1);
       for (int i = 1; i < ctx.name().size(); ++i) {
-        names.add(getName(ctx.name(i)));
+        names.add(visitName(ctx.name(i)));
       }
     } else {
       names = null;
@@ -245,7 +247,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   @Override
   public Concrete.FunctionDefinition visitDefFunction(DefFunctionContext ctx) {
     if (ctx == null) return null;
-    Concrete.Identifier identifier = getName(ctx.name());
+    Concrete.Identifier identifier = visitName(ctx.name());
     Abstract.Definition.Precedence precedence = visitPrecedence(ctx.precedence());
     FunctionContext functionContext = visitTypeTermOpt(ctx.typeTermOpt());
     List<Concrete.Argument> arguments = visitFunctionArguments(ctx.tele(), false);
@@ -336,7 +338,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   @Override
   public Concrete.DataDefinition visitDefData(DefDataContext ctx) {
     if (ctx == null) return null;
-    Concrete.Identifier identifier = getName(ctx.name());
+    Concrete.Identifier identifier = visitName(ctx.name());
     List<Concrete.TypeArgument> parameters = visitTeles(ctx.tele());
     Abstract.Definition.Precedence precedence = visitPrecedence(ctx.precedence());
     if (identifier == null || parameters == null || precedence == null) {
@@ -354,13 +356,55 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     }
 
     List<Concrete.Constructor> constructors = new ArrayList<>(ctx.constructorDef().size());
+    Concrete.DataDefinition dataDefinition = new Concrete.DataDefinition(tokenPosition(ctx.getStart()), ctx.staticMod() instanceof StaticStaticContext, identifier.getName(), precedence, parameters, universe, constructors);
     for (ConstructorDefContext constructorDefContext : ctx.constructorDef()) {
-      Concrete.Constructor constructor = (Concrete.Constructor) visit(constructorDefContext);
-      if (constructor != null) {
-        constructors.add(constructor);
+      visitConstructorDef(constructorDefContext, dataDefinition);
+    }
+    return dataDefinition;
+  }
+
+  private void visitConstructorDef(ConstructorDefContext ctx, Concrete.DataDefinition def) {
+    List<Concrete.Pattern> patterns = null;
+
+    if (ctx instanceof WithPatternsContext) {
+      WithPatternsContext wpCtx = (WithPatternsContext) ctx;
+      Concrete.Identifier dataDefIdentifier = visitName(wpCtx.name());
+      if (dataDefIdentifier == null) {
+        return;
+      }
+      if (!def.getName().name.equals(dataDefIdentifier.getName().name)) {
+        myErrorReporter.report(new ParserError(myNamespace, dataDefIdentifier.getPosition(), "Expected a data type name: " + def.getName()));
+        return;
+      }
+
+      patterns = visitPatterns(wpCtx.patternx());
+
+      ProcessImplicitResult result = processImplicit(patterns, def.getParameters());
+      if (result.patterns == null) {
+        if (result.numExcessive != 0) {
+          myErrorReporter.report(new ParserError(myNamespace,
+              tokenPosition(wpCtx.patternx(wpCtx.patternx().size() - result.numExcessive).start), "Too many arguments: " + result.numExcessive + " excessive"));
+        } else if (result.wrongImplicitPosition < patterns.size()) {
+          myErrorReporter.report(new ParserError(myNamespace,
+              tokenPosition(wpCtx.patternx(result.wrongImplicitPosition).start), "Unexpected implicit argument"));
+        } else {
+          myErrorReporter.report(new ParserError(myNamespace, tokenPosition(wpCtx.name().start), "Too few explicit arguments, expected: " + result.numExplicit));
+        }
+        return;
       }
     }
-    return new Concrete.DataDefinition(tokenPosition(ctx.getStart()), ctx.staticMod() instanceof StaticStaticContext, identifier.getName(), precedence, parameters, universe, constructors);
+
+    List<ConstructorContext> constructorCtxs = ctx instanceof WithPatternsContext ?
+        ((WithPatternsContext) ctx).constructor() : Collections.singletonList(((NoPatternsContext) ctx).constructor());
+
+    for (ConstructorContext conCtx : constructorCtxs) {
+      Concrete.Identifier conIdentifier = visitName(conCtx.name());
+      List<Concrete.TypeArgument> arguments = visitTeles(conCtx.tele());
+      if (conIdentifier == null || arguments == null) {
+        continue;
+      }
+      def.getConstructors().add(new Concrete.Constructor(conIdentifier.getPosition(), conIdentifier.getName(), visitPrecedence(conCtx.precedence()), arguments, def, patterns));
+    }
   }
 
   @Override
@@ -368,26 +412,10 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     return new Concrete.NamePattern(tokenPosition(ctx.getStart()), null);
   }
 
-  /*
   @Override
   public Concrete.Pattern visitPatternID(PatternIDContext ctx) {
-    String name = ctx.ID().getText();
-    Concrete.Position pos = tokenPosition(ctx.getStart());
-    Concrete.Expression constructorCall = findId(name, false, pos, false);
-    if (constructorCall != null && constructorCall instanceof Concrete.DefCallExpression
-        && ((Concrete.DefCallExpression) constructorCall).getDefinition() instanceof Constructor) {
-      Constructor constructor = (Constructor) ((Concrete.DefCallExpression) constructorCall).getDefinition();
-      boolean hasExplicit = false;
-      for (TypeArgument arg : constructor.getArguments()) {
-        if (arg.getExplicit())
-          hasExplicit = true;
-      }
-      if (!hasExplicit)
-        return new Concrete.ConstructorPattern(pos, new Name(name), new ArrayList<Concrete.Pattern>());
-    }
-    return new Concrete.NamePattern(pos, name);
+    return new Concrete.NamePattern(tokenPosition(ctx.getStart()), ctx.ID().getText());
   }
-  */
 
   private List<Concrete.Pattern> visitPatterns(List<PatternxContext> patternContexts) {
     List<Concrete.Pattern> patterns = new ArrayList<>();
@@ -406,7 +434,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
 
   @Override
   public Concrete.ConstructorPattern visitPatternConstructor(PatternConstructorContext ctx) {
-    Concrete.Identifier identifier = getName(ctx.name());
+    Concrete.Identifier identifier = visitName(ctx.name());
     if (identifier == null) {
       return null;
     }
@@ -486,7 +514,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   @Override
   public Concrete.VarExpression visitId(IdContext ctx) {
     if (ctx == null) return null;
-    Concrete.Identifier identifier = getName(ctx.name());
+    Concrete.Identifier identifier = visitName(ctx.name());
     if (identifier == null) {
       return null;
     }
@@ -599,65 +627,10 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     return new Concrete.LamExpression(tokenPosition(ctx.getStart()), args, body);
   }
 
-  /*
-  private void visitConstructorDef(ConstructorDefContext ctx, Concrete.DataDefinition def) {
-    List<String> oldContext = new ArrayList<>(myContext);
-    List<Concrete.Pattern> patterns = null;
-
-    if (ctx instanceof WithPatternsContext) {
-      WithPatternsContext wpCtx = (WithPatternsContext) ctx;
-      Name dataDefName = getName(wpCtx.name());
-      if (dataDefName == null) {
-        return;
-      }
-      if (!def.getName().equals(dataDefName)) {
-        myErrorReporter.report(new ParserError(myNamespace, dataDefName.position, "Expected a data type name: " + def.getName()));
-        return;
-      }
-
-      patterns = visitPatterns(wpCtx.patternx());
-
-      ProcessImplicitResult result = processImplicit(patterns, def.getParameters());
-      if (result.patterns == null) {
-        if (result.numExcessive != 0) {
-          myErrorReporter.report(new ParserError(myNamespace,
-              tokenPosition(wpCtx.patternx(wpCtx.patternx().size() - result.numExcessive).start), "Too many arguments: " + result.numExcessive + " excessive"));
-        } else if (result.wrongImplicitPosition < patterns.size()) {
-          myErrorReporter.report(new ParserError(myNamespace,
-              tokenPosition(wpCtx.patternx(result.wrongImplicitPosition).start), "Unexpected implicit argument"));
-        } else {
-          myErrorReporter.report(new ParserError(myNamespace, tokenPosition(wpCtx.name().start), "Too few explicit arguments, expected: " + result.numExplicit));
-        }
-        return;
-      }
-      for (int i = 0; i < result.patterns.size(); i++) {
-        applyPatternToContext(result.patterns.get(i), myContext.size() - result.patterns.size() + i);
-      }
-    }
-
-    List<ConstructorContext> constructorCtxs = ctx instanceof WithPatternsContext ?
-        ((WithPatternsContext) ctx).constructor() : Collections.singletonList(((NoPatternsContext) ctx).constructor());
-
-    for (ConstructorContext conCtx : constructorCtxs) {
-      Name conName = getName(conCtx.name());
-      if (conName == null) {
-        continue;
-      }
-
-      int size = myContext.size();
-      List<Concrete.TypeArgument> arguments = visitTeles(conCtx.tele());
-      trimToSize(myContext, size);
-
-      if (arguments == null) {
-        continue;
-      }
-      def.getConstructors().add(new Concrete.Constructor(conName.position, conName, visitPrecedence(conCtx.precedence()), new Universe.Type(), arguments, def, patterns));
-    }
-
-    myContext = oldContext;
- }
-
   private Concrete.Expression visitAtoms(Concrete.Expression expr, List<ArgumentContext> arguments) {
+    if (expr == null) {
+      return null;
+    }
     for (ArgumentContext argument : arguments) {
       boolean explicit = argument instanceof ArgumentExplicitContext;
       Concrete.Expression expr1;
@@ -672,85 +645,46 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     return expr;
   }
 
-  private class StackElem {
-    public Concrete.Expression argument;
-    public Definition definition;
-
-    public StackElem(Concrete.Expression argument, Definition definition) {
-      this.argument = argument;
-      this.definition = definition;
-    }
-  }
-
-  private void pushOnStack(List<StackElem> stack, StackElem elem, Concrete.Position position) {
-    if (stack.isEmpty()) {
-      stack.add(elem);
-      return;
-    }
-
-    StackElem topElem = stack.get(stack.size() - 1);
-    Definition.Precedence prec = topElem.definition.getPrecedence();
-    Definition.Precedence prec2 = elem.definition.getPrecedence();
-
-    if (prec.priority < prec2.priority || (prec.priority == prec2.priority && prec.associativity == Definition.Associativity.RIGHT_ASSOC && prec2.associativity == Definition.Associativity.RIGHT_ASSOC)) {
-      stack.add(elem);
-      return;
-    }
-
-    if (!(prec.priority > prec2.priority || (prec.priority == prec2.priority && prec.associativity == Definition.Associativity.LEFT_ASSOC && prec2.associativity == Definition.Associativity.LEFT_ASSOC))) {
-      String msg = "Precedence parsing error: cannot mix (" + topElem.definition.getName().name + ") [" + prec + "] and (" + elem.definition.getName().name + ") [" + prec2 + "] in the same infix expression";
-      myErrorReporter.report(new ParserError(myNamespace, position, msg));
-    }
-    stack.remove(stack.size() - 1);
-    pushOnStack(stack, new StackElem(new Concrete.BinOpExpression(position, topElem.argument, topElem.definition, elem.argument), elem.definition), position);
-  }
-
-  private Concrete.Expression rollUpStack(List<StackElem> stack, Concrete.Expression expr) {
-    for (int i = stack.size() - 1; i >= 0; --i) {
-      expr = new Concrete.BinOpExpression(stack.get(i).argument.getPosition(), stack.get(i).argument, stack.get(i).definition, expr);
-    }
-    return expr;
-  }
-
   @Override
   public Concrete.Expression visitBinOp(BinOpContext ctx) {
     if (ctx == null) return null;
-    List<StackElem> stack = new ArrayList<>(ctx.binOpLeft().size());
-    for (BinOpLeftContext leftContext : ctx.binOpLeft()) {
-      Concrete.Position position = tokenPosition(leftContext.infix().getStart());
-      Definition def;
-      if (leftContext.infix() instanceof InfixBinOpContext) {
-        def = visitInfixBinOp((InfixBinOpContext) leftContext.infix());
-      } else {
-        def = visitInfixId((InfixIdContext) leftContext.infix());
-      }
+    Concrete.Expression left = null;
+    Concrete.VarExpression binOp = null;
+    List<Abstract.BinOpSequenceElem> sequence = new ArrayList<>(ctx.binOpLeft().size());
 
-      Concrete.Expression expr = visitAtomFieldsAcc(leftContext.atomFieldsAcc());
-      if (expr == null) continue;
-      expr = visitAtoms(expr, leftContext.argument());
-      if (expr == null) continue;
+    for (BinOpLeftContext leftContext : ctx.binOpLeft()) {
+      Concrete.Identifier identifier = (Concrete.Identifier) visit(leftContext.infix());
+      Concrete.Expression expr = visitAtoms(visitAtomFieldsAcc(leftContext.atomFieldsAcc()), leftContext.argument());
+      if (expr == null) {
+        continue;
+      }
       if (leftContext.maybeNew() instanceof WithNewContext) {
         expr = new Concrete.NewExpression(tokenPosition(leftContext.getStart()), expr);
       }
 
-      if (def == null) {
-        stack = new ArrayList<>(ctx.binOpLeft().size() - stack.size());
-        continue;
+      if (left == null) {
+        left = expr;
+      } else {
+        sequence.add(new Abstract.BinOpSequenceElem(binOp, expr));
       }
-
-      pushOnStack(stack, new StackElem(expr, def), position);
+      binOp = new Concrete.VarExpression(identifier.getPosition(), identifier.getName());
     }
 
-    Concrete.Expression expr = visitAtomFieldsAcc(ctx.atomFieldsAcc());
-    if (expr == null) return null;
-    expr = visitAtoms(expr, ctx.argument());
-    if (expr == null) return null;
+    Concrete.Expression expr = visitAtoms(visitAtomFieldsAcc(ctx.atomFieldsAcc()), ctx.argument());
+    if (expr == null) {
+      return null;
+    }
     if (ctx.maybeNew() instanceof WithNewContext) {
       expr = new Concrete.NewExpression(tokenPosition(ctx.getStart()), expr);
     }
-    return rollUpStack(stack, expr);
+
+    if (left == null) {
+      return expr;
+    }
+
+    sequence.add(new Abstract.BinOpSequenceElem(binOp, expr));
+    return new Concrete.BinOpSequenceExpression(tokenPosition(ctx.getStart()), left, sequence);
   }
-  */
 
   @Override
   public Concrete.Expression visitAtomFieldsAcc(AtomFieldsAccContext ctx) {
@@ -762,7 +696,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
 
     for (FieldAccContext fieldAccContext : ctx.fieldAcc()) {
       if (fieldAccContext instanceof ClassFieldContext) {
-        Concrete.Identifier identifier = getName(((ClassFieldContext) fieldAccContext).name());
+        Concrete.Identifier identifier = visitName(((ClassFieldContext) fieldAccContext).name());
         if (identifier == null) {
           return null;
         }
@@ -791,15 +725,31 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   }
 
   @Override
-  public Utils.Name visitInfixBinOp(InfixBinOpContext ctx) {
+  public Concrete.Identifier visitInfixBinOp(InfixBinOpContext ctx) {
     if (ctx == null) return null;
-    return new Utils.Name(ctx.BIN_OP().getText(), Abstract.Definition.Fixity.INFIX);
+    return new Concrete.Identifier(tokenPosition(ctx.getStart()), ctx.BIN_OP().getText(), Abstract.Definition.Fixity.INFIX);
   }
 
   @Override
-  public Utils.Name visitInfixId(InfixIdContext ctx) {
+  public Concrete.Identifier visitInfixId(InfixIdContext ctx) {
     if (ctx == null) return null;
-    return new Utils.Name(ctx.ID().getText(), Abstract.Definition.Fixity.PREFIX);
+    return new Concrete.Identifier(tokenPosition(ctx.getStart()), ctx.ID().getText(), Abstract.Definition.Fixity.PREFIX);
+  }
+
+  public Concrete.Identifier visitName(NameContext ctx) {
+    return (Concrete.Identifier) visit(ctx);
+  }
+
+  @Override
+  public Concrete.Identifier visitNameId(NameIdContext ctx) {
+    if (ctx == null) return null;
+    return new Concrete.Identifier(tokenPosition(ctx.getStart()), ctx.ID().getText(), Abstract.Definition.Fixity.PREFIX);
+  }
+
+  @Override
+  public Concrete.Identifier visitNameBinOp(NameBinOpContext ctx) {
+    if (ctx == null) return null;
+    return new Concrete.Identifier(tokenPosition(ctx.getStart()), ctx.BIN_OP().getText(), Abstract.Definition.Fixity.INFIX);
   }
 
   @Override
@@ -816,7 +766,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     for (ClauseContext clauseCtx : ctx.clause()) {
       Concrete.Pattern pattern;
       if (clauseCtx.name() != null) {
-        Concrete.Identifier identifier = getName(clauseCtx.name());
+        Concrete.Identifier identifier = visitName(clauseCtx.name());
         if (identifier == null) {
           return null;
         }
@@ -880,21 +830,6 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       return null;
     }
     return new Concrete.LetExpression(tokenPosition(ctx.getStart()), clauses, expr);
-  }
-
-  private static Concrete.Identifier getName(NameContext ctx) {
-    if (ctx == null) return null;
-    Concrete.Position position;
-    String name;
-    Abstract.Definition.Fixity fixity = ctx instanceof NameIdContext ? Abstract.Definition.Fixity.PREFIX : Abstract.Definition.Fixity.INFIX;
-    if (fixity == Abstract.Definition.Fixity.PREFIX) {
-      name = ((NameIdContext) ctx).ID().getText();
-      position = tokenPosition(((NameIdContext) ctx).ID().getSymbol());
-    } else {
-      name = ((NameBinOpContext) ctx).BIN_OP().getText();
-      position = tokenPosition(((NameBinOpContext) ctx).BIN_OP().getSymbol());
-    }
-    return new Concrete.Identifier(position, name, fixity);
   }
 
   private static Concrete.Position tokenPosition(Token token) {

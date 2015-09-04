@@ -63,11 +63,10 @@ public final class Abstract {
     return expr;
   }
 
-  public interface DefCallExpression extends Expression {
+  public interface DefCallExpression extends VarExpression {
     byte PREC = 12;
     Expression getExpression();
     com.jetbrains.jetpad.vclang.term.definition.Definition getDefinition();
-    Utils.Name getName();
   }
 
   public interface ClassExtExpression extends Expression {
@@ -122,6 +121,21 @@ public final class Abstract {
     com.jetbrains.jetpad.vclang.term.definition.Definition getBinOp();
     Expression getLeft();
     Expression getRight();
+  }
+
+  public static class BinOpSequenceElem {
+    public VarExpression binOp;
+    public Expression argument;
+
+    public BinOpSequenceElem(VarExpression binOp, Expression argument) {
+      this.binOp = binOp;
+      this.argument = argument;
+    }
+  }
+
+  public interface BinOpSequenceExpression extends Expression {
+    Expression getLeft();
+    List<BinOpSequenceElem> getSequence();
   }
 
   public interface UniverseExpression extends Expression {

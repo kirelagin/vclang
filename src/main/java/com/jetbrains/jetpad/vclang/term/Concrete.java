@@ -234,6 +234,32 @@ public final class Concrete {
     }
   }
 
+  public static class BinOpSequenceExpression extends Expression implements Abstract.BinOpSequenceExpression {
+    private final Expression myLeft;
+    private final List<Abstract.BinOpSequenceElem> mySequence;
+
+    public BinOpSequenceExpression(Position position, Expression left, List<Abstract.BinOpSequenceElem> sequence) {
+      super(position);
+      myLeft = left;
+      mySequence = sequence;
+    }
+
+    @Override
+    public Expression getLeft() {
+      return myLeft;
+    }
+
+    @Override
+    public List<Abstract.BinOpSequenceElem> getSequence() {
+      return mySequence;
+    }
+
+    @Override
+    public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
+      return visitor.visitBinOpSequence(this, params);
+    }
+  }
+
   public static class DefCallExpression extends Expression implements Abstract.DefCallExpression {
     private final com.jetbrains.jetpad.vclang.term.definition.Definition myDefinition;
 
