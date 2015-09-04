@@ -231,7 +231,7 @@ public class SerializeVisitor implements ExpressionVisitor<Void> {
   public Void visitClassExt(ClassExtExpression expr) {
     myStream.write(15);
     try {
-      myDataStream.writeInt(myDefinitionsIndices.getDefinitionIndex(expr.getBaseClass(), true));
+      expr.getBaseClassExpression().accept(this);
       myDataStream.writeInt(expr.getDefinitionsMap().size());
       for (Map.Entry<FunctionDefinition, OverriddenDefinition> entry : expr.getDefinitionsMap().entrySet()) {
         myDataStream.writeInt(myDefinitionsIndices.getDefinitionIndex(entry.getKey(), true));

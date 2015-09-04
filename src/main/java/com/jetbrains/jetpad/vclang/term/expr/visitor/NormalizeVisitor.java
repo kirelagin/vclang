@@ -7,7 +7,6 @@ import com.jetbrains.jetpad.vclang.term.expr.*;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TelescopeArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
-import com.jetbrains.jetpad.vclang.term.pattern.ConstructorPattern;
 import com.jetbrains.jetpad.vclang.term.pattern.NamePattern;
 import com.jetbrains.jetpad.vclang.term.pattern.Utils;
 
@@ -432,10 +431,10 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
 
       Expression resultType = entry.getValue().getResultType() == null ? null : entry.getValue().getResultType().accept(this);
       Expression term = entry.getValue().getTerm() == null ? null : entry.getValue().getTerm().accept(this);
-      OverriddenDefinition definition = new OverriddenDefinition(entry.getValue().getNamespace(), entry.getValue().getPrecedence(), arguments, resultType, entry.getValue().getArrow(), term, entry.getValue().getOverriddenFunction());
+      OverriddenDefinition definition = new OverriddenDefinition(entry.getValue().getStaticNamespace(), entry.getValue().getDynamicNamespace(), entry.getValue().getPrecedence(), arguments, resultType, entry.getValue().getArrow(), term, entry.getValue().getOverriddenFunction());
       definitions.put(entry.getKey(), definition);
     }
-    return ClassExt(expr.getBaseClass(), definitions, expr.getUniverse());
+    return ClassExt(expr.getBaseClassExpression().accept(this), definitions, expr.getUniverse());
   }
 
   @Override

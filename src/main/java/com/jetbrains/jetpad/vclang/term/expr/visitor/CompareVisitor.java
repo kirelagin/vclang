@@ -634,9 +634,11 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
 
     ClassExtExpression classExt = (ClassExtExpression) expr;
     ClassExtExpression otherClassExt = (ClassExtExpression) other;
-    if (classExt.getBaseClass() != otherClassExt.getBaseClass() || classExt.getDefinitions().size() != otherClassExt.getDefinitions().size()) return new JustResult(CMP.NOT_EQUIV);
+    if (classExt.getDefinitions().size() != otherClassExt.getDefinitions().size()) return new JustResult(CMP.NOT_EQUIV);
+    Result result = classExt.getBaseClassExpression().accept(this, otherClassExt.getBaseClassExpression());
+    if (result.isOK() == CMP.NOT_EQUIV) return result;
 
-    CMP cmp = CMP.EQUALS;
+    CMP cmp = result.isOK();
     MaybeResult maybeResult = null;
     for (Map.Entry<FunctionDefinition, OverriddenDefinition> entry : classExt.getDefinitionsMap().entrySet()) {
       OverriddenDefinition otherDef = otherClassExt.getDefinitionsMap().get(entry.getKey());
@@ -646,7 +648,6 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
       List<Abstract.Expression> args2 = new ArrayList<>();
       lamArgsToTypes(otherDef.getArguments(), args1);
 
-      Result result;
       if (args1.size() == 0 && args2.size() == 0) {
         result = entry.getValue().getTerm().accept(this, otherDef.getTerm());
       } else {

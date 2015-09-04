@@ -101,10 +101,10 @@ public class ModuleDeserialization {
 
   public static Definition newDefinition(int code, Utils.Name name, Namespace parent) throws IncorrectFormat {
     if (code == ModuleSerialization.OVERRIDDEN_CODE) {
-      return new OverriddenDefinition(parent.getChild(name), Abstract.Definition.DEFAULT_PRECEDENCE, null);
+      return new OverriddenDefinition(parent.getChild(name), null /* TODO */, Abstract.Definition.DEFAULT_PRECEDENCE, null);
     }
     if (code == ModuleSerialization.FUNCTION_CODE) {
-      return new FunctionDefinition(parent.getChild(name), Abstract.Definition.DEFAULT_PRECEDENCE, null);
+      return new FunctionDefinition(parent.getChild(name), null /* TODO */, Abstract.Definition.DEFAULT_PRECEDENCE, null);
     }
     if (code == ModuleSerialization.DATA_CODE) {
       return new DataDefinition(parent.getChild(name), Abstract.Definition.DEFAULT_PRECEDENCE);
@@ -382,10 +382,7 @@ public class ModuleDeserialization {
         return Proj(expr, stream.readInt());
       }
       case 15: {
-        NamespaceMember definition = definitionMap.get(stream.readInt());
-        if (!(definition instanceof ClassDefinition)) {
-          throw new IncorrectFormat();
-        }
+        Expression baseClassExpression = readExpression(stream, definitionMap);
         Map<FunctionDefinition, OverriddenDefinition> map = new HashMap<>();
         int size = stream.readInt();
         for (int i = 0; i < size; ++i) {
@@ -397,7 +394,7 @@ public class ModuleDeserialization {
           deserializeDefinition(stream, definitionMap, overriding);
           map.put((FunctionDefinition) overridden, overriding);
         }
-        return ClassExt((ClassDefinition) definition, map, readUniverse(stream));
+        return ClassExt(baseClassExpression, map, readUniverse(stream));
       }
       case 16: {
         return New(readExpression(stream, definitionMap));

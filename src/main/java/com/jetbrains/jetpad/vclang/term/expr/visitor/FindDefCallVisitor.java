@@ -102,7 +102,7 @@ public class FindDefCallVisitor implements ExpressionVisitor<Boolean> {
 
   @Override
   public Boolean visitClassExt(ClassExtExpression expr) {
-    if (expr.getBaseClass() == myDef) return true;
+    if (expr.getBaseClassExpression().accept(this)) return true;
     for (OverriddenDefinition definition : expr.getDefinitions()) {
       if (definition.getArguments() != null && visitArguments(definition.getArguments())) return true;
       if (definition.getResultType() != null && definition.getResultType().accept(this)) return true;

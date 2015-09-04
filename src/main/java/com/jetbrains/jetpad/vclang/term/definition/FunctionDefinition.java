@@ -39,6 +39,14 @@ public class FunctionDefinition extends Definition implements Abstract.FunctionD
     myTerm = term;
   }
 
+  public Namespace getStaticNamespace() {
+    return myStaticNamespace;
+  }
+
+  public Namespace getDynamicNamespace() {
+    return myStaticNamespace == getNamespace() ? null : getNamespace();
+  }
+
   @Override
   public Arrow getArrow() {
     return myArrow;
