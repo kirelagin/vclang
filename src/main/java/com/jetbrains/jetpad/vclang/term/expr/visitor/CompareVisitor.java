@@ -19,7 +19,7 @@ import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.splitArguments;
 public class CompareVisitor implements AbstractExpressionVisitor<Expression, CompareVisitor.Result> {
   private final List<Equation> myEquations;
 
-  public enum CMP {EQUIV, EQUALS, GREATER, LESS, NOT_EQUIV}
+  public enum CMP { EQUIV, EQUALS, GREATER, LESS, NOT_EQUIV }
 
   public interface Result {
     CMP isOK();
@@ -598,6 +598,11 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
     Result result1 = expr.getRight().accept(this, otherApp1.getArgument().getExpression());
     if (result1.isOK() == CMP.NOT_EQUIV) return result1;
     return new JustResult(and(result.isOK(), result1.isOK()));
+  }
+
+  @Override
+  public Result visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Expression other) {
+    return new JustResult(CMP.NOT_EQUIV);
   }
 
   @Override

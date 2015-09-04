@@ -6,37 +6,37 @@ import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVis
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+import com.jetbrains.jetpad.vclang.term.statement.DefineStatement;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class FunctionDefinition extends Definition implements Abstract.FunctionDefinition, Function {
+  private final Namespace myStaticNamespace;
   private Arrow myArrow;
   private List<Argument> myArguments;
   private Expression myResultType;
   private Expression myTerm;
   private boolean myTypeHasErrors;
 
-  public FunctionDefinition(Namespace namespace, Precedence precedence, Arrow arrow) {
-    super(namespace, precedence);
+  public FunctionDefinition(Namespace staticNamespace, Namespace dynamicNamespace, Precedence precedence, Arrow arrow) {
+    super(dynamicNamespace == null ? staticNamespace : dynamicNamespace, precedence);
+    myStaticNamespace = staticNamespace;
     myArrow = arrow;
     myTypeHasErrors = true;
   }
 
-  public FunctionDefinition(Namespace namespace, Precedence precedence, List<Argument> arguments, Expression resultType, Arrow arrow, Expression term) {
-    super(namespace, precedence);
+  public FunctionDefinition(Namespace staticNamespace, Namespace dynamicNamespace, Precedence precedence, List<Argument> arguments, Expression resultType, Arrow arrow, Expression term) {
+    super(dynamicNamespace == null ? staticNamespace : dynamicNamespace, precedence);
     setUniverse(new Universe.Type(0, Universe.Type.PROP));
     hasErrors(false);
+    myStaticNamespace = staticNamespace;
     myArguments = arguments;
     myResultType = resultType;
     myArrow = arrow;
     myTypeHasErrors = false;
     myTerm = term;
-  }
-
-  @Override
-  public Collection<Definition> getItems() {
-    return getNamespace().getDefinitions();
   }
 
   @Override
@@ -61,6 +61,21 @@ public class FunctionDefinition extends Definition implements Abstract.FunctionD
   @Override
   public Utils.Name getOriginalName() {
     return null;
+  }
+
+  @Override
+  public Collection<? extends Abstract.Statement> getStatements() {
+    Namespace dynamicNamespace = myStaticNamespace == getNamespace() ? null : getNamespace();
+    List<Abstract.Statement> statements = new ArrayList<>(myStaticNamespace.getDefinitions().size() + (dynamicNamespace == null ? 0 : dynamicNamespace.getDefinitions().size()));
+    if (dynamicNamespace != null) {
+      for (Definition definition : dynamicNamespace.getDefinitions()) {
+        statements.add(new DefineStatement(definition, true));
+      }
+    }
+    for (Definition definition : myStaticNamespace.getDefinitions()) {
+      statements.add(new DefineStatement(definition, true));
+    }
+    return statements;
   }
 
   @Override

@@ -121,7 +121,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     if (definition == null) {
       return null;
     }
-    return new Concrete.DefineStatement(definition.getPosition(), definition);
+    return new Concrete.DefineStatement(definition.getPosition(), ctx.staticMod() instanceof StaticStaticContext, definition);
   }
 
   @Override
@@ -258,7 +258,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     Concrete.Expression resultType = functionContext.typeCtx == null ? null : visitExpr(functionContext.typeCtx);
     Concrete.Expression term = functionContext.termCtx == null ? null : visitExpr(functionContext.termCtx);
     List<Concrete.Statement> statements = visitStatementList(ctx.where().statement());
-    return new Concrete.FunctionDefinition(tokenPosition(ctx.getStart()), ctx.staticMod() instanceof StaticStaticContext, identifier.getName(), precedence, arguments, resultType, functionContext.arrow, term, false, null, statements);
+    return new Concrete.FunctionDefinition(tokenPosition(ctx.getStart()), identifier.getName(), precedence, arguments, resultType, functionContext.arrow, term, false, null, statements);
   }
 
   private List<Concrete.Argument> visitFunctionArguments(List<TeleContext> teleCtx, boolean overridden) {
@@ -332,7 +332,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   public Concrete.ClassDefinition visitDefClass(DefClassContext ctx) {
     if (ctx == null || ctx.classFields() == null) return null;
     List<Concrete.Statement> statements = visitStatementList(ctx.classFields().statement());
-    return new Concrete.ClassDefinition(tokenPosition(ctx.getStart()), ctx.staticMod() instanceof StaticStaticContext, ctx.ID().getText(), statements);
+    return new Concrete.ClassDefinition(tokenPosition(ctx.getStart()), ctx.ID().getText(), statements);
   }
 
   @Override
@@ -356,7 +356,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     }
 
     List<Concrete.Constructor> constructors = new ArrayList<>(ctx.constructorDef().size());
-    Concrete.DataDefinition dataDefinition = new Concrete.DataDefinition(tokenPosition(ctx.getStart()), ctx.staticMod() instanceof StaticStaticContext, identifier.getName(), precedence, parameters, universe, constructors);
+    Concrete.DataDefinition dataDefinition = new Concrete.DataDefinition(tokenPosition(ctx.getStart()), identifier.getName(), precedence, parameters, universe, constructors);
     for (ConstructorDefContext constructorDefContext : ctx.constructorDef()) {
       visitConstructorDef(constructorDefContext, dataDefinition);
     }

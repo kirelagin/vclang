@@ -1,7 +1,10 @@
 package com.jetbrains.jetpad.vclang.term.expr;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.definition.*;
+import com.jetbrains.jetpad.vclang.term.definition.Binding;
+import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
+import com.jetbrains.jetpad.vclang.term.definition.OverriddenDefinition;
+import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.AbstractExpressionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ExpressionVisitor;
 
@@ -10,19 +13,19 @@ import java.util.List;
 import java.util.Map;
 
 public class ClassExtExpression extends Expression implements Abstract.ClassExtExpression {
-  private final ClassDefinition myBaseClass;
+  private final Expression myBaseClassExpression;
   private final Map<FunctionDefinition, OverriddenDefinition> myDefinitions;
   private final Universe myUniverse;
 
-  public ClassExtExpression(ClassDefinition baseClass, Map<FunctionDefinition, OverriddenDefinition> definitions, Universe universe) {
-    myBaseClass = baseClass;
+  public ClassExtExpression(Expression baseClassExpression, Map<FunctionDefinition, OverriddenDefinition> definitions, Universe universe) {
+    myBaseClassExpression = baseClassExpression;
     myDefinitions = definitions;
     myUniverse = universe;
   }
 
   @Override
-  public ClassDefinition getBaseClass() {
-    return myBaseClass;
+  public Expression getBaseClassExpression() {
+    return myBaseClassExpression;
   }
 
   @Override

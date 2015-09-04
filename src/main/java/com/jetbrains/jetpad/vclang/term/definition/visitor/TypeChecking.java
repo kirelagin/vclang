@@ -186,7 +186,6 @@ public class TypeChecking {
   }
 
   public static FunctionDefinition typeCheckFunctionBegin(ErrorReporter errorReporter, Namespace namespace, Namespace localNamespace, Abstract.FunctionDefinition def, List<Binding> localContext, FunctionDefinition overriddenFunction) {
-    Namespace parentNamespace = localNamespace != null ? localNamespace : namespace;
     FunctionDefinition typedDef;
     // TODO: Do not create child namespace if the definition does not type check.
     if (def.isOverridden()) {
@@ -194,9 +193,9 @@ public class TypeChecking {
         errorReporter.report(new TypeCheckingError(namespace, "Overridden function cannot be static", def, getNames(localContext)));
         return null;
       }
-      typedDef = new OverriddenDefinition(parentNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null, overriddenFunction);
+      typedDef = new OverriddenDefinition(namespace.getChild(def.getName()), localNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null, overriddenFunction);
     } else {
-      typedDef = new FunctionDefinition(parentNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null);
+      typedDef = new FunctionDefinition(namespace.getChild(def.getName()), localNamespace == null ? null : localNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null);
     }
     if (!typeCheckFunctionBegin(errorReporter, namespace, def, localContext, overriddenFunction, typedDef)) {
       return null;

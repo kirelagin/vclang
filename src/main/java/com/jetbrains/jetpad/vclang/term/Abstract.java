@@ -191,6 +191,7 @@ public final class Abstract {
   }
 
   public interface DefineStatement extends Statement {
+    boolean isStatic();
     Definition getDefinition();
   }
 
@@ -228,7 +229,6 @@ public final class Abstract {
 
     Precedence DEFAULT_PRECEDENCE = new Precedence(Associativity.RIGHT_ASSOC, (byte) 10);
 
-    boolean isStatic();
     Precedence getPrecedence();
     <P, R> R accept(AbstractDefinitionVisitor<? super P, ? extends R> visitor, P params);
   }

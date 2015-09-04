@@ -5,6 +5,7 @@ import com.jetbrains.jetpad.vclang.term.expr.visitor.PrettyPrintVisitor;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementPrettyPrintVisitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.removeFromList;
@@ -148,10 +149,11 @@ public class DefinitionPrettyPrintVisitor implements AbstractDefinitionVisitor<V
   @Override
   public Void visitClass(Abstract.ClassDefinition def, Void ignored) {
     myBuilder.append("\\class ").append(def.getName()).append(" {");
-    if (def.getStatements() != null) {
+    Collection<? extends Abstract.Statement> statements = def.getStatements();
+    if (statements != null) {
       ++myIndent;
       StatementPrettyPrintVisitor visitor = new StatementPrettyPrintVisitor(myBuilder, myNames, myIndent);
-      for (Abstract.Statement statement : def.getStatements()) {
+      for (Abstract.Statement statement : statements) {
         myBuilder.append('\n');
         PrettyPrintVisitor.printIndent(myBuilder, myIndent);
         statement.accept(visitor, null);

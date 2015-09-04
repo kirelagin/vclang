@@ -2,16 +2,17 @@ package com.jetbrains.jetpad.vclang.term.expr;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Binding;
+import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.AbstractExpressionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ExpressionVisitor;
 
 import java.util.List;
 
 public class VarExpression extends Expression implements Abstract.VarExpression {
-  private final String myName;
+  private final Utils.Name myName;
 
   public VarExpression(String name) {
-    myName = name;
+    myName = new Utils.Name(name);
   }
 
   @Override
@@ -20,7 +21,7 @@ public class VarExpression extends Expression implements Abstract.VarExpression 
   }
 
   @Override
-  public String getName() {
+  public Utils.Name getName() {
     return myName;
   }
 

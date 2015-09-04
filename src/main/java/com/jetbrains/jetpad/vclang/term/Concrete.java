@@ -733,11 +733,18 @@ public final class Concrete {
   }
 
   public static class DefineStatement extends Statement implements Abstract.DefineStatement {
+    private final boolean myStatic;
     private final Definition myDefinition;
 
-    public DefineStatement(Position position, Definition definition) {
+    public DefineStatement(Position position, boolean isStatic, Definition definition) {
       super(position);
+      myStatic = isStatic;
       myDefinition = definition;
+    }
+
+    @Override
+    public boolean isStatic() {
+      return myStatic;
     }
 
     @Override
@@ -753,22 +760,15 @@ public final class Concrete {
 
   public static abstract class Definition extends Binding implements Abstract.Definition {
     private final Precedence myPrecedence;
-    private final boolean myStatic;
 
-    public Definition(Position position, boolean isStatic, Utils.Name name, Precedence precedence) {
+    public Definition(Position position, Utils.Name name, Precedence precedence) {
       super(position, name);
       myPrecedence = precedence;
-      myStatic = isStatic;
     }
 
     @Override
     public Precedence getPrecedence() {
       return myPrecedence;
-    }
-
-    @Override
-    public boolean isStatic() {
-      return myStatic;
     }
 
     @Override
@@ -788,8 +788,8 @@ public final class Concrete {
     private final Expression myTerm;
     private final List<Statement> myStatements;
 
-    public FunctionDefinition(Position position, boolean isStatic, Utils.Name name, Precedence precedence, List<Argument> arguments, Expression resultType, Abstract.Definition.Arrow arrow, Expression term, boolean overridden, Utils.Name originalName, List<Statement> statements) {
-      super(position, isStatic, name, precedence);
+    public FunctionDefinition(Position position, Utils.Name name, Precedence precedence, List<Argument> arguments, Expression resultType, Abstract.Definition.Arrow arrow, Expression term, boolean overridden, Utils.Name originalName, List<Statement> statements) {
+      super(position, name, precedence);
       myArguments = arguments;
       myResultType = resultType;
       myArrow = arrow;
@@ -850,8 +850,8 @@ public final class Concrete {
     private final List<TypeArgument> myParameters;
     private final Universe myUniverse;
 
-    public DataDefinition(Position position, boolean isStatic, Utils.Name name, Precedence precedence, List<TypeArgument> parameters, Universe universe, List<Concrete.Constructor> constructors) {
-      super(position, isStatic, name, precedence);
+    public DataDefinition(Position position, Utils.Name name, Precedence precedence, List<TypeArgument> parameters, Universe universe, List<Concrete.Constructor> constructors) {
+      super(position, name, precedence);
       myParameters = parameters;
       myConstructors = constructors;
       myUniverse = universe;
@@ -881,8 +881,8 @@ public final class Concrete {
   public static class ClassDefinition extends Definition implements Abstract.ClassDefinition {
     private final List<Statement> myFields;
 
-    public ClassDefinition(Position position, boolean isStatic, String name, List<Statement> fields) {
-      super(position, isStatic, new Utils.Name(name, Fixity.PREFIX), DEFAULT_PRECEDENCE);
+    public ClassDefinition(Position position, String name, List<Statement> fields) {
+      super(position, new Utils.Name(name, Fixity.PREFIX), DEFAULT_PRECEDENCE);
       myFields = fields;
     }
 
@@ -961,7 +961,7 @@ public final class Concrete {
     private final List<Pattern> myPatterns;
 
     public Constructor(Position position, Utils.Name name, Precedence precedence, List<TypeArgument> arguments, DataDefinition dataType, List<Pattern> patterns) {
-      super(position, dataType.isStatic(), name, precedence);
+      super(position, name, precedence);
       myArguments = arguments;
       myDataType = dataType;
       myPatterns = patterns;

@@ -2,14 +2,14 @@ grammar Vcgrammar;
 
 statements : statement*;
 
-statement : definition                                        # statDef
+statement : staticMod definition                              # statDef
           | nsCmd name fieldAcc* ('(' name (',' name)* ')')?  # statCmd
           ;
 
-definition  : staticMod '\\function' precedence name tele* typeTermOpt where?         # defFunction
-            // | '\\override' name ('\\as' name)? tele* typeTermOpt where?               # defOverride
-            | staticMod '\\data' precedence name tele* (':' literal)? constructorDef* # defData
-            | staticMod '\\class' ID tele* classFields                                # defClass
+definition  : '\\function' precedence name tele* typeTermOpt where?         # defFunction
+            // | '\\override' name ('\\as' name)? tele* typeTermOpt where?     # defOverride
+            | '\\data' precedence name tele* (':' literal)? constructorDef* # defData
+            | '\\class' ID tele* classFields                                # defClass
             ;
 
 staticMod : '\\static'                  # staticStatic
