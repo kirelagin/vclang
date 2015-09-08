@@ -434,7 +434,10 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
       OverriddenDefinition definition = new OverriddenDefinition(entry.getValue().getStaticNamespace(), entry.getValue().getDynamicNamespace(), entry.getValue().getPrecedence(), arguments, resultType, entry.getValue().getArrow(), term, entry.getValue().getOverriddenFunction());
       definitions.put(entry.getKey(), definition);
     }
-    return ClassExt(expr.getBaseClassExpression().accept(this), definitions, expr.getUniverse());
+    if (expr.getBaseClassExpression().getExpression() == null) {
+      return ClassExt(expr.getBaseClassExpression(), definitions, expr.getUniverse());
+    }
+    return ClassExt(DefCall(expr.getBaseClassExpression().getExpression().accept(this), expr.getBaseClassExpression().getDefinition()), definitions, expr.getUniverse());
   }
 
   @Override

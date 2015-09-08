@@ -45,7 +45,7 @@ public class ElimTest {
     ElimExpression pTerm = Elim(Index(4), clauses1);
     clauses1.add(new Clause(match(dataType.getConstructor("con1"), match("s")), Abstract.Definition.Arrow.RIGHT, Nat(), pTerm));
     clauses1.add(new Clause(match(dataType.getConstructor("con2"), match("x"), match("y"), match("z"), match("t")), Abstract.Definition.Arrow.RIGHT, Pi(Nat(), Nat()), pTerm));
-    FunctionDefinition pFunction = new FunctionDefinition(new Namespace(new Utils.Name("P"), null), Abstract.Definition.DEFAULT_PRECEDENCE, arguments3, Universe(), Abstract.Definition.Arrow.LEFT, pTerm);
+    FunctionDefinition pFunction = new FunctionDefinition(new Namespace(new Utils.Name("P"), null), null, Abstract.Definition.DEFAULT_PRECEDENCE, arguments3, Universe(), Abstract.Definition.Arrow.LEFT, pTerm);
 
     List<Argument> arguments = new ArrayList<>(3);
     arguments.add(Tele(vars("q", "w"), Nat()));
@@ -67,7 +67,7 @@ public class ElimTest {
 
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
-    FunctionDefinition function = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("fun")), Abstract.Definition.DEFAULT_PRECEDENCE, arguments, resultType, Abstract.Definition.Arrow.LEFT, term2);
+    FunctionDefinition function = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("fun")), null, Abstract.Definition.DEFAULT_PRECEDENCE, arguments, resultType, Abstract.Definition.Arrow.LEFT, term2);
     List<Binding> localContext = new ArrayList<>();
     FunctionDefinition typedFun = TypeChecking.typeCheckFunctionBegin(errorReporter, function.getNamespace().getParent(), null, function, localContext, null);
     assertNotNull(typedFun);

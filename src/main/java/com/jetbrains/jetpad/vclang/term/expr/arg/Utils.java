@@ -272,7 +272,7 @@ public class Utils {
 
     public Name(String name) {
       this.name = name;
-      this.fixity = Abstract.Definition.Fixity.PREFIX;
+      this.fixity = name.isEmpty() || Character.isJavaIdentifierStart(name.charAt(0)) ? Abstract.Definition.Fixity.PREFIX : Abstract.Definition.Fixity.INFIX;
     }
 
     public String getPrefixName() {

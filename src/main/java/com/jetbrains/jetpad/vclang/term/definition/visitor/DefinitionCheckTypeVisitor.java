@@ -3,7 +3,7 @@ package com.jetbrains.jetpad.vclang.term.definition.visitor;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 
-public class TypeCheckVisitor implements AbstractDefinitionVisitor<Void, Definition> {
+public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Void, Definition> {
   @Override
   public FunctionDefinition visitFunction(Abstract.FunctionDefinition def, Void params) {
     return null;

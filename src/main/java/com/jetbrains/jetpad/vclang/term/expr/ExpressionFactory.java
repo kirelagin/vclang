@@ -48,7 +48,7 @@ public class ExpressionFactory {
     return new DefCallExpression(expression, definition, parameters);
   }
 
-  public static ClassExtExpression ClassExt(Expression baseClassExpression, Map<FunctionDefinition, OverriddenDefinition> definitions, Universe universe) {
+  public static ClassExtExpression ClassExt(DefCallExpression baseClassExpression, Map<FunctionDefinition, OverriddenDefinition> definitions, Universe universe) {
     return new ClassExtExpression(baseClassExpression, definitions, universe);
   }
 

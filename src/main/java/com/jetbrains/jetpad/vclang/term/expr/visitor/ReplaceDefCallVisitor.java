@@ -31,7 +31,7 @@ public class ReplaceDefCallVisitor implements ExpressionVisitor<Expression> {
   }
 
   @Override
-  public Expression visitDefCall(DefCallExpression expr) {
+  public DefCallExpression visitDefCall(DefCallExpression expr) {
     Expression expr1;
     if (expr.getExpression() != null) {
       expr1 = expr.getExpression().accept(this);
@@ -177,7 +177,7 @@ public class ReplaceDefCallVisitor implements ExpressionVisitor<Expression> {
       OverriddenDefinition definition = new OverriddenDefinition(entry.getValue().getStaticNamespace(), entry.getValue().getDynamicNamespace(), entry.getValue().getPrecedence(), arguments, resultType, entry.getValue().getArrow(), term, entry.getValue().getOverriddenFunction());
       definitions.put(entry.getKey(), definition);
     }
-    return ClassExt(expr.getBaseClassExpression().accept(this), definitions, expr.getUniverse());
+    return ClassExt(visitDefCall(expr.getBaseClassExpression()), definitions, expr.getUniverse());
   }
 
   @Override

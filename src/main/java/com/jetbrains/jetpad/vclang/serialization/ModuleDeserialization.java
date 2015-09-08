@@ -383,6 +383,9 @@ public class ModuleDeserialization {
       }
       case 15: {
         Expression baseClassExpression = readExpression(stream, definitionMap);
+        if (!(baseClassExpression instanceof DefCallExpression)) {
+          throw new IncorrectFormat();
+        }
         Map<FunctionDefinition, OverriddenDefinition> map = new HashMap<>();
         int size = stream.readInt();
         for (int i = 0; i < size; ++i) {
@@ -394,7 +397,7 @@ public class ModuleDeserialization {
           deserializeDefinition(stream, definitionMap, overriding);
           map.put((FunctionDefinition) overridden, overriding);
         }
-        return ClassExt(baseClassExpression, map, readUniverse(stream));
+        return ClassExt((DefCallExpression) baseClassExpression, map, readUniverse(stream));
       }
       case 16: {
         return New(readExpression(stream, definitionMap));

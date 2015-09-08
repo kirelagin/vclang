@@ -30,7 +30,7 @@ public class SubstVisitor implements ExpressionVisitor<Expression> {
   }
 
   @Override
-  public Expression visitDefCall(DefCallExpression expr) {
+  public DefCallExpression visitDefCall(DefCallExpression expr) {
     if (expr.getExpression() == null && expr.getParameters() == null) return expr;
     Expression expr1 = null;
     if (expr.getExpression() != null) {
@@ -190,7 +190,7 @@ public class SubstVisitor implements ExpressionVisitor<Expression> {
       Expression[] result = visitLamArguments(entry.getValue().getArguments(), arguments, entry.getValue().getResultType(), entry.getValue().getTerm());
       definitions.put(entry.getKey(), new OverriddenDefinition(entry.getValue().getStaticNamespace(), entry.getValue().getDynamicNamespace(), entry.getValue().getPrecedence(), arguments, result[0], entry.getValue().getArrow(), result[1], entry.getKey()));
     }
-    return ClassExt(expr.getBaseClassExpression().accept(this), definitions, expr.getUniverse());
+    return ClassExt(visitDefCall(expr.getBaseClassExpression()), definitions, expr.getUniverse());
   }
 
   @Override

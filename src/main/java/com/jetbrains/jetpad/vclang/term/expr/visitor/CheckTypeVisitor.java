@@ -5,7 +5,6 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.definition.*;
-import com.jetbrains.jetpad.vclang.term.definition.visitor.TypeChecking;
 import com.jetbrains.jetpad.vclang.term.expr.*;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TelescopeArgument;
@@ -16,7 +15,10 @@ import com.jetbrains.jetpad.vclang.term.pattern.Pattern;
 import com.jetbrains.jetpad.vclang.term.pattern.Utils;
 import com.jetbrains.jetpad.vclang.typechecking.error.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
 
 import static com.jetbrains.jetpad.vclang.term.expr.Expression.compare;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
@@ -947,7 +949,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     int index = 0;
     while (it.hasPrevious()) {
       Binding def = it.previous();
-      if (expr.getName().equals(def.getName() == null ? null : def.getName().name)) {
+      if (expr.getName().name.equals(def.getName() == null ? null : def.getName().name)) {
         return new OKResult(Index(index), def.getType(), null);
       }
       ++index;
@@ -1137,7 +1139,12 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     args.add(new AbstractArgumentExpression(expr.getRight()));
 
     Concrete.Position position = expr instanceof Concrete.Expression ? ((Concrete.Expression) expr).getPosition() : null;
-    return typeCheckFunctionApps(new Concrete.DefCallExpression(position, null, expr.getBinOp()), args, expectedType, expr);
+    return typeCheckFunctionApps(new Concrete.DefCallExpression(position, expr.getBinOp()), args, expectedType, expr);
+  }
+
+  @Override
+  public Result visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Expression params) {
+    throw new UnsupportedOperationException();
   }
 
   public static class ExpandPatternResult {
@@ -1451,7 +1458,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     myLocalContext.remove(myLocalContext.size() - 1);
 
     LetExpression letExpression = Let(lets(let("caseF", lamArgs(Tele(vars("caseA"), exprOKResult.type)), elimOKResult.type,
-                    Abstract.Definition.Arrow.LEFT, elimOKResult.expression)), Apps(Index(0), exprOKResult.expression));
+        Abstract.Definition.Arrow.LEFT, elimOKResult.expression)), Apps(Index(0), exprOKResult.expression));
 
     expr.setWellTyped(exprOKResult.type.liftIndex(0, -1));
     return new OKResult(letExpression, exprOKResult.type.liftIndex(0, -1), equations);
@@ -1518,20 +1525,34 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
   @Override
   public Result visitClassExt(Abstract.ClassExtExpression expr, Expression expectedType) {
-    if (expr.getBaseClass().hasErrors()) {
-      TypeCheckingError error = new HasErrors(myNamespace, expr.getBaseClass().getName(), expr);
-      expr.setWellTyped(Error(DefCall(expr.getBaseClass()), error));
+    Result result = typeCheck(expr.getBaseClassExpression(), null);
+    if (!(result instanceof OKResult)) {
+      return result;
+    }
+    Expression normalizedBaseClassExpr = result.expression.normalize(NormalizeVisitor.Mode.WHNF);
+    if (!(normalizedBaseClassExpr instanceof DefCallExpression && ((DefCallExpression) normalizedBaseClassExpr).getDefinition() instanceof ClassDefinition)) {
+      TypeCheckingError error = new TypeCheckingError(myNamespace, "Expected a class", expr.getBaseClassExpression(), getNames(myLocalContext));
+      expr.setWellTyped(Error(normalizedBaseClassExpr, error));
       myErrorReporter.report(error);
       return null;
     }
 
-    if (expr.getDefinitions().isEmpty()) {
-      return checkResultImplicit(expectedType, new OKResult(DefCall(expr.getBaseClass()), expr.getBaseClass().getType(), null), expr);
+    ClassDefinition baseClass = (ClassDefinition) ((DefCallExpression) normalizedBaseClassExpr).getDefinition();
+    if (baseClass.hasErrors()) {
+      TypeCheckingError error = new HasErrors(myNamespace, baseClass.getName(), expr.getBaseClassExpression());
+      expr.setWellTyped(Error(normalizedBaseClassExpr, error));
+      myErrorReporter.report(error);
+      return null;
     }
 
     // TODO
+    // if (expr.getDefinitions().isEmpty()) {
+      return checkResultImplicit(expectedType, new OKResult(normalizedBaseClassExpr, baseClass.getType(), null), expr);
+    // }
+
+    /*
     Map<String, FunctionDefinition> abstracts = new HashMap<>();
-    for (Definition definition : expr.getBaseClass().getItems()) {
+    for (Definition definition : baseClass.getStatements()) {
       if (definition instanceof FunctionDefinition && definition.isAbstract()) {
         abstracts.put(definition.getName().name, (FunctionDefinition) definition);
       }
@@ -1555,6 +1576,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       universe = universe.max(definition.getUniverse());
     }
     return checkResultImplicit(expectedType, new OKResult(ClassExt(expr.getBaseClass(), definitions, universe), new UniverseExpression(universe), null), expr);
+    */
   }
 
   @Override

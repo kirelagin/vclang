@@ -32,7 +32,7 @@ public class DefinitionTest {
   @Test
   public void function() {
     // f : N => 0;
-    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, new ArrayList<Argument>(), Nat(), Definition.Arrow.RIGHT, Zero());
+    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), null, Abstract.Definition.DEFAULT_PRECEDENCE, new ArrayList<Argument>(), Nat(), Definition.Arrow.RIGHT, Zero());
     List<Binding> localContext = new ArrayList<>();
     FunctionDefinition typedDef = TypeChecking.typeCheckFunctionBegin(errorReporter, def.getNamespace().getParent(), null, def, localContext, null);
     assertNotNull(typedDef);
@@ -44,7 +44,7 @@ public class DefinitionTest {
   @Test
   public void functionUntyped() {
     // f => 0;
-    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, new ArrayList<Argument>(), null, Definition.Arrow.RIGHT, Zero());
+    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), null, Abstract.Definition.DEFAULT_PRECEDENCE, new ArrayList<Argument>(), null, Definition.Arrow.RIGHT, Zero());
     List<Binding> localContext = new ArrayList<>();
     FunctionDefinition typedDef = TypeChecking.typeCheckFunctionBegin(errorReporter, def.getNamespace().getParent(), null, def, localContext, null);
     assertNotNull(typedDef);
@@ -61,7 +61,7 @@ public class DefinitionTest {
     arguments.add(Tele(vars("x"), Nat()));
     arguments.add(Tele(vars("y"), Pi(Nat(), Nat())));
 
-    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), Abstract.Definition.DEFAULT_PRECEDENCE, arguments, null, Definition.Arrow.RIGHT, Index(0));
+    FunctionDefinition def = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("test")).getChild(new Utils.Name("f")), null, Abstract.Definition.DEFAULT_PRECEDENCE, arguments, null, Definition.Arrow.RIGHT, Index(0));
     List<Binding> localContext = new ArrayList<>();
     FunctionDefinition typedDef = TypeChecking.typeCheckFunctionBegin(errorReporter, def.getNamespace().getParent(), null, def, localContext, null);
     assertNotNull(typedDef);
