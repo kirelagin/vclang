@@ -96,10 +96,10 @@ public class ModuleLoaderTest {
     moduleLoader.setSourceSupplier(sourceSupplier);
     ModuleLoadingResult result = moduleLoader.load(RootModule.ROOT, "A", false);
     assertEquals(0, errorReporter.getErrorList().size());
-    assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getDefinitions().size());
-    assertEquals(1, result.classDefinition.getLocalNamespace().getDefinitions().size());
-    assertEquals(0, result.classDefinition.getNamespace().getDefinition("C").getNamespace().getDefinitions().size());
-    assertEquals(2, ((ClassDefinition) result.classDefinition.getNamespace().getDefinition("C")).getLocalNamespace().getDefinitions().size());
+    assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getDefinitionPairs().size());
+    assertEquals(1, result.classDefinition.getLocalNamespace().getDefinitionPairs().size());
+    assertEquals(0, result.classDefinition.getNamespace().getDefinition("C").getNamespace().getDefinitionPairs().size());
+    assertEquals(2, ((ClassDefinition) result.classDefinition.getNamespace().getDefinition("C")).getLocalNamespace().getDefinitionPairs().size());
   }
 
   @Test

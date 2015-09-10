@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term.definition;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
@@ -74,14 +75,20 @@ public class FunctionDefinition extends Definition implements Abstract.FunctionD
   @Override
   public Collection<? extends Abstract.Statement> getStatements() {
     Namespace dynamicNamespace = myStaticNamespace == getNamespace() ? null : getNamespace();
-    List<Abstract.Statement> statements = new ArrayList<>(myStaticNamespace.getDefinitions().size() + (dynamicNamespace == null ? 0 : dynamicNamespace.getDefinitions().size()));
+    List<Abstract.Statement> statements = new ArrayList<>(myStaticNamespace.getDefinitionPairs().size() + (dynamicNamespace == null ? 0 : dynamicNamespace.getDefinitionPairs().size()));
     if (dynamicNamespace != null) {
-      for (Definition definition : dynamicNamespace.getDefinitions()) {
-        statements.add(new DefineStatement(definition, true));
+      for (DefinitionPair pair : dynamicNamespace.getDefinitionPairs()) {
+        Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
+        if (definition != null) {
+          statements.add(new DefineStatement(definition, true));
+        }
       }
     }
-    for (Definition definition : myStaticNamespace.getDefinitions()) {
-      statements.add(new DefineStatement(definition, true));
+    for (DefinitionPair pair : myStaticNamespace.getDefinitionPairs()) {
+      Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
+      if (definition != null) {
+        statements.add(new DefineStatement(definition, true));
+      }
     }
     return statements;
   }

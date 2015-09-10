@@ -2,7 +2,15 @@ package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
 
+import java.util.List;
+
 public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void> {
+  private final List<String> myContext;
+
+  public ResolveNameVisitor(List<String> context) {
+    myContext = context;
+  }
+
   @Override
   public Void visitApp(Abstract.AppExpression expr, Void params) {
     return null;

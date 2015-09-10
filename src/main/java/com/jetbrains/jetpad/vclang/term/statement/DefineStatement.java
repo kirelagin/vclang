@@ -1,14 +1,13 @@
 package com.jetbrains.jetpad.vclang.term.statement;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.AbstractStatementVisitor;
 
 public class DefineStatement implements Abstract.DefineStatement {
-  private final Definition myDefinition;
+  private final Abstract.Definition myDefinition;
   private final boolean myStatic;
 
-  public DefineStatement(Definition definition, boolean isStatic) {
+  public DefineStatement(Abstract.Definition definition, boolean isStatic) {
     myDefinition = definition;
     myStatic = isStatic;
   }

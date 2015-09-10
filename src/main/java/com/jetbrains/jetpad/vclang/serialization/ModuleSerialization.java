@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.serialization;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
@@ -60,16 +61,16 @@ public class ModuleSerialization {
     }
 
     size = 0;
-    for (Definition member : namespace.getDefinitions()) {
-      if (!(member instanceof Constructor) && member.getNamespace().getParent() == namespace) {
+    for (DefinitionPair pair : namespace.getDefinitionPairs()) {
+      if (pair.definition != null && !(pair.definition instanceof Constructor) && pair.definition.getNamespace().getParent() == namespace) {
         ++size;
       }
     }
     visitor.getDataStream().writeInt(size);
-    for (Definition member : namespace.getDefinitions()) {
-      if (!(member instanceof Constructor) && member.getNamespace().getParent() == namespace) {
-        visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(member, true));
-        errors += serializeDefinition(visitor, member);
+    for (DefinitionPair pair : namespace.getDefinitionPairs()) {
+      if (pair.definition != null && !(pair.definition instanceof Constructor) && pair.definition.getNamespace().getParent() == namespace) {
+        visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(pair.definition, true));
+        errors += serializeDefinition(visitor, pair.definition);
       }
     }
     return errors;

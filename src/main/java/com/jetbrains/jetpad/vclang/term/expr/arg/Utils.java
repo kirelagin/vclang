@@ -86,10 +86,10 @@ public class Utils {
   }
 
   public static class ContextSaver implements Closeable {
-    private final List<Binding> myContext;
+    private final List myContext;
     private final int myOldContextSize;
 
-    public ContextSaver(List<Binding> context) {
+    public ContextSaver(List context) {
       myContext = context;
       myOldContextSize = context.size();
     }

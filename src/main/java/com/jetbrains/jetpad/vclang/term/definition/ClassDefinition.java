@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term.definition;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
@@ -39,12 +40,18 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
 
   @Override
   public Collection<? extends Abstract.Statement> getStatements() {
-    List<Abstract.Statement> statements = new ArrayList<>(myLocalNamespace.getDefinitions().size() + getNamespace().getDefinitions().size());
-    for (Definition definition : myLocalNamespace.getDefinitions()) {
-      statements.add(new DefineStatement(definition, false));
+    List<Abstract.Statement> statements = new ArrayList<>(myLocalNamespace.getDefinitionPairs().size() + getNamespace().getDefinitionPairs().size());
+    for (DefinitionPair pair : myLocalNamespace.getDefinitionPairs()) {
+      Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
+      if (definition != null) {
+        statements.add(new DefineStatement(definition, false));
+      }
     }
-    for (Definition definition : getNamespace().getDefinitions()) {
-      statements.add(new DefineStatement(definition, true));
+    for (DefinitionPair pair : getNamespace().getDefinitionPairs()) {
+      Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
+      if (definition != null) {
+        statements.add(new DefineStatement(definition, true));
+      }
     }
     return statements;
   }
