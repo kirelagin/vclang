@@ -18,7 +18,6 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
   public ClassDefinition(Namespace namespace) {
     super(namespace, DEFAULT_PRECEDENCE);
     super.hasErrors(false);
-    myLocalNamespace = new Namespace(namespace.getName(), null);
   }
 
   @Override
@@ -40,14 +39,14 @@ public class ClassDefinition extends Definition implements Abstract.ClassDefinit
 
   @Override
   public Collection<? extends Abstract.Statement> getStatements() {
-    List<Abstract.Statement> statements = new ArrayList<>(myLocalNamespace.getDefinitionPairs().size() + getNamespace().getDefinitionPairs().size());
-    for (DefinitionPair pair : myLocalNamespace.getDefinitionPairs()) {
+    List<Abstract.Statement> statements = new ArrayList<>(myLocalNamespace.getMembers().size() + getNamespace().getMembers().size());
+    for (DefinitionPair pair : myLocalNamespace.getMembers()) {
       Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
       if (definition != null) {
         statements.add(new DefineStatement(definition, false));
       }
     }
-    for (DefinitionPair pair : getNamespace().getDefinitionPairs()) {
+    for (DefinitionPair pair : getNamespace().getMembers()) {
       Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
       if (definition != null) {
         statements.add(new DefineStatement(definition, true));

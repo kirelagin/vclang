@@ -94,7 +94,7 @@ public class PrettyPrintingParserTest {
     FunctionDefinition fooDef = new FunctionDefinition(RootModule.ROOT.getChild(new Utils.Name("foo")), null, Abstract.Definition.DEFAULT_PRECEDENCE, lamArgs(Tele(vars("z"), Pi(Pi(Nat(), Nat()), Nat())), Tele(vars("x", "y"), Nat())), Nat(), Abstract.Definition.Arrow.LEFT, fooTermActual);
     fooClausesActual.add(new Clause(match(Prelude.ZERO), Abstract.Definition.Arrow.RIGHT, Index(0), fooTermActual));
     fooClausesActual.add(new Clause(match(Prelude.SUC, match("x'")), Abstract.Definition.Arrow.RIGHT, Apps(Index(2), Apps(DefCall(fooDef), Index(2), Index(1))), fooTermActual));
-    RootModule.ROOT.addMember(fooDef);
+    RootModule.ROOT.addDefinition(fooDef);
 
     List<Clause> clausesActual = new ArrayList<>();
     ElimExpression termActual = Elim(Index(1), clausesActual);

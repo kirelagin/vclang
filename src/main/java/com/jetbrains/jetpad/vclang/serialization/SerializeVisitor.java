@@ -195,8 +195,8 @@ public class SerializeVisitor implements ExpressionVisitor<Void> {
           myDataStream.writeUTF(((NamePattern) pattern).getName());
       } else if (pattern instanceof ConstructorPattern) {
         myDataStream.writeInt(myDefinitionsIndices.getDefinitionIndex(((ConstructorPattern) pattern).getConstructor(), false));
-        myDataStream.writeInt(((ConstructorPattern) pattern).getArguments().size());
-        for (Pattern nestedPattern : ((ConstructorPattern) pattern).getArguments()) {
+        myDataStream.writeInt(((ConstructorPattern) pattern).getPatterns().size());
+        for (Pattern nestedPattern : ((ConstructorPattern) pattern).getPatterns()) {
           visitPattern(nestedPattern);
         }
       }

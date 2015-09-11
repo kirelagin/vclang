@@ -1229,13 +1229,13 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       List<TypeArgument> constructorArguments = new ArrayList<>();
       splitArguments(constructor.getType().subst(matchedParameters, 0), constructorArguments);
 
-      Utils.ProcessImplicitResult implicitResult = processImplicit(constructorPattern.getArguments(), constructorArguments);
+      Utils.ProcessImplicitResult implicitResult = processImplicit(constructorPattern.getPatterns(), constructorArguments);
       if (implicitResult.patterns == null) {
         if (implicitResult.numExcessive != 0) {
           error = new TypeCheckingError(myNamespace, "Too many arguments: " + implicitResult.numExcessive + " excessive", constructorPattern,
               getNames(myLocalContext));
-        } else if (implicitResult.wrongImplicitPosition < constructorPattern.getArguments().size()) {
-          error = new TypeCheckingError(myNamespace, "Unexpected implicit argument", constructorPattern.getArguments().get(implicitResult.wrongImplicitPosition), getNames(myLocalContext));
+        } else if (implicitResult.wrongImplicitPosition < constructorPattern.getPatterns().size()) {
+          error = new TypeCheckingError(myNamespace, "Unexpected implicit argument", constructorPattern.getPatterns().get(implicitResult.wrongImplicitPosition), getNames(myLocalContext));
         } else {
           error = new TypeCheckingError(myNamespace, "Too few explicit arguments, expected: " + implicitResult.numExplicit, constructorPattern, getNames(myLocalContext));
         }

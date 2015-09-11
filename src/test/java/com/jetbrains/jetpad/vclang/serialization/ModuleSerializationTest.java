@@ -122,7 +122,7 @@ public class ModuleSerializationTest {
     assertNotNull(result.classDefinition);
     assertEquals(0, result.errorsNumber);
     assertEquals(def.getStatements().size(), result.classDefinition.getStatements().size());
-    assertEquals(def.getNamespace().getDefinitionPairs().size(), result.classDefinition.getNamespace().getDefinitionPairs().size());
+    assertEquals(def.getNamespace().getMembers().size(), result.classDefinition.getNamespace().getMembers().size());
     assertEquals(CompareVisitor.CMP.EQUALS, compare(dataDefinition.getType(), result.classDefinition.getNamespace().getDefinition("D").getType(), new ArrayList<CompareVisitor.Equation>(0)).isOK());
     assertEquals(0, errorReporter.getErrorList().size());
   }
@@ -144,9 +144,9 @@ public class ModuleSerializationTest {
     assertNotNull(result);
     assertNotNull(result.classDefinition);
     assertEquals(0, result.errorsNumber);
-    assertEquals(1, result.classDefinition.getNamespace().getChildren().size());
-    assertEquals(1, result.classDefinition.getNamespace().getDefinitionPairs().size());
-    assertEquals(1, result.classDefinition.getNamespace().getDefinition("f").getNamespace().getDefinitionPairs().size());
+    assertEquals(1, result.classDefinition.getNamespace().getMembers().size());
+    assertEquals(1, result.classDefinition.getNamespace().getMembers().size());
+    assertEquals(1, result.classDefinition.getNamespace().getDefinition("f").getNamespace().getMembers().size());
     assertEquals(0, errorReporter.getErrorList().size());
   }
 

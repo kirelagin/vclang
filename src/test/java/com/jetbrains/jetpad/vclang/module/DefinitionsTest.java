@@ -11,25 +11,25 @@ public class DefinitionsTest {
   @Test
   public void numberOfFieldsTest() {
     ClassDefinition result = parseDefs("\\static \\class Point { \\function x : Nat \\function y : Nat } \\static \\function C => Point { \\override x => 0 }");
-    assertEquals(2, result.getNamespace().getDefinitionPairs().size());
-    assertEquals(0, result.getLocalNamespace().getDefinitionPairs().size());
-    assertEquals(0, result.getNamespace().getChild(new Utils.Name("Point")).getDefinitionPairs().size());
-    assertEquals(2, ((ClassDefinition) result.getNamespace().getDefinition("Point")).getLocalNamespace().getDefinitionPairs().size());
+    assertEquals(2, result.getNamespace().getMembers().size());
+    assertEquals(0, result.getLocalNamespace().getMembers().size());
+    assertEquals(0, result.getNamespace().getChild(new Utils.Name("Point")).getMembers().size());
+    assertEquals(2, ((ClassDefinition) result.getNamespace().getDefinition("Point")).getLocalNamespace().getMembers().size());
   }
 
   @Test
   public void numberOfFieldsTest2() {
     ClassDefinition result = parseDefs("\\function f : Nat \\static \\function g => 0 \\class B { \\function h => 0 \\static \\function k => 0 } \\static \\class C { \\function h => 0 \\static \\function k => 0 }");
-    assertEquals(2, result.getNamespace().getDefinitionPairs().size());
+    assertEquals(2, result.getNamespace().getMembers().size());
     assertNotNull(result.getNamespace().getDefinition("g"));
     assertTrue(result.getNamespace().getDefinition("C") instanceof ClassDefinition);
-    assertEquals(1, result.getNamespace().getDefinition("C").getNamespace().getDefinitionPairs().size());
-    assertEquals(1, ((ClassDefinition) result.getNamespace().getDefinition("C")).getLocalNamespace().getDefinitionPairs().size());
-    assertEquals(2, result.getLocalNamespace().getDefinitionPairs().size());
+    assertEquals(1, result.getNamespace().getDefinition("C").getNamespace().getMembers().size());
+    assertEquals(1, ((ClassDefinition) result.getNamespace().getDefinition("C")).getLocalNamespace().getMembers().size());
+    assertEquals(2, result.getLocalNamespace().getMembers().size());
     assertNotNull(result.getLocalNamespace().getDefinition("f"));
     assertTrue(result.getLocalNamespace().getDefinition("B") instanceof ClassDefinition);
-    assertEquals(1, result.getLocalNamespace().getDefinition("B").getNamespace().getDefinitionPairs().size());
-    assertEquals(1, ((ClassDefinition) result.getLocalNamespace().getDefinition("B")).getLocalNamespace().getDefinitionPairs().size());
+    assertEquals(1, result.getLocalNamespace().getDefinition("B").getNamespace().getMembers().size());
+    assertEquals(1, ((ClassDefinition) result.getLocalNamespace().getDefinition("B")).getLocalNamespace().getMembers().size());
   }
 
   @Test
@@ -58,7 +58,7 @@ public class DefinitionsTest {
     assertEquals(2, result.getStatements().size());
     assertTrue(result.getField("A") instanceof ClassDefinition);
     assertEquals(3, ((ClassDefinition) result.getField("A")).getStatements().size());
-    assertTrue(result.getField("A").getNamespace().getChildren().isEmpty());
+    assertTrue(result.getField("A").getNamespace().getMembers().isEmpty());
   }
 
   @Test
@@ -87,20 +87,20 @@ public class DefinitionsTest {
     assertTrue(result.getField("A") instanceof ClassDefinition);
     ClassDefinition classA = (ClassDefinition) result.getField("A");
     assertEquals(4, classA.getStatements().size());
-    assertTrue(classA.getNamespace().getChildren().isEmpty());
+    assertTrue(classA.getNamespace().getMembers().isEmpty());
     assertTrue(classA.getField("B") instanceof ClassDefinition);
     ClassDefinition classB = (ClassDefinition) classA.getField("B");
     assertEquals(4, classB.getStatements().size());
-    assertEquals(1, classB.getNamespace().getChildren().size());
+    assertEquals(1, classB.getNamespace().getMembers().size());
     assertTrue(classB.getField("C") instanceof ClassDefinition);
     ClassDefinition classC = (ClassDefinition) classB.getField("C");
     assertEquals(2, classC.getStatements().size());
-    assertEquals(2, classC.getNamespace().getChildren().size());
+    assertEquals(2, classC.getNamespace().getMembers().size());
     assertEquals(classC.getField("w"), classB.getNamespace().getDefinition("w"));
     assertTrue(classA.getField("D") instanceof ClassDefinition);
     ClassDefinition classD = (ClassDefinition) classA.getField("D");
     assertEquals(1, classD.getStatements().size());
-    assertEquals(1, classD.getNamespace().getChildren().size());
+    assertEquals(1, classD.getNamespace().getMembers().size());
     assertEquals(classC.getField("w"), classD.getNamespace().getDefinition("w"));
     assertEquals(classC.getField("w"), classD.getField("w"));
   }

@@ -918,6 +918,8 @@ public final class Concrete {
     public void prettyPrint(StringBuilder builder, List<String> names, byte prec) {
       prettyPrintPattern(this, builder, names);
     }
+
+    public abstract String getName();
   }
 
   public static class NamePattern extends Pattern implements Abstract.NamePattern {
@@ -943,15 +945,25 @@ public final class Concrete {
       myArguments = arguments;
     }
 
-
     @Override
     public Utils.Name getConstructorName() {
       return myConstructorName;
     }
 
     @Override
-    public List<Concrete.Pattern> getArguments() {
+    public List<Concrete.Pattern> getPatterns() {
       return myArguments;
+    }
+
+    @Override
+    public void replacePatternWithConstructor(int index) {
+      Pattern pattern = myArguments.get(index);
+      myArguments.set(index, new ConstructorPattern(pattern.getPosition(), new Utils.Name(pattern.getName()), new ArrayList<Pattern>(0)));
+    }
+
+    @Override
+    public String getName() {
+      return myConstructorName.name;
     }
   }
 
@@ -970,6 +982,12 @@ public final class Concrete {
     @Override
     public List<Pattern> getPatterns() {
       return myPatterns;
+    }
+
+    @Override
+    public void replacePatternWithConstructor(int index) {
+      Pattern pattern = myPatterns.get(index);
+      myPatterns.set(index, new ConstructorPattern(pattern.getPosition(), new Utils.Name(pattern.getName()), new ArrayList<Pattern>(0)));
     }
 
     @Override

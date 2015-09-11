@@ -42,10 +42,8 @@ public abstract class BaseModuleLoader implements ModuleLoader {
 
   @Override
   public ModuleLoadingResult load(Namespace parent, String name, boolean tryLoad) {
-    Namespace module = parent.findChild(name);
-    if (module == null) {
-      module = new Namespace(new Utils.Name(name), parent);
-    }
+    DefinitionPair member = parent.getMember(name);
+    Namespace module = member == null ? new Namespace(new Utils.Name(name), parent) : member.namespace;
 
     int index = myLoadingModules.indexOf(module);
     if (index != -1) {

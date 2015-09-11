@@ -205,15 +205,13 @@ public class ModuleDeserialization {
         throw new IncorrectFormat();
       }
       deserializeNamespace(stream, definitionMap);
-    }
-
-    size = stream.readInt();
-    for (int i = 0; i < size; ++i) {
-      NamespaceMember member = definitionMap.get(stream.readInt());
-      if (!(member instanceof Definition)) {
-        throw new IncorrectFormat();
+      if (stream.readBoolean()) {
+        NamespaceMember member1 = definitionMap.get(stream.readInt());
+        if (!(member1 instanceof Definition)) {
+          throw new IncorrectFormat();
+        }
+        deserializeDefinition(stream, definitionMap, (Definition) member1);
       }
-      deserializeDefinition(stream, definitionMap, (Definition) member);
     }
   }
 

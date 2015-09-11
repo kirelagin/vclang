@@ -1,13 +1,16 @@
 package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 
 import java.util.List;
 
 public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void> {
+  private final NameResolver myNameResolver;
   private final List<String> myContext;
 
-  public ResolveNameVisitor(List<String> context) {
+  public ResolveNameVisitor(NameResolver nameResolver, List<String> context) {
+    myNameResolver = nameResolver;
     myContext = context;
   }
 

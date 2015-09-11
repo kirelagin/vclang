@@ -771,7 +771,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
           return null;
         }
         pattern = new Concrete.ConstructorPattern(tokenPosition(clauseCtx.name().start), identifier.getName(), visitPatterns(clauseCtx.patternx()));
-        for (Concrete.Pattern subPattern : ((Concrete.ConstructorPattern) pattern).getArguments()) {
+        for (Concrete.Pattern subPattern : ((Concrete.ConstructorPattern) pattern).getPatterns()) {
           if (subPattern instanceof Concrete.ConstructorPattern) {
             myErrorReporter.report(new ParserError(myNamespace, subPattern.getPosition(), "Only simple constructor patterns are allowed under elim"));
             return null;

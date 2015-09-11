@@ -47,30 +47,24 @@ public class ModuleSerialization {
   public static int serializeNamespace(SerializeVisitor visitor, Namespace namespace) throws IOException {
     int errors = 0;
     int size = 0;
-    for (Namespace child : namespace.getChildren()) {
-      if (child.getParent() == namespace) {
+    for (DefinitionPair member : namespace.getMembers()) {
+      if (member.namespace.getParent() == namespace) {
         ++size;
       }
     }
     visitor.getDataStream().writeInt(size);
-    for (Namespace child : namespace.getChildren()) {
-      if (child.getParent() == namespace) {
-        visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(child, false));
-        errors += serializeNamespace(visitor, child);
-      }
-    }
 
-    size = 0;
-    for (DefinitionPair pair : namespace.getDefinitionPairs()) {
-      if (pair.definition != null && !(pair.definition instanceof Constructor) && pair.definition.getNamespace().getParent() == namespace) {
-        ++size;
-      }
-    }
-    visitor.getDataStream().writeInt(size);
-    for (DefinitionPair pair : namespace.getDefinitionPairs()) {
-      if (pair.definition != null && !(pair.definition instanceof Constructor) && pair.definition.getNamespace().getParent() == namespace) {
-        visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(pair.definition, true));
-        errors += serializeDefinition(visitor, pair.definition);
+    for (DefinitionPair member : namespace.getMembers()) {
+      if (member.namespace.getParent() == namespace) {
+        visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(member.namespace, false));
+        errors += serializeNamespace(visitor, member.namespace);
+        if (member.definition != null && !(member.definition instanceof Constructor) && member.definition.getNamespace().getParent() == namespace) {
+          visitor.getDataStream().writeBoolean(true);
+          visitor.getDataStream().writeInt(visitor.getDefinitionsIndices().getDefinitionIndex(member.definition, true));
+          errors += serializeDefinition(visitor, member.definition);
+        } else {
+          visitor.getDataStream().writeBoolean(false);
+        }
       }
     }
     return errors;

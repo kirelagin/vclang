@@ -101,13 +101,21 @@ public class Utils {
     }
   }
 
-  public static class CompleteContextSaver implements Closeable {
-    private final List<Binding> myContext;
-    private final List<Binding> myOldContext;
+  public static class CompleteContextSaver<T> implements Closeable {
+    private final List<T> myContext;
+    private final List<T> myOldContext;
 
-    public CompleteContextSaver(List<Binding> context) {
+    public CompleteContextSaver(List<T> context) {
       myContext = context;
       myOldContext = new ArrayList<>(context);
+    }
+
+    public List<T> getCurrentContext() {
+      return myContext;
+    }
+
+    public List<T> getOldContext() {
+      return myOldContext;
     }
 
     @Override

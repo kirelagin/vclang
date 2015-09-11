@@ -75,16 +75,16 @@ public class FunctionDefinition extends Definition implements Abstract.FunctionD
   @Override
   public Collection<? extends Abstract.Statement> getStatements() {
     Namespace dynamicNamespace = myStaticNamespace == getNamespace() ? null : getNamespace();
-    List<Abstract.Statement> statements = new ArrayList<>(myStaticNamespace.getDefinitionPairs().size() + (dynamicNamespace == null ? 0 : dynamicNamespace.getDefinitionPairs().size()));
+    List<Abstract.Statement> statements = new ArrayList<>(myStaticNamespace.getMembers().size() + (dynamicNamespace == null ? 0 : dynamicNamespace.getMembers().size()));
     if (dynamicNamespace != null) {
-      for (DefinitionPair pair : dynamicNamespace.getDefinitionPairs()) {
+      for (DefinitionPair pair : dynamicNamespace.getMembers()) {
         Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
         if (definition != null) {
           statements.add(new DefineStatement(definition, true));
         }
       }
     }
-    for (DefinitionPair pair : myStaticNamespace.getDefinitionPairs()) {
+    for (DefinitionPair pair : myStaticNamespace.getMembers()) {
       Abstract.Definition definition = pair.definition != null ? pair.definition : pair.abstractDefinition;
       if (definition != null) {
         statements.add(new DefineStatement(definition, true));

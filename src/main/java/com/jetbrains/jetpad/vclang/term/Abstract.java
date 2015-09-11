@@ -265,15 +265,18 @@ public final class Abstract {
     String getName();
   }
 
-  public interface ConstructorPattern extends Pattern {
-    Utils.Name getConstructorName();
-    List<? extends Pattern> getArguments();
+  public interface PatternContainer {
+    List<? extends Pattern> getPatterns();
+    void replacePatternWithConstructor(int index);
   }
 
-  public interface Constructor extends Definition {
+  public interface ConstructorPattern extends Pattern, PatternContainer {
+    Utils.Name getConstructorName();
+  }
+
+  public interface Constructor extends Definition, PatternContainer {
     List<? extends TypeArgument> getArguments();
     DataDefinition getDataType();
-    List<? extends Pattern> getPatterns();
   }
 
   public interface NamespaceCommandStatement extends Statement {

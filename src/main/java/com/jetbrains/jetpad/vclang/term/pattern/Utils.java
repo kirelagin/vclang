@@ -20,7 +20,7 @@ public class Utils {
       return 1;
     } else if (pattern instanceof Abstract.ConstructorPattern) {
       int result = 0;
-      for (Abstract.Pattern nestedPattern : ((Abstract.ConstructorPattern) pattern).getArguments()) {
+      for (Abstract.Pattern nestedPattern : ((Abstract.ConstructorPattern) pattern).getPatterns()) {
         result += getNumArguments(nestedPattern);
       }
       return result;
@@ -33,7 +33,7 @@ public class Utils {
     if (pattern instanceof Abstract.NamePattern) {
       names.add(((Abstract.NamePattern) pattern).getName());
     } else if (pattern instanceof Abstract.ConstructorPattern) {
-      for (Abstract.Pattern nestedPattern : ((Abstract.ConstructorPattern) pattern).getArguments()) {
+      for (Abstract.Pattern nestedPattern : ((Abstract.ConstructorPattern) pattern).getPatterns()) {
         collectPatternNames(nestedPattern, names);
       }
     }
@@ -56,7 +56,7 @@ public class Utils {
       if (!topLevel)
         builder.append('(');
       builder.append(((Abstract.ConstructorPattern) pattern).getConstructorName());
-      for (Abstract.Pattern p : ((Abstract.ConstructorPattern) pattern).getArguments()) {
+      for (Abstract.Pattern p : ((Abstract.ConstructorPattern) pattern).getPatterns()) {
         builder.append(' ');
         prettyPrintPattern(p, builder, names, false);
       }

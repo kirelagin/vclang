@@ -1,7 +1,7 @@
 package com.jetbrains.jetpad.vclang.typechecking.nameresolver;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
-import com.jetbrains.jetpad.vclang.term.definition.NamespaceMember;
 
 public class DeepNamespaceNameResolver extends NamespaceNameResolver {
   public DeepNamespaceNameResolver(Namespace namespace) {
@@ -9,7 +9,7 @@ public class DeepNamespaceNameResolver extends NamespaceNameResolver {
   }
 
   @Override
-  public NamespaceMember locateName(String name) {
+  public DefinitionPair locateName(String name) {
     return getNamespace().locateName(name);
   }
 }

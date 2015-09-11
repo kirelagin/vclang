@@ -1,11 +1,6 @@
 package com.jetbrains.jetpad.vclang.typechecking.nameresolver;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
-import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
-import com.jetbrains.jetpad.vclang.module.Namespace;
-import com.jetbrains.jetpad.vclang.module.RootModule;
-import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.term.definition.NamespaceMember;
+import com.jetbrains.jetpad.vclang.module.*;
 
 public class LoadingNameResolver implements NameResolver {
   private final ModuleLoader myModuleLoader;
@@ -17,11 +12,11 @@ public class LoadingNameResolver implements NameResolver {
   }
 
   @Override
-  public NamespaceMember locateName(String name) {
-    NamespaceMember member = myNameResolver.locateName(name);
+  public DefinitionPair locateName(String name) {
+    DefinitionPair member = myNameResolver.locateName(name);
     if (member != null) {
-      if (member instanceof Namespace) {
-        myModuleLoader.load(((Namespace) member).getParent(), member.getName().name, true);
+      if (member.definition == null && member.abstractDefinition == null) {
+        myModuleLoader.load(member.namespace.getParent(), member.namespace.getName().name, true);
       }
       return member;
     }
@@ -30,22 +25,25 @@ public class LoadingNameResolver implements NameResolver {
     if (result == null) {
       return null;
     } else {
-      return result.classDefinition != null ? result.classDefinition : result.namespace;
+      return new DefinitionPair(result.namespace, result.classDefinition, null); // TODO: return Abstract.Definition
     }
   }
 
   @Override
-  public NamespaceMember getMember(Namespace parent, String name) {
-    Definition definition = parent.getDefinition(name);
-    if (definition != null) {
-      return definition;
-    }
-
-    Namespace child = parent.findChild(name);
-    if (child == null) {
+  public DefinitionPair getMember(Namespace parent, String name) {
+    DefinitionPair member = parent.getMember(name);
+    if (member == null) {
       return null;
     }
-    ModuleLoadingResult result = myModuleLoader.load(parent, name, true);
-    return result != null && result.classDefinition != null ? result.classDefinition : child;
+
+    if (member.definition == null && member.abstractDefinition == null) {
+      ModuleLoadingResult result = myModuleLoader.load(parent, name, true);
+      if (result != null) {
+        // TODO: return Abstract.Definition
+        member.definition = result.classDefinition;
+      }
+    }
+
+    return member;
   }
 }
