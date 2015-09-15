@@ -4,6 +4,6 @@ import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 
 public interface NameResolver {
-  DefinitionPair locateName(String name);
+  DefinitionPair locateName(String name, boolean isStatic);
   DefinitionPair getMember(Namespace parent, String name);
 }

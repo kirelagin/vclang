@@ -21,7 +21,6 @@ import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ParseSource implements Source {
@@ -74,10 +73,10 @@ public abstract class ParseSource implements Source {
       return new ModuleLoadingResult(namespace, null, true, countingErrorReporter.getErrorsNumber());
     }
 
-    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(namespace.getParent()));
+    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(namespace.getParent(), null));
     List<Concrete.Statement> statements = new BuildVisitor(namespace, errorReporter).visitStatements(tree);
     Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
-    Namespace localNamespace = new DefinitionResolveNameVisitor(namespace, nameResolver, new ArrayList<String>()).visitClass(classDefinition, null);
+    Namespace localNamespace = new DefinitionResolveNameVisitor(namespace, nameResolver).visitClass(classDefinition, null);
     ClassDefinition result = new DefinitionCheckTypeVisitor().visitClass(classDefinition, null);
     result.setLocalNamespace(localNamespace);
     return new ModuleLoadingResult(namespace, result, true, countingErrorReporter.getErrorsNumber());

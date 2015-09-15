@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.module;
 
+import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.NamespaceMember;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
@@ -89,6 +90,25 @@ public class Namespace implements NamespaceMember {
         return member;
       }
     }
+    return null;
+  }
+
+  public Abstract.Definition addAbstractDefinition(Namespace namespace, Abstract.Definition definition) {
+    if (myMembers == null) {
+      myMembers = new HashMap<>();
+    } else {
+      DefinitionPair pair = myMembers.get(definition.getName().name);
+      if (pair != null) {
+        if (pair.abstractDefinition != null) {
+          return pair.abstractDefinition;
+        } else {
+          pair.abstractDefinition = definition;
+          return null;
+        }
+      }
+    }
+
+    myMembers.put(definition.getName().name, new DefinitionPair(namespace, definition, null));
     return null;
   }
 

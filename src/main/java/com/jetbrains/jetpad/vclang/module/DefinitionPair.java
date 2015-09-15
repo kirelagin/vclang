@@ -5,12 +5,12 @@ import com.jetbrains.jetpad.vclang.term.definition.Definition;
 
 public class DefinitionPair {
   public Namespace namespace;
-  public Definition definition;
   public Abstract.Definition abstractDefinition;
+  public Definition definition;
 
-  public DefinitionPair(Namespace namespace, Definition definition, Abstract.Definition abstractDefinition) {
+  public DefinitionPair(Namespace namespace, Abstract.Definition abstractDefinition, Definition definition) {
     this.namespace = namespace;
-    this.definition = definition;
     this.abstractDefinition = abstractDefinition;
+    this.definition = definition;
   }
 }

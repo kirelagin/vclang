@@ -12,8 +12,8 @@ public class LoadingNameResolver implements NameResolver {
   }
 
   @Override
-  public DefinitionPair locateName(String name) {
-    DefinitionPair member = myNameResolver.locateName(name);
+  public DefinitionPair locateName(String name, boolean isStatic) {
+    DefinitionPair member = myNameResolver.locateName(name, isStatic);
     if (member != null) {
       if (member.definition == null && member.abstractDefinition == null) {
         myModuleLoader.load(member.namespace.getParent(), member.namespace.getName().name, true);

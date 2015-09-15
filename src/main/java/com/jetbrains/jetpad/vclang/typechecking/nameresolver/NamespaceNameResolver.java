@@ -4,19 +4,26 @@ import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 
 public class NamespaceNameResolver implements NameResolver {
-  private final Namespace myNamespace;
+  private final Namespace myStaticNamespace;
+  private final Namespace myDynamicNamespace;
 
-  public NamespaceNameResolver(Namespace namespace) {
-    myNamespace = namespace;
+  public NamespaceNameResolver(Namespace staticNamespace, Namespace dynamicNamespace) {
+    myStaticNamespace = staticNamespace;
+    myDynamicNamespace = dynamicNamespace;
   }
 
-  protected Namespace getNamespace() {
-    return myNamespace;
+  protected Namespace getStaticNamespace() {
+    return myStaticNamespace;
+  }
+
+  protected Namespace getDynamicNamespace() {
+    return myDynamicNamespace;
   }
 
   @Override
-  public DefinitionPair locateName(String name) {
-    return myNamespace.getMember(name);
+  public DefinitionPair locateName(String name, boolean isStatic) {
+    DefinitionPair result = !isStatic && myDynamicNamespace != null ? myDynamicNamespace.getMember(name) : null;
+    return result != null ? result : myStaticNamespace.getMember(name);
   }
 
   @Override

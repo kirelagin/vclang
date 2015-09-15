@@ -14,7 +14,7 @@ public class DummyNameResolver implements NameResolver {
   }
 
   @Override
-  public DefinitionPair locateName(String name) {
+  public DefinitionPair locateName(String name, boolean isStatic) {
     return null;
   }
 

@@ -13,6 +13,12 @@ public class CompositeNameResolver implements NameResolver {
     myNameResolvers = new ArrayList<>(2);
   }
 
+  public CompositeNameResolver(NameResolver nameResolver1, NameResolver nameResolver2) {
+    myNameResolvers = new ArrayList<>(2);
+    myNameResolvers.add(nameResolver1);
+    myNameResolvers.add(nameResolver2);
+  }
+
   public CompositeNameResolver(List<NameResolver> nameResolvers) {
     myNameResolvers = nameResolvers;
   }
@@ -26,9 +32,9 @@ public class CompositeNameResolver implements NameResolver {
   }
 
   @Override
-  public DefinitionPair locateName(String name) {
+  public DefinitionPair locateName(String name, boolean isStatic) {
     for (int i = myNameResolvers.size() - 1; i >= 0; --i) {
-      DefinitionPair result = myNameResolvers.get(i).locateName(name);
+      DefinitionPair result = myNameResolvers.get(i).locateName(name, isStatic);
       if (result != null) {
         return result;
       }

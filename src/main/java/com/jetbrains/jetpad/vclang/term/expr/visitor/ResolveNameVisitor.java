@@ -8,10 +8,12 @@ import java.util.List;
 public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void> {
   private final NameResolver myNameResolver;
   private final List<String> myContext;
+  private final boolean myStatic;
 
-  public ResolveNameVisitor(NameResolver nameResolver, List<String> context) {
+  public ResolveNameVisitor(NameResolver nameResolver, List<String> context, boolean isStatic) {
     myNameResolver = nameResolver;
     myContext = context;
+    myStatic = isStatic;
   }
 
   @Override
