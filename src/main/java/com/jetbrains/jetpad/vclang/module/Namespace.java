@@ -79,8 +79,8 @@ public class Namespace implements NamespaceMember {
   }
 
   public Definition getDefinition(String name) {
-    DefinitionPair pair = getMember(name);
-    return pair == null ? null : pair.definition;
+    DefinitionPair member = getMember(name);
+    return member == null ? null : member.definition;
   }
 
   public DefinitionPair locateName(String name) {
@@ -93,22 +93,22 @@ public class Namespace implements NamespaceMember {
     return null;
   }
 
-  public Abstract.Definition addAbstractDefinition(Namespace namespace, Abstract.Definition definition) {
+  public Abstract.Definition addAbstractDefinition(Abstract.Definition definition) {
     if (myMembers == null) {
       myMembers = new HashMap<>();
     } else {
-      DefinitionPair pair = myMembers.get(definition.getName().name);
-      if (pair != null) {
-        if (pair.abstractDefinition != null) {
-          return pair.abstractDefinition;
+      DefinitionPair oldMember = myMembers.get(definition.getName().name);
+      if (oldMember != null) {
+        if (oldMember.abstractDefinition != null) {
+          return oldMember.abstractDefinition;
         } else {
-          pair.abstractDefinition = definition;
+          oldMember.abstractDefinition = definition;
           return null;
         }
       }
     }
 
-    myMembers.put(definition.getName().name, new DefinitionPair(namespace, definition, null));
+    myMembers.put(definition.getName().name, new DefinitionPair(getChild(definition.getName()), definition, null));
     return null;
   }
 
@@ -116,12 +116,12 @@ public class Namespace implements NamespaceMember {
     if (myMembers == null) {
       myMembers = new HashMap<>();
     } else {
-      DefinitionPair pair = myMembers.get(definition.getName().name);
-      if (pair != null) {
-        if (pair.definition != null) {
-          return pair.definition;
+      DefinitionPair oldMember = myMembers.get(definition.getName().name);
+      if (oldMember != null) {
+        if (oldMember.definition != null) {
+          return oldMember.definition;
         } else {
-          pair.definition = definition;
+          oldMember.definition = definition;
           return null;
         }
       }
@@ -129,6 +129,24 @@ public class Namespace implements NamespaceMember {
 
     myMembers.put(definition.getName().name, new DefinitionPair(definition.getNamespace(), null, definition));
     return null;
+  }
+
+  public DefinitionPair addMember(DefinitionPair member) {
+    if (myMembers == null) {
+      myMembers = new HashMap<>();
+    } else {
+      DefinitionPair oldMember = myMembers.get(member.namespace.getName().name);
+      if (oldMember != null) {
+        return oldMember;
+      }
+    }
+
+    myMembers.put(member.namespace.getName().name, member);
+    return null;
+  }
+
+  public DefinitionPair removeMember(DefinitionPair member) {
+    return myMembers.remove(member.namespace.getName().name);
   }
 
   public void clear() {
