@@ -207,7 +207,7 @@ public class SerializeVisitor implements ExpressionVisitor<Void> {
 
   private void visitClause(Clause clause) {
     try {
-      visitPattern(clause.getPattern());
+      visitPattern(clause.getPatterns().get(0));
       myDataStream.writeBoolean(clause.getArrow() == Abstract.Definition.Arrow.RIGHT);
       clause.getExpression().accept(this);
     } catch (IOException e) {

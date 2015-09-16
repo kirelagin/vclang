@@ -11,7 +11,7 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
+import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.Index;
 import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.numberOfVariables;
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.expandPatternSubstitute;
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.patternToExpression;
@@ -224,11 +224,11 @@ public class TerminationCheckVisitor implements ExpressionVisitor<Boolean> {
 
     int var = expr.getExpression().getIndex();
     for (Clause clause : expr.getClauses()) {
-      Expression newExpr = patternToExpression(clause.getPattern()).getExpression();
+      Expression newExpr = patternToExpression(clause.getPatterns().get(0)).getExpression();
       List<Expression> patterns = new ArrayList<>(myPatterns.size());
 
       for (Expression pattern : myPatterns) {
-        patterns.add(expandPatternSubstitute(clause.getPattern(), var, newExpr, pattern));
+        patterns.add(expandPatternSubstitute(clause.getPatterns().get(0), var, newExpr, pattern));
       }
 
       if (!clause.getExpression().accept(new TerminationCheckVisitor(myDef, patterns))) {

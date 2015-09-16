@@ -1,9 +1,7 @@
 package com.jetbrains.jetpad.vclang.term.definition.visitor;
 
-import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.definition.Constructor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementResolveNameVisitor;
@@ -46,7 +44,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
         statement.accept(statementVisitor, null);
       }
 
-      ResolveNameVisitor visitor = new ResolveNameVisitor(myNameResolver, myContext, myDynamicNamespace == null);
+      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
       try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
         for (Abstract.Argument argument : def.getArguments()) {
           if (argument instanceof Abstract.TypeArgument) {
@@ -75,7 +73,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
 
   @Override
   public Void visitData(Abstract.DataDefinition def, Void params) {
-    ResolveNameVisitor visitor = new ResolveNameVisitor(myNameResolver, myContext, myDynamicNamespace == null);
+    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
 
     try (Utils.CompleteContextSaver<String> saver = new Utils.CompleteContextSaver<>(myContext)) {
       for (Abstract.TypeArgument parameter : def.getParameters()) {
@@ -102,13 +100,13 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   @Override
   public Void visitConstructor(Abstract.Constructor def, Void params) {
     try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
+      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
       if (def.getPatterns() != null) {
         for (int i = 0; i < def.getPatterns().size(); ++i) {
-          visitPattern(def, i);
+          visitor.visitPattern(def, i);
         }
       }
 
-      ResolveNameVisitor visitor = new ResolveNameVisitor(myNameResolver, myContext, myDynamicNamespace == null);
       for (Abstract.TypeArgument argument : def.getArguments()) {
         argument.getType().accept(visitor, null);
         if (argument instanceof Abstract.TelescopeArgument) {
@@ -118,29 +116,6 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
     }
 
     return null;
-  }
-
-  private void visitPattern(Abstract.PatternContainer con, int index) {
-    Abstract.Pattern pattern = con.getPatterns().get(index);
-    if (pattern instanceof Abstract.NamePattern) {
-      String name = ((Abstract.NamePattern) pattern).getName();
-      DefinitionPair member = myNameResolver.locateName(name, myDynamicNamespace == null);
-      if (member != null && (member.definition instanceof Constructor || member.abstractDefinition instanceof Abstract.Constructor)) {
-        con.replacePatternWithConstructor(index);
-      } else {
-        myContext.add(name);
-        return;
-      }
-    }
-
-    if (pattern instanceof Abstract.ConstructorPattern) {
-      List<? extends Abstract.Pattern> patterns = ((Abstract.ConstructorPattern) pattern).getPatterns();
-      for (int i = 0; i < patterns.size(); ++i) {
-        visitPattern((Abstract.ConstructorPattern) pattern, i);
-      }
-    } else {
-      throw new IllegalStateException();
-    }
   }
 
   @Override

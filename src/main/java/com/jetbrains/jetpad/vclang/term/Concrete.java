@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionPrettyPrintVisitor;
@@ -9,6 +10,7 @@ import com.jetbrains.jetpad.vclang.term.expr.visitor.PrettyPrintVisitor;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.AbstractStatementVisitor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.prettyPrintPattern;
@@ -201,39 +203,6 @@ public final class Concrete {
     }
   }
 
-  public static class BinOpExpression extends Expression implements Abstract.BinOpExpression {
-    private final Expression myLeft;
-    private final Expression myRight;
-    private final com.jetbrains.jetpad.vclang.term.definition.Definition myBinOp;
-
-    public BinOpExpression(Position position, Expression left, com.jetbrains.jetpad.vclang.term.definition.Definition binOp, Expression right) {
-      super(position);
-      myLeft = left;
-      myRight = right;
-      myBinOp = binOp;
-    }
-
-    @Override
-    public Expression getLeft() {
-      return myLeft;
-    }
-
-    @Override
-    public Expression getRight() {
-      return myRight;
-    }
-
-    @Override
-    public com.jetbrains.jetpad.vclang.term.definition.Definition getBinOp() {
-      return myBinOp;
-    }
-
-    @Override
-    public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
-      return visitor.visitBinOp(this, params);
-    }
-  }
-
   public static class BinOpSequenceExpression extends Expression implements Abstract.BinOpSequenceExpression {
     private final Expression myLeft;
     private final List<Abstract.BinOpSequenceElem> mySequence;
@@ -261,42 +230,29 @@ public final class Concrete {
   }
 
   public static class DefCallExpression extends Expression implements Abstract.DefCallExpression {
-    private final com.jetbrains.jetpad.vclang.term.definition.Definition myDefinition;
+    private final Expression myExpression;
+    private Utils.Name myName;
+    private DefinitionPair myDefinition;
+
+    public DefCallExpression(Position position, Expression expression, Utils.Name name) {
+      super(position);
+      myExpression = expression;
+      myDefinition = null;
+      myName = name;
+    }
 
     public DefCallExpression(Position position, com.jetbrains.jetpad.vclang.term.definition.Definition definition) {
       super(position);
-      myDefinition = definition;
+      myExpression = null;
+      myName = definition.getName();
+      myDefinition = new DefinitionPair(definition.getNamespace(), null, definition);
     }
 
-    @Override
-    public Expression getExpression() {
-      return null;
-    }
-
-    @Override
-    public com.jetbrains.jetpad.vclang.term.definition.Definition getDefinition() {
-      return myDefinition;
-    }
-
-    @Override
-    public Utils.Name getName() {
-      return myDefinition.getName();
-    }
-
-    @Override
-    public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
-      return visitor.visitDefCall(this, params);
-    }
-  }
-
-  public static class DefCallNameExpression extends Expression implements Abstract.DefCallExpression {
-    private final Expression myExpression;
-    private final Utils.Name myName;
-
-    public DefCallNameExpression(Position position, Expression expression, Utils.Name name) {
+    public DefCallExpression(Position position, DefinitionPair definition) {
       super(position);
-      myExpression = expression;
-      myName = name;
+      myExpression = null;
+      myName = definition.namespace.getName();
+      myDefinition = definition;
     }
 
     @Override
@@ -305,13 +261,19 @@ public final class Concrete {
     }
 
     @Override
-    public com.jetbrains.jetpad.vclang.term.definition.Definition getDefinition() {
-      return null;
+    public DefinitionPair getDefinitionPair() {
+      return myDefinition;
     }
 
     @Override
     public Utils.Name getName() {
       return myName;
+    }
+
+    @Override
+    public void replaceWithDefCall(DefinitionPair definition) {
+      myDefinition = definition;
+      myName = myDefinition.definition.getName();
     }
 
     @Override
@@ -567,25 +529,6 @@ public final class Concrete {
     }
   }
 
-  public static class VarExpression extends Expression implements Abstract.VarExpression {
-    private final Utils.Name myName;
-
-    public VarExpression(Position position, Utils.Name name) {
-      super(position);
-      myName = name;
-    }
-
-    @Override
-    public Utils.Name getName() {
-      return myName;
-    }
-
-    @Override
-    public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
-      return visitor.visitVar(this, params);
-    }
-  }
-
   public static class IndexExpression extends Expression implements Abstract.IndexExpression {
     private final int myIndex;
 
@@ -675,7 +618,7 @@ public final class Concrete {
   }
 
   public static class Clause extends SourceNode implements Abstract.Clause {
-    private final Pattern myPattern;
+    private Pattern myPattern;
     private final Definition.Arrow myArrow;
     private final Expression myExpression;
 
@@ -687,8 +630,8 @@ public final class Concrete {
     }
 
     @Override
-    public Abstract.Pattern getPattern() {
-      return myPattern;
+    public List<Pattern> getPatterns() {
+      return Collections.singletonList(myPattern);
     }
 
     @Override
@@ -704,6 +647,11 @@ public final class Concrete {
     @Override
     public void prettyPrint(StringBuilder builder, List<String> names, byte prec) {
       Utils.prettyPrintClause(null, this, builder, names, 0);
+    }
+
+    @Override
+    public void replacePatternWithConstructor(int index) {
+      myPattern = new ConstructorPattern(myPattern.getPosition(), new Utils.Name(myPattern.getName()), new ArrayList<Pattern>(0));
     }
   }
 

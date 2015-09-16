@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.AbstractDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
@@ -66,7 +67,7 @@ public final class Abstract {
   public interface DefCallExpression extends VarExpression {
     byte PREC = 12;
     Expression getExpression();
-    com.jetbrains.jetpad.vclang.term.definition.Definition getDefinition();
+    DefinitionPair getDefinitionPair();
   }
 
   public interface ClassExtExpression extends Expression {
@@ -118,7 +119,7 @@ public final class Abstract {
   }
 
   public interface BinOpExpression extends Expression {
-    com.jetbrains.jetpad.vclang.term.definition.Definition getBinOp();
+    DefinitionPair getBinOp();
     Expression getLeft();
     Expression getRight();
   }
@@ -147,6 +148,7 @@ public final class Abstract {
   public interface VarExpression extends Expression {
     byte PREC = 12;
     Utils.Name getName();
+    void replaceWithDefCall(DefinitionPair definition);
   }
 
   public interface InferHoleExpression extends Expression {
@@ -176,8 +178,7 @@ public final class Abstract {
     int getField();
   }
 
-  public interface Clause extends PrettyPrintableSourceNode {
-    Pattern getPattern();
+  public interface Clause extends PatternContainer, PrettyPrintableSourceNode {
     Definition.Arrow getArrow();
     Expression getExpression();
   }

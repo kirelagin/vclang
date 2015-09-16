@@ -142,8 +142,8 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
       return myMode == Mode.TOP ? null : applyDefCall(defCallExpr, args);
     }
 
-    if (defCallExpr.getDefinition() instanceof Function) {
-      return visitFunctionCall((Function) defCallExpr.getDefinition(), defCallExpr, args);
+    if (defCallExpr.getDefinitionPair() instanceof Function) {
+      return visitFunctionCall((Function) defCallExpr.getDefinitionPair(), defCallExpr, args);
     }
 
     if (myMode == Mode.TOP) return null;
@@ -240,11 +240,11 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
         Clause otherwise = null;
 
         for (Clause clause : ((ElimExpression) result).getClauses()) {
-          if (clause.getPattern() instanceof NamePattern) {
+          if (clause.getPatterns().get(0) instanceof NamePattern) {
             otherwise = clause;
             continue;
           }
-          Utils.PatternMatchResult matchResult = clause.getPattern().match(expr, myContext);
+          Utils.PatternMatchResult matchResult = clause.getPatterns().get(0).match(expr, myContext);
           if (matchResult instanceof Utils.PatternMatchOKResult) {
             matchOKResult = (Utils.PatternMatchOKResult) matchResult;
             clauseOK = clause;
@@ -252,7 +252,7 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
         }
         if (clauseOK == null && otherwise != null) {
           clauseOK = otherwise;
-          matchOKResult = (Utils.PatternMatchOKResult) clauseOK.getPattern().match(expr, myContext);
+          matchOKResult = (Utils.PatternMatchOKResult) clauseOK.getPatterns().get(0).match(expr, myContext);
         }
 
         if (clauseOK != null) {

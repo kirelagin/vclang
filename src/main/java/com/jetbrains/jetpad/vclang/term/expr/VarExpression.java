@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term.expr;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Binding;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
@@ -23,6 +24,11 @@ public class VarExpression extends Expression implements Abstract.VarExpression 
   @Override
   public Utils.Name getName() {
     return myName;
+  }
+
+  @Override
+  public void replaceWithDefCall(DefinitionPair definition) {
+    throw new IllegalStateException();
   }
 
   @Override

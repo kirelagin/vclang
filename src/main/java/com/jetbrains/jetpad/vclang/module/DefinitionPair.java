@@ -13,4 +13,8 @@ public class DefinitionPair {
     this.abstractDefinition = abstractDefinition;
     this.definition = definition;
   }
+
+  public Abstract.Definition.Precedence getPrecedence() {
+    return definition != null ? definition.getPrecedence() : abstractDefinition != null ? abstractDefinition.getPrecedence() : null;
+  }
 }

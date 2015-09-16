@@ -158,8 +158,8 @@ public class LiftIndexVisitor implements ExpressionVisitor<Expression> {
   }
 
   private Clause visitClause(Clause clause, ElimExpression elimExpr) {
-    return new Clause(clause.getPattern(), clause.getArrow(),
-            clause.getExpression().liftIndex(myFrom + getNumArguments(clause.getPattern()), myOn), elimExpr);
+    return new Clause(clause.getPatterns().get(0), clause.getArrow(),
+            clause.getExpression().liftIndex(myFrom + getNumArguments(clause.getPatterns().get(0)), myOn), elimExpr);
   }
 
   @Override

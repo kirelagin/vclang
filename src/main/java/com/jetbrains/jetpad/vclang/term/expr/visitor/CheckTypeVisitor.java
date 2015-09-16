@@ -259,7 +259,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
   private Result typeCheckFunctionApps(Abstract.Expression fun, List<Abstract.ArgumentExpression> args, Expression expectedType, Abstract.Expression expression) {
     Result function;
-    if (fun instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) fun).getDefinition() instanceof Constructor && !((Constructor) ((Abstract.DefCallExpression) fun).getDefinition()).getDataType().getParameters().isEmpty()) {
+    if (fun instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) fun).getDefinitionPair().definition instanceof Constructor && !((Constructor) ((Abstract.DefCallExpression) fun).getDefinitionPair().definition).getDataType().getParameters().isEmpty()) {
       function = typeCheckDefCall((Abstract.DefCallExpression) fun, null);
       if (function instanceof OKResult) {
         return typeCheckApps(fun, 0, (OKResult) function, args, expectedType, expression);
@@ -549,7 +549,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
   private Result typeCheckDefCall(Abstract.DefCallExpression expr, Expression expectedType) {
     ClassDefinition parent = null;
     OKResult result = null;
-    if (expr.getDefinition() == null) {
+    if (expr.getDefinitionPair() == null) {
       assert expr.getExpression() != null;
 
       Result exprResult = typeCheck(expr.getExpression(), null);
@@ -643,20 +643,20 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
         return null;
       }
     } else {
-      if (expr.getDefinition() instanceof FunctionDefinition && ((FunctionDefinition) expr.getDefinition()).typeHasErrors() || !(expr.getDefinition() instanceof FunctionDefinition) && expr.getDefinition().hasErrors()) {
+      if (expr.getDefinitionPair().definition instanceof FunctionDefinition && ((FunctionDefinition) expr.getDefinitionPair().definition).typeHasErrors() || !(expr.getDefinitionPair().definition instanceof FunctionDefinition) && expr.getDefinitionPair().definition.hasErrors()) {
         TypeCheckingError error = new HasErrors(myNamespace, expr.getName(), expr);
-        expr.setWellTyped(Error(DefCall(expr.getDefinition()), error));
+        expr.setWellTyped(Error(DefCall(expr.getDefinitionPair().definition), error));
         myErrorReporter.report(error);
         return null;
       }
 
       /* TODO
-      if (expr.getDefinition().isAbstract()) {
-        myAbstractCalls.add(expr.getDefinition());
+      if (expr.getDefinitionPair().isAbstract()) {
+        myAbstractCalls.add(expr.getDefinitionPair());
       }
       */
 
-      result = new OKResult(DefCall(expr.getDefinition()), expr.getDefinition().getType(), null);
+      result = new OKResult(DefCall(expr.getDefinitionPair().definition), expr.getDefinitionPair().definition.getType(), null);
     }
 
     if (result.expression instanceof DefCallExpression) {
@@ -1365,8 +1365,8 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
     List<Clause> clauses = new ArrayList<>();
     for (Abstract.Clause clause : expr.getClauses()) {
-      try (CompleteContextSaver ignore = new CompleteContextSaver(myLocalContext)) {
-        ExpandPatternResult result = expandPatternOn(clause.getPattern(), varIndex, expr.getExpression());
+      try (CompleteContextSaver ignore = new CompleteContextSaver<>(myLocalContext)) {
+        ExpandPatternResult result = expandPatternOn(clause.getPatterns().get(0), varIndex, expr.getExpression());
         if (result == null)
           return null;
         if (result.pattern instanceof NamePattern) {

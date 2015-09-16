@@ -512,13 +512,13 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   }
 
   @Override
-  public Concrete.VarExpression visitId(IdContext ctx) {
+  public Concrete.DefCallExpression visitId(IdContext ctx) {
     if (ctx == null) return null;
     Concrete.Identifier identifier = visitName(ctx.name());
     if (identifier == null) {
       return null;
     }
-    return new Concrete.VarExpression(identifier.getPosition(), identifier.getName());
+    return new Concrete.DefCallExpression(identifier.getPosition(), null, identifier.getName());
   }
 
   @Override
@@ -649,7 +649,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   public Concrete.Expression visitBinOp(BinOpContext ctx) {
     if (ctx == null) return null;
     Concrete.Expression left = null;
-    Concrete.VarExpression binOp = null;
+    Concrete.DefCallExpression binOp = null;
     List<Abstract.BinOpSequenceElem> sequence = new ArrayList<>(ctx.binOpLeft().size());
 
     for (BinOpLeftContext leftContext : ctx.binOpLeft()) {
@@ -667,7 +667,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       } else {
         sequence.add(new Abstract.BinOpSequenceElem(binOp, expr));
       }
-      binOp = new Concrete.VarExpression(identifier.getPosition(), identifier.getName());
+      binOp = new Concrete.DefCallExpression(identifier.getPosition(), null, identifier.getName());
     }
 
     Concrete.Expression expr = visitAtoms(visitAtomFieldsAcc(ctx.atomFieldsAcc()), ctx.argument());
@@ -700,7 +700,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         if (identifier == null) {
           return null;
         }
-        expression = new Concrete.DefCallNameExpression(tokenPosition(fieldAccContext.getStart()), expression, identifier.getName());
+        expression = new Concrete.DefCallExpression(tokenPosition(fieldAccContext.getStart()), expression, identifier.getName());
       } else
       if (fieldAccContext instanceof SigmaFieldContext) {
         expression = new Concrete.ProjExpression(tokenPosition(fieldAccContext.getStart()), expression, Integer.valueOf(((SigmaFieldContext) fieldAccContext).NUMBER().getText()) - 1);

@@ -4,6 +4,7 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.pattern.Pattern;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.term.expr.arg.Utils.prettyPrintClause;
@@ -27,8 +28,8 @@ public class Clause implements Abstract.Clause {
   }
 
   @Override
-  public Pattern getPattern() {
-    return myPattern;
+  public List<Pattern> getPatterns() {
+    return Collections.singletonList(myPattern);
   }
 
   @Override
@@ -51,5 +52,10 @@ public class Clause implements Abstract.Clause {
     StringBuilder builder = new StringBuilder();
     prettyPrint(builder, new ArrayList<String>(), Abstract.Expression.PREC);
     return builder.toString();
+  }
+
+  @Override
+  public void replacePatternWithConstructor(int index) {
+    throw new IllegalStateException();
   }
 }
