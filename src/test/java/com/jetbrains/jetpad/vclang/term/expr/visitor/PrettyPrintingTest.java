@@ -17,6 +17,7 @@ import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
+import static org.junit.Assert.assertNotNull;
 
 public class PrettyPrintingTest {
   @Test
@@ -67,6 +68,7 @@ public class PrettyPrintingTest {
   @Test
   public void prettyPrintingPatternDataDef() {
     ClassDefinition def = parseDefs("\\data LE (n m : Nat) | LE (zero) m => LE-zero | LE (suc n) (suc m) => LE-suc (LE n m)");
+    assertNotNull(def);
     def.accept(new DefinitionPrettyPrintVisitor(new StringBuilder(), new ArrayList<String>(), Abstract.Expression.PREC), null);
   }
 }

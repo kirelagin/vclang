@@ -20,6 +20,7 @@ public class DefinitionsTest {
   @Test
   public void numberOfFieldsTest2() {
     ClassDefinition result = parseDefs("\\function f : Nat \\static \\function g => 0 \\class B { \\function h => 0 \\static \\function k => 0 } \\static \\class C { \\function h => 0 \\static \\function k => 0 }");
+    assertNotNull(result);
     assertEquals(2, result.getNamespace().getMembers().size());
     assertNotNull(result.getNamespace().getDefinition("g"));
     assertTrue(result.getNamespace().getDefinition("C") instanceof ClassDefinition);
@@ -55,6 +56,7 @@ public class DefinitionsTest {
   @Test
   public void exportPublicFieldsTest() {
     ClassDefinition result = parseDefs("\\static \\class A { \\function x : Nat \\class B { \\static \\function y => x } \\export B } \\static \\function f (a : A) => a.y");
+    assertNotNull(result);
     assertEquals(2, result.getStatements().size());
     assertTrue(result.getField("A") instanceof ClassDefinition);
     assertEquals(3, ((ClassDefinition) result.getField("A")).getStatements().size());
@@ -83,6 +85,7 @@ public class DefinitionsTest {
             "\\class D { \\export B }\n" +
             "\\function f (b : B) : b.C.z = x + b.y => path (\\lam _ => x + b.y)\n" +
             "}");
+    assertNotNull(result);
     assertEquals(2, result.getStatements().size());
     assertTrue(result.getField("A") instanceof ClassDefinition);
     ClassDefinition classA = (ClassDefinition) result.getField("A");

@@ -142,8 +142,8 @@ public class NormalizeVisitor implements ExpressionVisitor<Expression> {
       return myMode == Mode.TOP ? null : applyDefCall(defCallExpr, args);
     }
 
-    if (defCallExpr.getDefinitionPair() instanceof Function) {
-      return visitFunctionCall((Function) defCallExpr.getDefinitionPair(), defCallExpr, args);
+    if (defCallExpr.getDefinition() instanceof Function) {
+      return visitFunctionCall((Function) defCallExpr.getDefinition(), defCallExpr, args);
     }
 
     if (myMode == Mode.TOP) return null;

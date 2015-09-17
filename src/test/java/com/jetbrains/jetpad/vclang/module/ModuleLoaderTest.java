@@ -8,8 +8,7 @@ import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class ModuleLoaderTest {
   ListErrorReporter errorReporter;
@@ -95,6 +94,7 @@ public class ModuleLoaderTest {
     sourceSupplier.add(module, "\\function f : Nat \\static \\class C { \\function g : Nat \\function h => g }");
     moduleLoader.setSourceSupplier(sourceSupplier);
     ModuleLoadingResult result = moduleLoader.load(RootModule.ROOT, "A", false);
+    assertNotNull(result);
     assertEquals(0, errorReporter.getErrorList().size());
     assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getMembers().size());
     assertEquals(1, result.classDefinition.getLocalNamespace().getMembers().size());

@@ -83,7 +83,9 @@ public abstract class ParseSource implements Source {
     Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
     Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, myModule, nameResolver).visitClass(classDefinition, null);
     ClassDefinition result = new DefinitionCheckTypeVisitor().visitClass(classDefinition, null);
-    result.setLocalNamespace(localNamespace);
+    if (result != null) {
+      result.setLocalNamespace(localNamespace);
+    }
     return new ModuleLoadingResult(myModule, result, true, countingErrorReporter.getErrorsNumber());
   }
 }

@@ -254,7 +254,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
 
     Concrete.Expression resultType = functionContext.typeCtx == null ? null : visitExpr(functionContext.typeCtx);
     Concrete.Expression term = functionContext.termCtx == null ? null : visitExpr(functionContext.termCtx);
-    List<Concrete.Statement> statements = visitStatementList(ctx.where().statement());
+    List<Concrete.Statement> statements = ctx.where() == null ? Collections.<Concrete.Statement>emptyList() : visitStatementList(ctx.where().statement());
     return new Concrete.FunctionDefinition(tokenPosition(ctx.getStart()), identifier.getName(), precedence, arguments, resultType, functionContext.arrow, term, false, null, statements);
   }
 
