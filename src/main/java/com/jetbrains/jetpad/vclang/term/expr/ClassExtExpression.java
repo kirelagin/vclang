@@ -4,8 +4,9 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.AbstractExpressionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ExpressionVisitor;
+import com.jetbrains.jetpad.vclang.term.statement.DefineStatement;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +31,12 @@ public class ClassExtExpression extends Expression implements Abstract.ClassExtE
   }
 
   @Override
-  public Collection<OverriddenDefinition> getDefinitions() {
-    return myDefinitions.values();
+  public List<DefineStatement> getStatements() {
+    List<DefineStatement> statements = new ArrayList<>(myDefinitions.size());
+    for (OverriddenDefinition overriddenDefinition : myDefinitions.values()) {
+      statements.add(new DefineStatement(overriddenDefinition, false));
+    }
+    return statements;
   }
 
   public Map<FunctionDefinition, OverriddenDefinition> getDefinitionsMap() {

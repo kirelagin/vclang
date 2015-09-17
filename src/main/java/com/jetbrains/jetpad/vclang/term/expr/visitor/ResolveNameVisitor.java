@@ -5,8 +5,10 @@ import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Constructor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
+import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 
 import java.util.List;
@@ -205,7 +207,12 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
   @Override
   public Void visitClassExt(Abstract.ClassExtExpression expr, Void params) {
     expr.getBaseClassExpression().accept(this, null);
-    // TODO: expr.getDefinitions()
+    CompositeNameResolver nameResolver = new CompositeNameResolver();
+    nameResolver.pushNameResolver(myNameResolver);
+    StatementResolveNameVisitor visitor = new StatementResolveNameVisitor(myErrorReporter, null, new Namespace(new Utils.Name("<anonymous>"), myNamespace), nameResolver, myContext);
+    for (Abstract.Statement statement : expr.getStatements()) {
+      statement.accept(visitor, null);
+    }
     return null;
   }
 

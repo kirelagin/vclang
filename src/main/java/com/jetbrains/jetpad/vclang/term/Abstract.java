@@ -73,7 +73,7 @@ public final class Abstract {
   public interface ClassExtExpression extends Expression {
     byte PREC = 12;
     Expression getBaseClassExpression();
-    Collection<? extends Definition> getDefinitions();
+    Collection<? extends Statement> getStatements();
   }
 
   public interface NewExpression extends Expression {

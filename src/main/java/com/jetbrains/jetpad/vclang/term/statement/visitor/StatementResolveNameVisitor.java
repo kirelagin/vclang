@@ -25,18 +25,23 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
     myErrorReporter = errorReporter;
     myStaticNamespace = staticNamespace;
     myDynamicNamespace = dynamicNamespace;
-    myPrivateNamespace = new Namespace(staticNamespace.getName(), null);
+    myPrivateNamespace = staticNamespace == null ? null : new Namespace(staticNamespace.getName(), null);
     myNameResolver = nameResolver;
     myContext = context;
 
     myNameResolver.pushNameResolver(new NamespaceNameResolver(staticNamespace, dynamicNamespace));
-    myNameResolver.pushNameResolver(new NamespaceNameResolver(myPrivateNamespace, null));
+    if (myPrivateNamespace != null) {
+      myNameResolver.pushNameResolver(new NamespaceNameResolver(myPrivateNamespace, null));
+    }
   }
 
   @Override
   public Void visitDefine(Abstract.DefineStatement stat, Void params) {
     if (!stat.isStatic() && myDynamicNamespace == null) {
       myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Non-static definition in a static context", stat, myContext));
+    } else
+    if (stat.isStatic() && myStaticNamespace == null) {
+      myErrorReporter.report(new TypeCheckingError(myDynamicNamespace, "Static definitions are not allowed in this context", stat, myContext));
     } else {
       stat.getDefinition().accept(new DefinitionResolveNameVisitor(myErrorReporter, myStaticNamespace, stat.isStatic() ? null : myDynamicNamespace, myNameResolver, myContext), null);
       (stat.isStatic() ? myStaticNamespace : myDynamicNamespace).addAbstractDefinition(stat.getDefinition());
@@ -46,6 +51,11 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
 
   @Override
   public Void visitNamespaceCommand(Abstract.NamespaceCommandStatement stat, Void params) {
+    if (myStaticNamespace == null || myPrivateNamespace == null) {
+      myErrorReporter.report(new TypeCheckingError(myDynamicNamespace, "Namespace commands are not allowed in this context", stat, myContext));
+      return null;
+    }
+
     boolean export = false, remove = false;
     switch (stat.getKind()) {
       case OPEN:
@@ -110,7 +120,9 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
 
   @Override
   public void close() {
-    myNameResolver.popNameResolver();
+    if (myPrivateNamespace != null) {
+      myNameResolver.popNameResolver();
+    }
     myNameResolver.popNameResolver();
   }
 }

@@ -1546,7 +1546,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     }
 
     // TODO
-    // if (expr.getDefinitions().isEmpty()) {
+    // if (expr.getStatements().isEmpty()) {
       return checkResultImplicit(expectedType, new OKResult(normalizedBaseClassExpr, baseClass.getType(), null), expr);
     // }
 
@@ -1559,7 +1559,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     }
 
     Map<FunctionDefinition, OverriddenDefinition> definitions = new HashMap<>();
-    for (Abstract.FunctionDefinition definition : expr.getDefinitions()) {
+    for (Abstract.FunctionDefinition definition : expr.getStatements()) {
       FunctionDefinition oldDefinition = abstracts.remove(definition.getName().name);
       if (oldDefinition == null) {
         myErrorReporter.report(new TypeCheckingError(myNamespace, definition.getName() + " is not defined in " + expr.getBaseClass().getNamespace().getFullName(), definition, getNames(myLocalContext)));

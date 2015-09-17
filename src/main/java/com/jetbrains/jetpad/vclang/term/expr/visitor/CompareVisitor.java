@@ -634,7 +634,7 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
 
     ClassExtExpression classExt = (ClassExtExpression) expr;
     ClassExtExpression otherClassExt = (ClassExtExpression) other;
-    if (classExt.getDefinitions().size() != otherClassExt.getDefinitions().size()) return new JustResult(CMP.NOT_EQUIV);
+    if (classExt.getStatements().size() != otherClassExt.getStatements().size()) return new JustResult(CMP.NOT_EQUIV);
     Result result = classExt.getBaseClassExpression().accept(this, otherClassExt.getBaseClassExpression());
     if (result.isOK() == CMP.NOT_EQUIV) return result;
 

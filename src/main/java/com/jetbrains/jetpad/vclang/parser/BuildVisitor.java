@@ -710,16 +710,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     }
 
     if (ctx.classFields() != null) {
-      List<Concrete.Statement> statements = visitStatementList(ctx.classFields().statement());
-      List<Concrete.Definition> definitions = new ArrayList<>(statements.size());
-      for (Concrete.Statement statement : statements) {
-        if (statement instanceof Concrete.DefineStatement) {
-          definitions.add(((Concrete.DefineStatement) statement).getDefinition());
-        } else {
-          myErrorReporter.report(new ParserError(myNamespace, statement.getPosition(), "Only definitions are allowed in anonymous classes"));
-        }
-      }
-      expression = new Concrete.ClassExtExpression(tokenPosition(ctx.getStart()), expression, definitions);
+      expression = new Concrete.ClassExtExpression(tokenPosition(ctx.getStart()), expression, visitStatementList(ctx.classFields().statement()));
     }
     return expression;
   }

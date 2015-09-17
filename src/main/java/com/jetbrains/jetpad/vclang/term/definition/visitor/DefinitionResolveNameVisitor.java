@@ -20,12 +20,8 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   private List<String> myContext;
 
   public DefinitionResolveNameVisitor(ErrorReporter errorReporter, Namespace namespace, NameResolver nameResolver) {
-    myErrorReporter = errorReporter;
-    myStaticNamespace = namespace;
-    myDynamicNamespace = null;
-    myNameResolver = new CompositeNameResolver();
+    this(errorReporter, namespace, null, new CompositeNameResolver(), new ArrayList<String>());
     myNameResolver.pushNameResolver(nameResolver);
-    myContext = new ArrayList<>();
   }
 
   public DefinitionResolveNameVisitor(ErrorReporter errorReporter, Namespace staticNamespace, Namespace dynamicNamespace, CompositeNameResolver nameResolver, List<String> context) {
@@ -34,46 +30,55 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
     myDynamicNamespace = dynamicNamespace;
     myNameResolver = nameResolver;
     myContext = context;
+
+    assert myStaticNamespace != null || myDynamicNamespace != null;
   }
 
   @Override
   public Namespace visitFunction(Abstract.FunctionDefinition def, Void params) {
-    Namespace localNamespace = myDynamicNamespace == null ? null : myDynamicNamespace.getChild(def.getName());
-    try (StatementResolveNameVisitor statementVisitor = new StatementResolveNameVisitor(myErrorReporter, myStaticNamespace.getChild(def.getName()), localNamespace, myNameResolver, myContext)) {
-      for (Abstract.Statement statement : def.getStatements()) {
-        statement.accept(statementVisitor, null);
+    if (def.getStatements().isEmpty()) {
+      visitFunction(def);
+      return null;
+    } else {
+      Namespace localNamespace = myDynamicNamespace == null ? null : myDynamicNamespace.getChild(def.getName());
+      try (StatementResolveNameVisitor statementVisitor = new StatementResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? null : myStaticNamespace.getChild(def.getName()), localNamespace, myNameResolver, myContext)) {
+        for (Abstract.Statement statement : def.getStatements()) {
+          statement.accept(statementVisitor, null);
+        }
+        visitFunction(def);
+      }
+      return localNamespace;
+    }
+  }
+
+  private void visitFunction(Abstract.FunctionDefinition def) {
+    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+    try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
+      for (Abstract.Argument argument : def.getArguments()) {
+        if (argument instanceof Abstract.TypeArgument) {
+          ((Abstract.TypeArgument) argument).getType().accept(visitor, null);
+        }
+        if (argument instanceof Abstract.TelescopeArgument) {
+          myContext.addAll(((Abstract.TelescopeArgument) argument).getNames());
+        } else
+        if (argument instanceof Abstract.NameArgument) {
+          myContext.add(((Abstract.NameArgument) argument).getName());
+        }
       }
 
-      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
-      try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
-        for (Abstract.Argument argument : def.getArguments()) {
-          if (argument instanceof Abstract.TypeArgument) {
-            ((Abstract.TypeArgument) argument).getType().accept(visitor, null);
-          }
-          if (argument instanceof Abstract.TelescopeArgument) {
-            myContext.addAll(((Abstract.TelescopeArgument) argument).getNames());
-          } else
-          if (argument instanceof Abstract.NameArgument) {
-            myContext.add(((Abstract.NameArgument) argument).getName());
-          }
-        }
+      if (def.getResultType() != null) {
+        def.getResultType().accept(visitor, null);
+      }
 
-        if (def.getResultType() != null) {
-          def.getResultType().accept(visitor, null);
-        }
-
-        if (def.getTerm() != null) {
-          def.getTerm().accept(visitor, null);
-        }
+      if (def.getTerm() != null) {
+        def.getTerm().accept(visitor, null);
       }
     }
-
-    return localNamespace;
   }
 
   @Override
   public Void visitData(Abstract.DataDefinition def, Void params) {
-    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
 
     try (Utils.CompleteContextSaver<String> saver = new Utils.CompleteContextSaver<>(myContext)) {
       for (Abstract.TypeArgument parameter : def.getParameters()) {
@@ -100,7 +105,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   @Override
   public Void visitConstructor(Abstract.Constructor def, Void params) {
     try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
-      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
       if (def.getPatterns() != null) {
         for (int i = 0; i < def.getPatterns().size(); ++i) {
           visitor.visitPattern(def, i);

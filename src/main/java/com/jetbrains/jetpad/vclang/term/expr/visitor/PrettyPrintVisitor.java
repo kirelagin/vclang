@@ -3,8 +3,8 @@ package com.jetbrains.jetpad.vclang.term.expr.visitor;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionPrettyPrintVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
+import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementPrettyPrintVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -299,9 +299,9 @@ public class PrettyPrintVisitor implements AbstractExpressionVisitor<Byte, Void>
     expr.getBaseClassExpression().accept(this, (byte) -Abstract.ClassExtExpression.PREC);
     myBuilder.append(" {\n");
     myIndent += INDENT;
-    DefinitionPrettyPrintVisitor visitor = new DefinitionPrettyPrintVisitor(myBuilder, myNames, myIndent);
-    for (Abstract.Definition definition : expr.getDefinitions()) {
-      definition.accept(visitor, null);
+    StatementPrettyPrintVisitor visitor = new StatementPrettyPrintVisitor(myBuilder, myNames, myIndent);
+    for (Abstract.Statement statement : expr.getStatements()) {
+      statement.accept(visitor, null);
       myBuilder.append("\n");
     }
     myIndent -= INDENT;

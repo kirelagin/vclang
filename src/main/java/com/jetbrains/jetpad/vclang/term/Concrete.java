@@ -284,9 +284,9 @@ public final class Concrete {
 
   public static class ClassExtExpression extends Expression implements Abstract.ClassExtExpression {
     private final Expression myBaseClassExpression;
-    private final List<Definition> myDefinitions;
+    private final List<Statement> myDefinitions;
 
-    public ClassExtExpression(Position position, Expression baseClassExpression, List<Definition> definitions) {
+    public ClassExtExpression(Position position, Expression baseClassExpression, List<Statement> definitions) {
       super(position);
       myBaseClassExpression = baseClassExpression;
       myDefinitions = definitions;
@@ -298,7 +298,7 @@ public final class Concrete {
     }
 
     @Override
-    public List<Definition> getDefinitions() {
+    public List<Statement> getStatements() {
       return myDefinitions;
     }
 

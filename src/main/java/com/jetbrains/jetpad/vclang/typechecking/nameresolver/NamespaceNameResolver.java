@@ -23,7 +23,7 @@ public class NamespaceNameResolver implements NameResolver {
   @Override
   public DefinitionPair locateName(String name, boolean isStatic) {
     DefinitionPair result = !isStatic && myDynamicNamespace != null ? myDynamicNamespace.getMember(name) : null;
-    return result != null ? result : myStaticNamespace.getMember(name);
+    return result != null ? result : myStaticNamespace != null ? myStaticNamespace.getMember(name) : null;
   }
 
   @Override
