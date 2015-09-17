@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
@@ -17,11 +16,9 @@ import static com.jetbrains.jetpad.vclang.term.pattern.Utils.ProcessImplicitResu
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.processImplicit;
 
 public class BuildVisitor extends VcgrammarBaseVisitor {
-  private Namespace myNamespace;
   private final ErrorReporter myErrorReporter;
 
-  public BuildVisitor(Namespace namespace, ErrorReporter errorReporter) {
-    myNamespace = namespace;
+  public BuildVisitor(ErrorReporter errorReporter) {
     myErrorReporter = errorReporter;
   }
 
@@ -74,7 +71,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
   private List<Concrete.NameArgument> getVars(ExprContext expr) {
     List<Concrete.NameArgument> result = getVarsNull(expr);
     if (result == null) {
-      myErrorReporter.report(new ParserError(myNamespace, tokenPosition(expr.getStart()), "Expected a list of variables"));
+      myErrorReporter.report(new ParserError(null, tokenPosition(expr.getStart()), "Expected a list of variables"));
       return null;
     } else {
       return result;
@@ -138,7 +135,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         }
         path.add(identifier);
       } else {
-        myErrorReporter.report(new ParserError(myNamespace, tokenPosition(fieldAccContext.getStart()), "Expected a name"));
+        myErrorReporter.report(new ParserError(null, tokenPosition(fieldAccContext.getStart()), "Expected a name"));
       }
     }
 
@@ -217,7 +214,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
     if (ctx == null) return null;
     int priority = Integer.valueOf(ctx.NUMBER().getText());
     if (priority < 1 || priority > 9) {
-      myErrorReporter.report(new ParserError(myNamespace, tokenPosition(ctx.NUMBER().getSymbol()), "Precedence out of range: " + priority));
+      myErrorReporter.report(new ParserError(null, tokenPosition(ctx.NUMBER().getSymbol()), "Precedence out of range: " + priority));
 
       if (priority < 1) {
         priority = 1;
@@ -272,7 +269,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       if (overridden || args.get(0) instanceof Concrete.TelescopeArgument) {
         arguments.add(args.get(0));
       } else {
-        myErrorReporter.report(new ParserError(myNamespace, tokenPosition(tele.getStart()), "Expected a typed variable"));
+        myErrorReporter.report(new ParserError(null, tokenPosition(tele.getStart()), "Expected a typed variable"));
         return null;
       }
     }
@@ -290,7 +287,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       if (literalContext instanceof UnknownContext) {
         arguments.add(new Concrete.NameArgument(tokenPosition(literalContext.getStart()), true, null));
       } else {
-        myErrorReporter.report(new ParserError(myNamespace, tokenPosition(literalContext.getStart()), "Unexpected token. Expected an identifier."));
+        myErrorReporter.report(new ParserError(null, tokenPosition(literalContext.getStart()), "Unexpected token. Expected an identifier."));
         return null;
       }
     } else {
@@ -351,7 +348,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       if (expression instanceof Concrete.UniverseExpression) {
         universe = ((Concrete.UniverseExpression) expression).getUniverse();
       } else {
-        myErrorReporter.report(new ParserError(myNamespace, expression.getPosition(), "Expected a universe"));
+        myErrorReporter.report(new ParserError(null, expression.getPosition(), "Expected a universe"));
       }
     }
 
@@ -373,7 +370,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         return;
       }
       if (!def.getName().name.equals(dataDefIdentifier.getName().name)) {
-        myErrorReporter.report(new ParserError(myNamespace, dataDefIdentifier.getPosition(), "Expected a data type name: " + def.getName()));
+        myErrorReporter.report(new ParserError(null, dataDefIdentifier.getPosition(), "Expected a data type name: " + def.getName()));
         return;
       }
 
@@ -382,13 +379,13 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       ProcessImplicitResult result = processImplicit(patterns, def.getParameters());
       if (result.patterns == null) {
         if (result.numExcessive != 0) {
-          myErrorReporter.report(new ParserError(myNamespace,
+          myErrorReporter.report(new ParserError(null,
               tokenPosition(wpCtx.patternx(wpCtx.patternx().size() - result.numExcessive).start), "Too many arguments: " + result.numExcessive + " excessive"));
         } else if (result.wrongImplicitPosition < patterns.size()) {
-          myErrorReporter.report(new ParserError(myNamespace,
+          myErrorReporter.report(new ParserError(null,
               tokenPosition(wpCtx.patternx(result.wrongImplicitPosition).start), "Unexpected implicit argument"));
         } else {
-          myErrorReporter.report(new ParserError(myNamespace, tokenPosition(wpCtx.name().start), "Too few explicit arguments, expected: " + result.numExplicit));
+          myErrorReporter.report(new ParserError(null, tokenPosition(wpCtx.name().start), "Too few explicit arguments, expected: " + result.numExplicit));
         }
         return;
       }
@@ -531,7 +528,7 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
 
     for (Concrete.TypeArgument arg : args) {
       if (!arg.getExplicit()) {
-        myErrorReporter.report(new ParserError(myNamespace, arg.getPosition(), "Fields in sigma types must be explicit"));
+        myErrorReporter.report(new ParserError(null, arg.getPosition(), "Fields in sigma types must be explicit"));
       }
     }
     return new Concrete.SigmaExpression(tokenPosition(ctx.getStart()), args);
@@ -764,13 +761,13 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
         pattern = new Concrete.ConstructorPattern(tokenPosition(clauseCtx.name().start), identifier.getName(), visitPatterns(clauseCtx.patternx()));
         for (Concrete.Pattern subPattern : ((Concrete.ConstructorPattern) pattern).getPatterns()) {
           if (subPattern instanceof Concrete.ConstructorPattern) {
-            myErrorReporter.report(new ParserError(myNamespace, subPattern.getPosition(), "Only simple constructor patterns are allowed under elim"));
+            myErrorReporter.report(new ParserError(null, subPattern.getPosition(), "Only simple constructor patterns are allowed under elim"));
             return null;
           }
         }
       } else {
         if (wasOtherwise) {
-          myErrorReporter.report(new ParserError(myNamespace, tokenPosition(clauseCtx.start), "Multiple otherwise clauses"));
+          myErrorReporter.report(new ParserError(null, tokenPosition(clauseCtx.start), "Multiple otherwise clauses"));
           continue;
         }
         wasOtherwise = true;

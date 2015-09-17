@@ -52,7 +52,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   }
 
   private void visitFunction(Abstract.FunctionDefinition def) {
-    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myContext, myDynamicNamespace == null);
     try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
       for (Abstract.Argument argument : def.getArguments()) {
         if (argument instanceof Abstract.TypeArgument) {
@@ -78,7 +78,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
 
   @Override
   public Void visitData(Abstract.DataDefinition def, Void params) {
-    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myContext, myDynamicNamespace == null);
 
     try (Utils.CompleteContextSaver<String> saver = new Utils.CompleteContextSaver<>(myContext)) {
       for (Abstract.TypeArgument parameter : def.getParameters()) {
@@ -105,7 +105,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   @Override
   public Void visitConstructor(Abstract.Constructor def, Void params) {
     try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
-      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myStaticNamespace == null ? myDynamicNamespace : myStaticNamespace, myNameResolver, myContext, myDynamicNamespace == null);
+      ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myContext, myDynamicNamespace == null);
       if (def.getPatterns() != null) {
         for (int i = 0; i < def.getPatterns().size(); ++i) {
           visitor.visitPattern(def, i);

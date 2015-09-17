@@ -76,12 +76,12 @@ public abstract class BaseModuleLoader implements ModuleLoader {
     try {
       ModuleLoadingResult result;
       if (compile) {
-        result = source.load(module);
+        result = source.load();
         if (result != null && result.errorsNumber == 0 && result.classDefinition != null && output.canWrite()) {
           output.write(module, result.classDefinition);
         }
       } else {
-        result = output.read(module);
+        result = output.read();
       }
 
       if (result == null || result.errorsNumber != 0) {

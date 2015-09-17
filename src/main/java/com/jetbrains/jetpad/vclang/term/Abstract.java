@@ -138,6 +138,8 @@ public final class Abstract {
     byte PREC = 0;
     Expression getLeft();
     List<BinOpSequenceElem> getSequence();
+    BinOpExpression makeBinOp(Expression left, DefinitionPair definition, VarExpression var, Expression right);
+    void replace(Expression expression);
   }
 
   public interface UniverseExpression extends Expression {

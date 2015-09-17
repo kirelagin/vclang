@@ -37,10 +37,8 @@ public class PrettyPrintingParserTest {
     builder.append("\\static ");
     def.accept(new DefinitionPrettyPrintVisitor(builder, new ArrayList<String>(), 0), null);
 
-    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
-    Namespace localNamespace = new Namespace(namespace.getName(), null);
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Concrete.FunctionDefinition result = (Concrete.FunctionDefinition) new BuildVisitor(namespace, errorReporter).visitDefinition(parse(errorReporter, builder.toString()).definition());
+    Concrete.FunctionDefinition result = (Concrete.FunctionDefinition) new BuildVisitor(errorReporter).visitDefinition(parse(errorReporter, builder.toString()).definition());
     assertEquals(0, errorReporter.getErrorList().size());
 
     assertEquals(expected.getArguments().size(), result.getArguments().size());

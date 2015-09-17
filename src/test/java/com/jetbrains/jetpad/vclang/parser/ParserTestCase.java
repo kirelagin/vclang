@@ -1,6 +1,5 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
@@ -12,8 +11,6 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DummyNameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import org.antlr.v4.runtime.*;
 
 import java.util.ArrayList;
@@ -38,21 +35,16 @@ public class ParserTestCase {
     return parser;
   }
 
-  public static Concrete.Expression parseExpr(NameResolver nameResolver, String text, int errors) {
+  public static Concrete.Expression parseExpr(String text, int errors) {
     RootModule.initialize();
-    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Concrete.Expression result = new BuildVisitor(namespace, errorReporter).visitExpr(parse(errorReporter, text).expr());
+    Concrete.Expression result = new BuildVisitor(errorReporter).visitExpr(parse(errorReporter, text).expr());
     if (errors < 0) {
       assertTrue(!errorReporter.getErrorList().isEmpty());
     } else {
       assertEquals(errors, errorReporter.getErrorList().size());
     }
     return result;
-  }
-
-  public static Concrete.Expression parseExpr(String text, int errors) {
-    return parseExpr(DummyNameResolver.getInstance(), text, errors);
   }
 
   public static Concrete.Expression parseExpr(String text) {
@@ -65,9 +57,8 @@ public class ParserTestCase {
 
   public static Definition parseDef(String text, int errors) {
     RootModule.initialize();
-    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Concrete.Definition definition = new BuildVisitor(namespace, errorReporter).visitDefinition(parse(errorReporter, text).definition());
+    Concrete.Definition definition = new BuildVisitor(errorReporter).visitDefinition(parse(errorReporter, text).definition());
     Definition result = definition.accept(new DefinitionCheckTypeVisitor(), null);
     assertEquals(errors, errorReporter.getErrorList().size());
     return result;
@@ -79,9 +70,8 @@ public class ParserTestCase {
 
   public static ClassDefinition parseDefs(String text, int errors) {
     RootModule.initialize();
-    Namespace namespace = RootModule.ROOT.getChild(new Utils.Name("test"));
     ListErrorReporter errorReporter = new ListErrorReporter();
-    List<Concrete.Statement> statements = new BuildVisitor(namespace, errorReporter).visitStatements(parse(errorReporter, text).statements());
+    List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(parse(errorReporter, text).statements());
     Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
     ClassDefinition result = new DefinitionCheckTypeVisitor().visitClass(classDefinition, null);
     assertEquals(errors, errorReporter.getErrorList().size());

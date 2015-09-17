@@ -6,7 +6,7 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import java.io.IOException;
 
 public class GeneralError {
-  private final Namespace myNamespace;
+  private Namespace myNamespace;
   private final String myMessage;
   private Level myLevel;
 
@@ -36,6 +36,10 @@ public class GeneralError {
 
   public Namespace getNamespace() {
     return myNamespace;
+  }
+
+  public void setNamespace(Namespace namespace) {
+    myNamespace = namespace;
   }
 
   public String printHeader() {

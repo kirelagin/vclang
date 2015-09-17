@@ -204,7 +204,7 @@ public final class Concrete {
   }
 
   public static class BinOpSequenceExpression extends Expression implements Abstract.BinOpSequenceExpression {
-    private final Expression myLeft;
+    private Expression myLeft;
     private final List<Abstract.BinOpSequenceElem> mySequence;
 
     public BinOpSequenceExpression(Position position, Expression left, List<Abstract.BinOpSequenceElem> sequence) {
@@ -224,8 +224,54 @@ public final class Concrete {
     }
 
     @Override
+    public BinOpExpression makeBinOp(Abstract.Expression left, DefinitionPair binOp, Abstract.VarExpression var, Abstract.Expression right) {
+      assert left instanceof Expression && right instanceof Expression && var instanceof Expression;
+      return new BinOpExpression(((Expression) var).getPosition(), (Expression) left, binOp, (Expression) right);
+    }
+
+    @Override
+    public void replace(Abstract.Expression expression) {
+      assert expression instanceof Expression;
+      myLeft = (Expression) expression;
+      mySequence.clear();
+    }
+
+    @Override
     public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
       return visitor.visitBinOpSequence(this, params);
+    }
+  }
+
+  public static class BinOpExpression extends Expression implements Abstract.BinOpExpression {
+    private final Expression myLeft;
+    private final DefinitionPair myBinOp;
+    private final Expression myRight;
+
+    public BinOpExpression(Position position, Expression left, DefinitionPair binOp, Expression right) {
+      super(position);
+      myLeft = left;
+      myBinOp = binOp;
+      myRight = right;
+    }
+
+    @Override
+    public DefinitionPair getBinOp() {
+      return myBinOp;
+    }
+
+    @Override
+    public Concrete.Expression getLeft() {
+      return myLeft;
+    }
+
+    @Override
+    public Concrete.Expression getRight() {
+      return myRight;
+    }
+
+    @Override
+    public <P, R> R accept(AbstractExpressionVisitor<? super P, ? extends R> visitor, P params) {
+      return visitor.visitBinOp(this, params);
     }
   }
 

@@ -14,6 +14,7 @@ import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveName
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.LocalErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DeepNamespaceNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
@@ -35,6 +36,10 @@ public abstract class ParseSource implements Source {
     myModule = module;
   }
 
+  Namespace getModule() {
+    return myModule;
+  }
+
   public InputStream getStream() {
     return myStream;
   }
@@ -44,10 +49,10 @@ public abstract class ParseSource implements Source {
   }
 
   @Override
-  public ModuleLoadingResult load(Namespace namespace) throws IOException {
+  public ModuleLoadingResult load() throws IOException {
     CountingErrorReporter countingErrorReporter = new CountingErrorReporter();
     final CompositeErrorReporter errorReporter = new CompositeErrorReporter();
-    errorReporter.addErrorReporter(myErrorReporter);
+    errorReporter.addErrorReporter(new LocalErrorReporter(myModule, myErrorReporter));
     errorReporter.addErrorReporter(countingErrorReporter);
 
     VcgrammarLexer lexer = new VcgrammarLexer(new ANTLRInputStream(myStream));
@@ -70,15 +75,15 @@ public abstract class ParseSource implements Source {
 
     VcgrammarParser.StatementsContext tree = parser.statements();
     if (tree == null || countingErrorReporter.getErrorsNumber() != 0) {
-      return new ModuleLoadingResult(namespace, null, true, countingErrorReporter.getErrorsNumber());
+      return new ModuleLoadingResult(myModule, null, true, countingErrorReporter.getErrorsNumber());
     }
 
-    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(namespace.getParent(), null));
-    List<Concrete.Statement> statements = new BuildVisitor(namespace, errorReporter).visitStatements(tree);
+    NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(myModule.getParent(), null));
+    List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(tree);
     Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
-    Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, namespace, nameResolver).visitClass(classDefinition, null);
+    Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, myModule, nameResolver).visitClass(classDefinition, null);
     ClassDefinition result = new DefinitionCheckTypeVisitor().visitClass(classDefinition, null);
     result.setLocalNamespace(localNamespace);
-    return new ModuleLoadingResult(namespace, result, true, countingErrorReporter.getErrorsNumber());
+    return new ModuleLoadingResult(myModule, result, true, countingErrorReporter.getErrorsNumber());
   }
 }

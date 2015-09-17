@@ -2,6 +2,7 @@ package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.parser.BinOpParser;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Constructor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
@@ -11,18 +12,17 @@ import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void> {
   private final ErrorReporter myErrorReporter;
-  private final Namespace myNamespace;
   private final NameResolver myNameResolver;
   private final List<String> myContext;
   private final boolean myStatic;
 
-  public ResolveNameVisitor(ErrorReporter errorReporter, Namespace namespace, NameResolver nameResolver, List<String> context, boolean isStatic) {
+  public ResolveNameVisitor(ErrorReporter errorReporter, NameResolver nameResolver, List<String> context, boolean isStatic) {
     myErrorReporter = errorReporter;
-    myNamespace = namespace;
     myNameResolver = nameResolver;
     myContext = context;
     myStatic = isStatic;
@@ -95,7 +95,7 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
       if (member != null && (member.definition != null || member.abstractDefinition != null)) {
         expr.replaceWithDefCall(member);
       } else {
-        myErrorReporter.report(new TypeCheckingError(myNamespace, "Not in scope: '" + expr.getName() + "'", expr, myContext));
+        myErrorReporter.report(new TypeCheckingError(null, "Not in scope: '" + expr.getName() + "'", expr, myContext));
       }
     }
     return null;
@@ -146,7 +146,23 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
 
   @Override
   public Void visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Void params) {
-    // TODO
+    if (expr.getSequence().isEmpty()) {
+      expr.replace(expr.getLeft());
+    } else {
+      BinOpParser parser = new BinOpParser(myErrorReporter, expr);
+      List<BinOpParser.StackElem> stack = new ArrayList<>(expr.getSequence().size());
+      Abstract.Expression expression = expr.getLeft();
+      for (Abstract.BinOpSequenceElem elem : expr.getSequence()) {
+        DefinitionPair member = myNameResolver.locateName(elem.binOp.getName().name, myStatic);
+        if (member != null) {
+          parser.pushOnStack(stack, expression, member, elem.binOp);
+          expression = elem.argument;
+        } else {
+          myErrorReporter.report(new TypeCheckingError(null, "Not in scope: " + elem.binOp.getName().getPrefixName(), elem.binOp, myContext));
+        }
+      }
+      expr.replace(parser.rollUpStack(stack, expression));
+    }
     return null;
   }
 
@@ -209,7 +225,7 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
     expr.getBaseClassExpression().accept(this, null);
     CompositeNameResolver nameResolver = new CompositeNameResolver();
     nameResolver.pushNameResolver(myNameResolver);
-    StatementResolveNameVisitor visitor = new StatementResolveNameVisitor(myErrorReporter, null, new Namespace(new Utils.Name("<anonymous>"), myNamespace), nameResolver, myContext);
+    StatementResolveNameVisitor visitor = new StatementResolveNameVisitor(myErrorReporter, null, new Namespace(new Utils.Name("<anonymous>"), null), nameResolver, myContext);
     for (Abstract.Statement statement : expr.getStatements()) {
       statement.accept(visitor, null);
     }

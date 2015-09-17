@@ -36,7 +36,7 @@ public class FileSource extends ParseSource {
   }
 
   @Override
-  public ModuleLoadingResult load(Namespace namespace) throws IOException {
+  public ModuleLoadingResult load() throws IOException {
     boolean ok = false;
     if (myDirectory != null) {
       File[] files = myDirectory.listFiles();
@@ -44,11 +44,11 @@ public class FileSource extends ParseSource {
         ok = true;
         for (File file : files) {
           if (file.isDirectory()) {
-            namespace.getChild(new Utils.Name(file.getName()));
+            getModule().getChild(new Utils.Name(file.getName()));
           } else if (file.isFile()) {
             String name = FileOperations.getVcFileName(file);
             if (name != null) {
-              namespace.getChild(new Utils.Name(name));
+              getModule().getChild(new Utils.Name(name));
             }
           }
         }
@@ -57,9 +57,9 @@ public class FileSource extends ParseSource {
 
     if (myFile != null && myFile.exists()) {
       setStream(new FileInputStream(myFile));
-      return super.load(namespace);
+      return super.load();
     } else {
-      return ok ? new ModuleLoadingResult(namespace, null, true, 0) : null;
+      return ok ? new ModuleLoadingResult(getModule(), null, true, 0) : null;
     }
   }
 }
