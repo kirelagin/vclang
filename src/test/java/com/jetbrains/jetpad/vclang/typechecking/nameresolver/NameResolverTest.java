@@ -22,17 +22,17 @@ import static org.junit.Assert.*;
 public class NameResolverTest {
   @Test
   public void nameResolverError() {
-    resolveNamesExpr("A { \\function f (x : Nat) <= elim x | zero => zero | suc x' => zero }", -1);
+    resolveNamesExpr("A { \\function f (x : Nat) <= \\elim x | zero => zero | suc x' => zero }", 1);
   }
 
   @Test
   public void nameResolverLamOpenError() {
-    assertNull(resolveNamesExpr("\\lam x => (\\Pi (y : Nat) -> (\\lam y => y)) y", 1));
+    resolveNamesExpr("\\lam x => (\\Pi (y : Nat) -> (\\lam y => y)) y", 1);
   }
 
   @Test
   public void nameResolverPiOpenError() {
-    assertNull(resolveNamesExpr("\\Pi (a b : Nat a) -> Nat a b", 1));
+    resolveNamesExpr("\\Pi (a b : Nat a) -> Nat a b", 1);
   }
 
   @Test
@@ -45,7 +45,7 @@ public class NameResolverTest {
     namespace.addDefinition(plus);
     namespace.addDefinition(mul);
 
-    Concrete.Expression result = resolveNamesExpr("0 + 1 * 2 + 3 * (4 * 5) * (6 + 7)");
+    Concrete.Expression result = resolveNamesExpr("0 + 1 * 2 + 3 * (4 * 5) * (6 + 7)", new NamespaceNameResolver(namespace, null));
     assertNotNull(result);
     assertTrue(compare(BinOp(BinOp(Zero(), plus, BinOp(Suc(Zero()), mul, Suc(Suc(Zero())))), plus, BinOp(BinOp(Suc(Suc(Suc(Zero()))), mul, BinOp(Suc(Suc(Suc(Suc(Zero())))), mul, Suc(Suc(Suc(Suc(Suc(Zero()))))))), mul, BinOp(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))), plus, Suc(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))))))), result));
   }
@@ -60,7 +60,7 @@ public class NameResolverTest {
     namespace.addDefinition(plus);
     namespace.addDefinition(mul);
 
-    resolveNamesExpr("11 + 2 * 3", 1);
+    resolveNamesExpr("11 + 2 * 3", 1, new NamespaceNameResolver(namespace, null));
   }
 
   @Test
@@ -214,14 +214,14 @@ public class NameResolverTest {
 
   @Test
   public void exportPublicFieldsTest() {
-    Namespace localNamespace = resolveNamesClass("test", "\\static \\class A { \\function x : Nat \\class B { \\static \\function y => x } \\export B } \\static \\function f (a : A) => a.y");
+    Namespace localNamespace = resolveNamesClass("test", "\\static \\class A { \\static \\function x : Nat \\static \\class B { \\static \\function y => x } \\export B } \\static \\function f => A.y");
     assertNotNull(localNamespace);
     assertNotNull(RootModule.ROOT.getMember("test"));
     Namespace staticNamespace = RootModule.ROOT.getMember("test").namespace;
 
     assertEquals(2, staticNamespace.getMembers().size());
     assertNotNull(staticNamespace.getMember("A"));
-    assertTrue(staticNamespace.getMember("A").namespace.getMembers().isEmpty());
+    assertEquals(3, staticNamespace.getMember("A").namespace.getMembers().size());
     assertEquals(3, ((Abstract.ClassDefinition) staticNamespace.getMember("A").abstractDefinition).getStatements().size());
   }
 

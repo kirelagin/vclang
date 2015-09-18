@@ -319,7 +319,7 @@ public final class Concrete {
     @Override
     public void replaceWithDefCall(DefinitionPair definition) {
       myDefinition = definition;
-      myName = myDefinition.definition.getName();
+      myName = myDefinition.namespace.getName();
     }
 
     @Override

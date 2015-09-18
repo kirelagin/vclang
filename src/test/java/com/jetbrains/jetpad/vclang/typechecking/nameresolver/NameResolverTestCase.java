@@ -14,16 +14,30 @@ import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.*;
 import static org.junit.Assert.assertEquals;
 
 public class NameResolverTestCase {
-  public static int resolveNamesExpr(Concrete.Expression expression) {
+  public static int resolveNamesExpr(Concrete.Expression expression, NameResolver nameResolver) {
     ListErrorReporter errorReporter = new ListErrorReporter();
-    expression.accept(new ResolveNameVisitor(errorReporter, DummyNameResolver.getInstance(), new ArrayList<String>(0), true), null);
+    expression.accept(new ResolveNameVisitor(errorReporter, nameResolver, new ArrayList<String>(0), true), null);
     return errorReporter.getErrorList().size();
+  }
+
+  public static int resolveNamesExpr(Concrete.Expression expression) {
+    return resolveNamesExpr(expression, DummyNameResolver.getInstance());
+  }
+
+  public static Concrete.Expression resolveNamesExpr(String text, int errors, NameResolver nameResolver) {
+    Concrete.Expression result = parseExpr(text, 0);
+    assertEquals(errors, resolveNamesExpr(result, nameResolver));
+    return result;
   }
 
   public static Concrete.Expression resolveNamesExpr(String text, int errors) {
     Concrete.Expression result = parseExpr(text, 0);
     assertEquals(errors, resolveNamesExpr(result));
     return result;
+  }
+
+  public static Concrete.Expression resolveNamesExpr(String text, NameResolver nameResolver) {
+    return resolveNamesExpr(text, 0, nameResolver);
   }
 
   public static Concrete.Expression resolveNamesExpr(String text) {

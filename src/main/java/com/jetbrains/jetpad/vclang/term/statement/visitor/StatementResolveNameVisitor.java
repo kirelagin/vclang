@@ -8,6 +8,7 @@ import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
+import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 
 import java.io.Closeable;
@@ -74,22 +75,25 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
 
     List<? extends Abstract.Identifier> path = stat.getPath();
     Abstract.Identifier identifier = path.get(0);
-    DefinitionPair member = myNameResolver.locateName(identifier.getName().name, true);
-    for (int i = 1; i < path.size(); ++i) {
-      DefinitionPair member1 = myNameResolver.getMember(member.namespace, path.get(i).getName().name);
+    DefinitionPair member = null;
+    for (Abstract.Identifier aPath : path) {
+      DefinitionPair member1 = member == null ? NameResolver.Helper.locateName(myNameResolver, identifier.getName().name, aPath, true, myErrorReporter) : myNameResolver.getMember(member.namespace, aPath.getName().name);
       if (member1 == null) {
-        myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Name '" + path.get(i).getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
+        if (member != null) {
+          myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Name '" + aPath.getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
+        }
         return null;
       }
       member = member1;
     }
+    if (member == null) return null;
 
     List<? extends Abstract.Identifier> names = stat.getNames();
     if (names != null) {
       for (Abstract.Identifier name : names) {
         DefinitionPair member1 = myNameResolver.getMember(member.namespace, name.getName().name);
         if (member1 == null) {
-          myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Name '" + name.getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
+          myErrorReporter.report(new TypeCheckingError("Name '" + name.getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
         } else {
           processNamespaceCommand(member1, export, remove, stat);
         }
