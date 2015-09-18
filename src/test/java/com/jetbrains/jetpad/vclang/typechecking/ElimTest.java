@@ -17,8 +17,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
+import static com.jetbrains.jetpad.vclang.typechecking.TypeCheckingTestCase.typeCheckClass;
 import static org.junit.Assert.*;
 
 public class ElimTest {
@@ -71,31 +71,31 @@ public class ElimTest {
     List<Binding> localContext = new ArrayList<>();
     FunctionDefinition typedFun = TypeChecking.typeCheckFunctionBegin(errorReporter, function.getNamespace().getParent(), null, function, localContext, null);
     assertNotNull(typedFun);
-    TypeChecking.typeCheckFunctionEnd(errorReporter, function.getNamespace().getParent(), function.getTerm(), typedFun, localContext, null);
+    TypeChecking.typeCheckFunctionEnd(errorReporter, function.getTerm(), typedFun, localContext, null);
     assertEquals(0, errorReporter.getErrorList().size());
     assertFalse(typedFun.hasErrors());
   }
 
   @Test
   public void elim2() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D Nat (x y : Nat) | con1 Nat | con2 (Nat -> Nat) (a b c : Nat)\n" +
-        "\\static \\function P (a1 b1 c1 : Nat) (d1 : D a1 b1 c1) (a2 b2 c2 : Nat) (d2 : D a2 b2 c2) : \\Type0 <= \\elim d1\n" +
+            "\\static \\function P (a1 b1 c1 : Nat) (d1 : D a1 b1 c1) (a2 b2 c2 : Nat) (d2 : D a2 b2 c2) : \\Type0 <= \\elim d1\n" +
             "| con2 _ _ _ _ => Nat -> Nat\n" +
             "| con1 _ => Nat\n" +
-        "\\static \\function test (q w : Nat) (e : D w 0 q) (r : D q w 1) : P w 0 q e q w 1 r <= \\elim r\n" +
+            "\\static \\function test (q w : Nat) (e : D w 0 q) (r : D q w 1) : P w 0 q e q w 1 r <= \\elim r\n" +
             "| con1 s <= \\elim e\n" +
-              "| con2 x y z t => x\n" +
-              "| con1 _ => s\n" +
-              ";\n" +
+            "| con2 x y z t => x\n" +
+            "| con1 _ => s\n" +
+            ";\n" +
             "| con2 x y z t <= \\elim e\n" +
-              "| con1 s => x q\n" +
-              "| con2 _ y z t => x");
+            "| con1 s => x q\n" +
+            "| con2 _ y z t => x");
   }
 
   @Test
   public void elim3() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D (x : Nat -> Nat) (y : Nat) | con1 {Nat} Nat | con2 (Nat -> Nat) {a b c : Nat}\n" +
         "\\static \\function test (q : Nat -> Nat) (e : D q 0) (r : D (\\lam x => x) (q 1)) : Nat <= \\elim r\n" +
           "| con1 s <= \\elim e\n" +
@@ -109,42 +109,42 @@ public class ElimTest {
 
   @Test
   public void elim4() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\function test (x : Nat) : Nat <= \\elim x | zero => 0 | _ => 1\n" +
         "\\static \\function test2 (x : Nat) : 1 = 1 => path (\\lam _ => test x)", 1);
   }
 
   @Test
   public void elim5() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D (x : Nat) | D zero => d0 | D (suc n) => d1\n" +
         "\\static \\function test (x : D 0) : Nat => \\elim x | d0 => 0");
   }
 
   @Test
   public void elimUnknownIndex1() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D (x : Nat) | D zero => d0 | D (suc _) => d1\n" +
         "\\static \\function test (x : Nat) (y : D x) : Nat <= \\elim y | d0 => 0 | d1 => 1", 1);
   }
 
   @Test
   public void elimUnknownIndex2() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D (x : Nat) | D zero => d0 | D (suc _) => d1\n" +
         "\\static \\function test (x : Nat) (y : D x) : Nat <= \\elim y | d0 => 0 | _ => 1", 1);
   }
 
   @Test
   public void elimUnknownIndex3() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data D (x : Nat) | D zero => d0 | D (suc _) => d1\n" +
         "\\static \\function test (x : Nat) (y : D x) : Nat <= \\elim y | _ => 0", 1);
   }
 
   @Test
   public void elimUnknownIndex4() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data E | A | B | C\n" +
         "\\static \\data D (x : E) | D A => d0 | D B => d1 | D _ => d2\n" +
         "\\static \\function test (x : E) (y : D x) : Nat <= \\elim y | d0 => 0 | d1 => 1", 1);
@@ -152,7 +152,7 @@ public class ElimTest {
 
   @Test
   public void elimUnknownIndex5() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data E | A | B | C\n" +
         "\\static \\data D (x : E) | D A => d0 | D B => d1 | D _ => d2\n" +
         "\\static \\function test (x : E) (y : D x) : Nat <= \\elim y | d0 => 0 | d1 => 1 | d2 => 2", 1);
@@ -160,7 +160,7 @@ public class ElimTest {
 
   @Test
   public void elimUnknownIndex6() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data E | A | B | C\n" +
         "\\static \\data D (x : E) | D A => d0 | D B => d1 | D _ => d2\n" +
         "\\static \\function test (x : E) (y : D x) : Nat <= \\elim y | d0 => 0 | d1 => 1 | _ => 2", 1);
@@ -168,7 +168,7 @@ public class ElimTest {
 
   @Test
   public void elimUnknownIndex7() {
-    parseDefs(
+    typeCheckClass(
         "\\static \\data E | A | B | C\n" +
         "\\static \\data D (x : E) | D A => d0 | D B => d1 | D _ => d2\n" +
         "\\static \\function test (x : E) (y : D x) : Nat <= \\elim y | _ => 0", 1);
@@ -176,6 +176,6 @@ public class ElimTest {
 
   @Test
   public void elimTooManyArgs() {
-    parseDefs("\\static \\data A | a Nat Nat \\static \\function test (a : A) : Nat <= \\elim a | a _ _ _ =>0", 1);
+    typeCheckClass("\\static \\data A | a Nat Nat \\static \\function test (a : A) : Nat <= \\elim a | a _ _ _ =>0", 1);
   }
 }

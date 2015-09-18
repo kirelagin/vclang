@@ -2,7 +2,7 @@ package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
+import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionPrettyPrintVisitor;
@@ -15,7 +15,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDefs;
+import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDef;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
 import static org.junit.Assert.assertNotNull;
 
@@ -67,7 +67,7 @@ public class PrettyPrintingTest {
 
   @Test
   public void prettyPrintingPatternDataDef() {
-    ClassDefinition def = parseDefs("\\data LE (n m : Nat) | LE (zero) m => LE-zero | LE (suc n) (suc m) => LE-suc (LE n m)");
+    Concrete.Definition def = parseDef("\\data LE (n m : Nat) | LE (zero) m => LE-zero | LE (suc n) (suc m) => LE-suc (LE n m)");
     assertNotNull(def);
     def.accept(new DefinitionPrettyPrintVisitor(new StringBuilder(), new ArrayList<String>(), Abstract.Expression.PREC), null);
   }

@@ -18,6 +18,10 @@ public class GeneralError {
     myLevel = Level.ERROR;
   }
 
+  public GeneralError(String message) {
+    this(null, message);
+  }
+
   public Level getLevel() {
     return myLevel;
   }

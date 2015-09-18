@@ -3,9 +3,6 @@ package com.jetbrains.jetpad.vclang.parser;
 import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
-import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
-import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionCheckTypeVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
@@ -17,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ParserTestCase {
   public static VcgrammarParser parse(final ErrorReporter errorReporter, String text) {
@@ -39,11 +35,7 @@ public class ParserTestCase {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     Concrete.Expression result = new BuildVisitor(errorReporter).visitExpr(parse(errorReporter, text).expr());
-    if (errors < 0) {
-      assertTrue(!errorReporter.getErrorList().isEmpty());
-    } else {
-      assertEquals(errors, errorReporter.getErrorList().size());
-    }
+    assertEquals(errors, errorReporter.getErrorList().size());
     return result;
   }
 
@@ -51,31 +43,29 @@ public class ParserTestCase {
     return parseExpr(text, 0);
   }
 
-  public static Definition parseDef(String text) {
+  public static Concrete.Definition parseDef(String text) {
     return parseDef(text, 0);
   }
 
-  public static Definition parseDef(String text, int errors) {
+  public static Concrete.Definition parseDef(String text, int errors) {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     Concrete.Definition definition = new BuildVisitor(errorReporter).visitDefinition(parse(errorReporter, text).definition());
-    Definition result = definition.accept(new DefinitionCheckTypeVisitor(), null);
     assertEquals(errors, errorReporter.getErrorList().size());
-    return result;
+    return definition;
   }
 
-  public static ClassDefinition parseDefs(String text) {
-    return parseDefs(text, 0);
+  public static Concrete.ClassDefinition parseClass(String text) {
+    return parseClass(text, 0);
   }
 
-  public static ClassDefinition parseDefs(String text, int errors) {
+  public static Concrete.ClassDefinition parseClass(String text, int errors) {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(parse(errorReporter, text).statements());
     Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
-    ClassDefinition result = new DefinitionCheckTypeVisitor().visitClass(classDefinition, null);
     assertEquals(errors, errorReporter.getErrorList().size());
-    return result;
+    return classDefinition;
   }
 
   public static boolean compare(Expression expr1, Abstract.Expression expr2) {

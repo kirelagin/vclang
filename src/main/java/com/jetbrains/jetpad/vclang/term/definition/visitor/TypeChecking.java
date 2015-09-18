@@ -39,7 +39,7 @@ public class TypeChecking {
   public static DataDefinition typeCheckDataBegin(ErrorReporter errorReporter, Namespace namespace, Namespace localNamespace, Abstract.DataDefinition def, List<Binding> localContext) {
     List<TypeArgument> parameters = new ArrayList<>(def.getParameters().size());
     int origSize = localContext.size();
-    CheckTypeVisitor visitor = new CheckTypeVisitor(namespace, localContext, errorReporter, CheckTypeVisitor.Side.RHS);
+    CheckTypeVisitor visitor = new CheckTypeVisitor(localContext, errorReporter, CheckTypeVisitor.Side.RHS);
     for (Abstract.TypeArgument parameter : def.getParameters()) {
       CheckTypeVisitor.OKResult result = visitor.checkType(parameter.getType(), Universe());
       if (result == null) {
@@ -97,14 +97,14 @@ public class TypeChecking {
     }
   }
 
-  public static Constructor typeCheckConstructor(ErrorReporter errorReporter, Namespace namespace, DataDefinition dataDefinition, Abstract.Constructor con, List<Binding> localContext, int conIndex) {
-    try (Utils.CompleteContextSaver ignore = new Utils.CompleteContextSaver(localContext)) {
+  public static Constructor typeCheckConstructor(ErrorReporter errorReporter, DataDefinition dataDefinition, Abstract.Constructor con, List<Binding> localContext, int conIndex) {
+    try (Utils.CompleteContextSaver ignore = new Utils.CompleteContextSaver<>(localContext)) {
       List<TypeArgument> arguments = new ArrayList<>(con.getArguments().size());
       Universe universe = new Universe.Type(0, Universe.Type.PROP);
       int index = 1;
       boolean ok = true;
 
-      CheckTypeVisitor visitor = new CheckTypeVisitor(namespace, localContext, errorReporter, CheckTypeVisitor.Side.RHS);
+      CheckTypeVisitor visitor = new CheckTypeVisitor(localContext, errorReporter, CheckTypeVisitor.Side.RHS);
       List<Pattern> patterns = null;
       if (con.getPatterns() != null) {
         patterns = new ArrayList<>();
@@ -190,20 +190,20 @@ public class TypeChecking {
     // TODO: Do not create child namespace if the definition does not type check.
     if (def.isOverridden()) {
       if (localNamespace == null) {
-        errorReporter.report(new TypeCheckingError(namespace, "Overridden function cannot be static", def, getNames(localContext)));
+        errorReporter.report(new TypeCheckingError("Overridden function cannot be static", def, getNames(localContext)));
         return null;
       }
       typedDef = new OverriddenDefinition(namespace.getChild(def.getName()), localNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null, overriddenFunction);
     } else {
       typedDef = new FunctionDefinition(namespace.getChild(def.getName()), localNamespace == null ? null : localNamespace.getChild(def.getName()), def.getPrecedence(), null, null, def.getArrow(), null);
     }
-    if (!typeCheckFunctionBegin(errorReporter, namespace, def, localContext, overriddenFunction, typedDef)) {
+    if (!typeCheckFunctionBegin(errorReporter, def, localContext, overriddenFunction, typedDef)) {
       return null;
     }
     return typedDef;
   }
 
-  public static boolean typeCheckFunctionBegin(ErrorReporter errorReporter, Namespace namespace, Abstract.FunctionDefinition def, List<Binding> localContext, FunctionDefinition overriddenFunction, FunctionDefinition typedDef) {
+  public static boolean typeCheckFunctionBegin(ErrorReporter errorReporter, Abstract.FunctionDefinition def, List<Binding> localContext, FunctionDefinition overriddenFunction, FunctionDefinition typedDef) {
     if (overriddenFunction == null && def.isOverridden()) {
       // TODO
       // myModuleLoader.getTypeCheckingErrors().add(new TypeCheckingError(parent, "Cannot find function " + def.getName() + " in the parent class", def, getNames(localContext)));
@@ -212,7 +212,7 @@ public class TypeChecking {
     }
 
     List<Argument> arguments = new ArrayList<>(def.getArguments().size());
-    CheckTypeVisitor visitor = new CheckTypeVisitor(namespace, localContext, errorReporter, CheckTypeVisitor.Side.RHS);
+    CheckTypeVisitor visitor = new CheckTypeVisitor(localContext, errorReporter, CheckTypeVisitor.Side.RHS);
 
     List<TypeArgument> splitArgs = null;
     Expression splitResult = null;
@@ -365,9 +365,9 @@ public class TypeChecking {
     return true;
   }
 
-  public static boolean typeCheckFunctionEnd(ErrorReporter errorReporter, Namespace namespace, Abstract.Expression term, FunctionDefinition definition, List<Binding> localContext, FunctionDefinition overriddenFunction) {
+  public static boolean typeCheckFunctionEnd(ErrorReporter errorReporter, Abstract.Expression term, FunctionDefinition definition, List<Binding> localContext, FunctionDefinition overriddenFunction) {
     if (term != null) {
-      CheckTypeVisitor visitor = new CheckTypeVisitor(namespace, localContext, errorReporter, CheckTypeVisitor.Side.LHS);
+      CheckTypeVisitor visitor = new CheckTypeVisitor(localContext, errorReporter, CheckTypeVisitor.Side.LHS);
       CheckTypeVisitor.OKResult termResult = visitor.checkType(term, definition.getResultType());
 
       if (termResult != null) {

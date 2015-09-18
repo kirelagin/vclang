@@ -19,9 +19,9 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseDef;
 import static com.jetbrains.jetpad.vclang.term.expr.Expression.compare;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
+import static com.jetbrains.jetpad.vclang.typechecking.TypeCheckingTestCase.typeCheckDef;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -152,12 +152,12 @@ public class ModuleSerializationTest {
 
   @Test
   public void serializeNestedTest() throws IOException {
-    ClassDefinition def = (ClassDefinition) parseDef("\\class A { \\class B { \\class C { } } }");
+    ClassDefinition def = (ClassDefinition) typeCheckDef("\\class A { \\class B { \\class C { } } }");
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     DataOutputStream dataStream = new DataOutputStream(stream);
     ModuleSerialization.writeStream(def.getNamespace(), def, dataStream);
 
-    ClassDefinition newDef = (ClassDefinition) parseDef("\\class B {}");
+    ClassDefinition newDef = (ClassDefinition) typeCheckDef("\\class B {}");
     RootModule.ROOT.addDefinition(newDef);
     ModuleDeserialization moduleDeserialization = new ModuleDeserialization(moduleLoader);
     ModuleLoadingResult result = moduleDeserialization.readStream(new DataInputStream(new ByteArrayInputStream(stream.toByteArray())), newDef.getNamespace());

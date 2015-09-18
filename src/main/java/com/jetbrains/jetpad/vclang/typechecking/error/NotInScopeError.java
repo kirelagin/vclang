@@ -12,8 +12,17 @@ public class NotInScopeError extends TypeCheckingError {
     myName = name;
   }
 
+  public NotInScopeError(Abstract.PrettyPrintableSourceNode expression, String name) {
+    super("Not in scope", expression, null);
+    myName = name;
+  }
+
   public NotInScopeError(Namespace namespace, Abstract.PrettyPrintableSourceNode expression, Utils.Name name) {
     this(namespace, expression, name.getPrefixName());
+  }
+
+  public NotInScopeError(Abstract.PrettyPrintableSourceNode expression, Utils.Name name) {
+    this(expression, name.getPrefixName());
   }
 
   @Override
