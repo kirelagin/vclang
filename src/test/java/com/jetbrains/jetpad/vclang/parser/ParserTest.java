@@ -1,21 +1,9 @@
 package com.jetbrains.jetpad.vclang.parser;
 
-import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
-import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
-import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
-import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
-import com.jetbrains.jetpad.vclang.term.expr.visitor.ResolveNameVisitor;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.*;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
@@ -74,14 +62,12 @@ public class ParserTest {
 
   @Test
   public void parserLamOpenError() {
-    Concrete.Expression result = parseExpr("\\lam x => (\\Pi (y : Nat) -> (\\lam y => y)) y", 1);
-    assertNull(result);
+    assertNotNull(parseExpr("\\lam x => (\\Pi (y : Nat) -> (\\lam y => y)) y"));
   }
 
   @Test
   public void parserPiOpenError() {
-    Concrete.Expression result = parseExpr("\\Pi (a b : Nat a) -> Nat a b", 1);
-    assertNull(result);
+    assertNotNull(parseExpr("\\Pi (a b : Nat a) -> Nat a b"));
   }
 
   @Test
@@ -96,7 +82,7 @@ public class ParserTest {
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(1)).getType()));
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(2)).getType()));
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(3)).getType()));
-    assertTrue(compare(Apps(Index(0), Index(6), Index(5), Index(4), Index(3), Index(2), Index(1)), def.getResultType()));
+    assertTrue(compare(Apps(Var("A"), Var("x"), Var("y"), Var("z"), Var("w"), Var("t"), Var("r")), def.getResultType()));
   }
 
   @Test
@@ -110,43 +96,8 @@ public class ParserTest {
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(0)).getType()));
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(1)).getType()));
     assertTrue(compare(DefCall(Prelude.NAT), ((Concrete.TypeArgument) def.getArguments().get(2)).getType()));
-    assertTrue(compare(Apps(Index(0), Index(4), Index(2), Index(1)), ((Concrete.TypeArgument) def.getArguments().get(4)).getType()));
+    assertTrue(compare(Apps(Var("A"), Var("x"), Var("y"), Var("z")), ((Concrete.TypeArgument) def.getArguments().get(4)).getType()));
     assertTrue(compare(DefCall(Prelude.NAT), def.getResultType()));
-  }
-
-  @Test
-  public void parserInfix() {
-    List<Argument> arguments = new ArrayList<>(1);
-    arguments.add(Tele(true, vars("x", "y"), Nat()));
-    Namespace namespace = new Namespace(new Utils.Name("test"), null);
-    Definition plus = new FunctionDefinition(namespace.getChild(new Utils.Name("+", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
-    Definition mul = new FunctionDefinition(namespace.getChild(new Utils.Name("*", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 7), arguments, Nat(), Definition.Arrow.LEFT, null);
-    namespace.addDefinition(plus);
-    namespace.addDefinition(mul);
-
-    ListErrorReporter errorReporter = new ListErrorReporter();
-    NameResolver nameResolver = new NamespaceNameResolver(namespace, null);
-    Concrete.Expression result = parseExpr("0 + 1 * 2 + 3 * (4 * 5) * (6 + 7)", 0);
-    assertEquals(0, errorReporter.getErrorList().size());
-    assertNotNull(result);
-    result.accept(new ResolveNameVisitor(errorReporter, nameResolver, new ArrayList<String>(0), true), null);
-    assertTrue(compare(BinOp(BinOp(Zero(), plus, BinOp(Suc(Zero()), mul, Suc(Suc(Zero())))), plus, BinOp(BinOp(Suc(Suc(Suc(Zero()))), mul, BinOp(Suc(Suc(Suc(Suc(Zero())))), mul, Suc(Suc(Suc(Suc(Suc(Zero()))))))), mul, BinOp(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))), plus, Suc(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))))))), result));
-  }
-
-  @Test
-  public void parserInfixError() {
-    List<Argument> arguments = new ArrayList<>(1);
-    arguments.add(Tele(true, vars("x", "y"), Nat()));
-    Namespace namespace = new Namespace(new Utils.Name("test"), null);
-    Definition plus = new FunctionDefinition(namespace.getChild(new Utils.Name("+", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
-    Definition mul = new FunctionDefinition(namespace.getChild(new Utils.Name("*", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.RIGHT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
-    namespace.addDefinition(plus);
-    namespace.addDefinition(mul);
-
-    ListErrorReporter errorReporter = new ListErrorReporter();
-    NameResolver nameResolver = new NamespaceNameResolver(namespace, null);
-    parseExpr("11 + 2 * 3").accept(new ResolveNameVisitor(errorReporter, nameResolver, new ArrayList<String>(0), true), null);
-    assertEquals(1, errorReporter.getErrorList().size());
   }
 
   @Test

@@ -3,9 +3,18 @@ package com.jetbrains.jetpad.vclang.typechecking.nameresolver;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Abstract;
+import com.jetbrains.jetpad.vclang.term.Concrete;
+import com.jetbrains.jetpad.vclang.term.definition.Definition;
+import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
+import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.compare;
+import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
 import static com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolverTestCase.resolveNamesClass;
 import static com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolverTestCase.resolveNamesExpr;
 import static org.junit.Assert.*;
@@ -14,6 +23,44 @@ public class NameResolverTest {
   @Test
   public void nameResolverError() {
     resolveNamesExpr("A { \\function f (x : Nat) <= elim x | zero => zero | suc x' => zero }", -1);
+  }
+
+  @Test
+  public void nameResolverLamOpenError() {
+    assertNull(resolveNamesExpr("\\lam x => (\\Pi (y : Nat) -> (\\lam y => y)) y", 1));
+  }
+
+  @Test
+  public void nameResolverPiOpenError() {
+    assertNull(resolveNamesExpr("\\Pi (a b : Nat a) -> Nat a b", 1));
+  }
+
+  @Test
+  public void parserInfix() {
+    List<Argument> arguments = new ArrayList<>(1);
+    arguments.add(Tele(true, vars("x", "y"), Nat()));
+    Namespace namespace = new Namespace(new Utils.Name("test"), null);
+    Definition plus = new FunctionDefinition(namespace.getChild(new Utils.Name("+", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
+    Definition mul = new FunctionDefinition(namespace.getChild(new Utils.Name("*", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 7), arguments, Nat(), Definition.Arrow.LEFT, null);
+    namespace.addDefinition(plus);
+    namespace.addDefinition(mul);
+
+    Concrete.Expression result = resolveNamesExpr("0 + 1 * 2 + 3 * (4 * 5) * (6 + 7)");
+    assertNotNull(result);
+    assertTrue(compare(BinOp(BinOp(Zero(), plus, BinOp(Suc(Zero()), mul, Suc(Suc(Zero())))), plus, BinOp(BinOp(Suc(Suc(Suc(Zero()))), mul, BinOp(Suc(Suc(Suc(Suc(Zero())))), mul, Suc(Suc(Suc(Suc(Suc(Zero()))))))), mul, BinOp(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))), plus, Suc(Suc(Suc(Suc(Suc(Suc(Suc(Zero())))))))))), result));
+  }
+
+  @Test
+  public void parserInfixError() {
+    List<Argument> arguments = new ArrayList<>(1);
+    arguments.add(Tele(true, vars("x", "y"), Nat()));
+    Namespace namespace = new Namespace(new Utils.Name("test"), null);
+    Definition plus = new FunctionDefinition(namespace.getChild(new Utils.Name("+", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.LEFT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
+    Definition mul = new FunctionDefinition(namespace.getChild(new Utils.Name("*", Abstract.Definition.Fixity.INFIX)), null, new Definition.Precedence(Definition.Associativity.RIGHT_ASSOC, (byte) 6), arguments, Nat(), Definition.Arrow.LEFT, null);
+    namespace.addDefinition(plus);
+    namespace.addDefinition(mul);
+
+    resolveNamesExpr("11 + 2 * 3", 1);
   }
 
   @Test

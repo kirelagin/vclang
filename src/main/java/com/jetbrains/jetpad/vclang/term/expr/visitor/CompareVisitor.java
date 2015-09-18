@@ -225,7 +225,7 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
       return new MaybeResult(expr1);
     }
 
-    if (expr1 instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr1).getDefinitionPair().definition == Prelude.PATH_CON && args.size() == 1 && args.get(0).getExpression() instanceof Abstract.LamExpression) {
+    if (expr1 instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr1).getDefinitionPair() != null && ((Abstract.DefCallExpression) expr1).getDefinitionPair().definition == Prelude.PATH_CON && args.size() == 1 && args.get(0).getExpression() instanceof Abstract.LamExpression) {
       List<Abstract.ArgumentExpression> args1 = new ArrayList<>();
       Abstract.Expression expr2 = Abstract.getFunction(((Abstract.LamExpression) args.get(0).getExpression()).getBody(), args1);
       if (expr2 instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr2).getDefinitionPair().definition == Prelude.AT && args1.size() == 5 && args1.get(4).getExpression() instanceof Abstract.IndexExpression && ((Abstract.IndexExpression) args1.get(4).getExpression()).getIndex() == 0) {
@@ -281,6 +281,11 @@ public class CompareVisitor implements AbstractExpressionVisitor<Expression, Com
     if (tupleResult != null) return tupleResult;
     Result lamResult = checkLam(expr, other);
     if (lamResult != null) return lamResult;
+
+    if (expr.getDefinitionPair() == null && other instanceof Abstract.VarExpression) {
+      return new JustResult(expr.getName().name.equals(((Abstract.VarExpression) other).getName().name) ? CMP.EQUALS : CMP.NOT_EQUIV);
+    }
+
     if (!(other instanceof DefCallExpression)) return new JustResult(CMP.NOT_EQUIV);
     DefCallExpression otherDefCall = (DefCallExpression) other;
     Definition definition1 = expr.getDefinitionPair().definition instanceof OverriddenDefinition ? ((OverriddenDefinition) expr.getDefinitionPair().definition).getOverriddenFunction() : expr.getDefinitionPair().definition;
