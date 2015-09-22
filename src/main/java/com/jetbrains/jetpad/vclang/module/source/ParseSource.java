@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.module.source;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
 import com.jetbrains.jetpad.vclang.module.Namespace;
@@ -12,9 +13,10 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionCheckTypeVisitor;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.CountingErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.LocalErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.NameDefinedError;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.CountingErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.LocalErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.DeepNamespaceNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.LoadingNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
@@ -80,12 +82,13 @@ public abstract class ParseSource implements Source {
 
     NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(myModule.getParent(), null));
     List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(tree);
-    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
+    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, myModule.getName().name, statements);
     Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, myModule, nameResolver).visitClass(classDefinition, null);
+    myErrorReporter.report(new NameDefinedError(true, classDefinition, classDefinition.getName(), myModule.getParent()));
     ClassDefinition result = new DefinitionCheckTypeVisitor(errorReporter).visitClass(classDefinition, null);
     if (result != null) {
       result.setLocalNamespace(localNamespace);
     }
-    return new ModuleLoadingResult(myModule, result, true, countingErrorReporter.getErrorsNumber());
+    return new ModuleLoadingResult(myModule, new DefinitionPair(myModule, classDefinition, result), true, countingErrorReporter.getErrorsNumber());
   }
 }

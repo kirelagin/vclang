@@ -93,23 +93,24 @@ public class Namespace implements NamespaceMember {
     return null;
   }
 
-  public Abstract.Definition addAbstractDefinition(Abstract.Definition definition) {
+  public DefinitionPair addAbstractDefinition(Abstract.Definition definition) {
     if (myMembers == null) {
       myMembers = new HashMap<>();
     } else {
       DefinitionPair oldMember = myMembers.get(definition.getName().name);
       if (oldMember != null) {
         if (oldMember.abstractDefinition != null) {
-          return oldMember.abstractDefinition;
+          return null;
         } else {
           oldMember.abstractDefinition = definition;
-          return null;
+          return oldMember;
         }
       }
     }
 
-    myMembers.put(definition.getName().name, new DefinitionPair(getChild(definition.getName()), definition, null));
-    return null;
+    DefinitionPair result = new DefinitionPair(getChild(definition.getName()), definition, null);
+    myMembers.put(definition.getName().name, result);
+    return result;
   }
 
   public Definition addDefinition(Definition definition) {
@@ -136,7 +137,7 @@ public class Namespace implements NamespaceMember {
       myMembers = new HashMap<>();
     } else {
       DefinitionPair oldMember = myMembers.get(member.namespace.getName().name);
-      if (oldMember != null) {
+      if (oldMember != null && (oldMember.definition != null || oldMember.abstractDefinition != null)) {
         return oldMember;
       }
     }

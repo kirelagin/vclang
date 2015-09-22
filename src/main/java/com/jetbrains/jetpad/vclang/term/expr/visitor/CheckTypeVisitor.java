@@ -13,6 +13,7 @@ import com.jetbrains.jetpad.vclang.term.pattern.NamePattern;
 import com.jetbrains.jetpad.vclang.term.pattern.Pattern;
 import com.jetbrains.jetpad.vclang.term.pattern.Utils;
 import com.jetbrains.jetpad.vclang.typechecking.error.*;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 import java.util.ArrayList;
 import java.util.Collections;

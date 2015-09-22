@@ -10,7 +10,7 @@ import com.jetbrains.jetpad.vclang.term.expr.Clause;
 import com.jetbrains.jetpad.vclang.term.expr.ElimExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 import org.junit.Test;
 
 import java.util.ArrayList;

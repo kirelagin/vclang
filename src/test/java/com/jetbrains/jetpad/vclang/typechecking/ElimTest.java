@@ -11,7 +11,7 @@ import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Argument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 import org.junit.Test;
 
 import java.util.ArrayList;

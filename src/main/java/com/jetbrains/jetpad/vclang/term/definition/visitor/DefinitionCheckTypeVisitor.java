@@ -2,7 +2,7 @@ package com.jetbrains.jetpad.vclang.term.definition.visitor;
 
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Void, Definition> {
   private final ErrorReporter myErrorReporter;

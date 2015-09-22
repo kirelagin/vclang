@@ -4,7 +4,7 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;

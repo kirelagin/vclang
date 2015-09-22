@@ -7,7 +7,7 @@ import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveName
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 
 import java.util.ArrayList;
 import java.util.Collection;

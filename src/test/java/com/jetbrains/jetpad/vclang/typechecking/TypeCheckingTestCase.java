@@ -7,8 +7,8 @@ import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionCheckTypeVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CheckTypeVisitor;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 
 import java.util.ArrayList;
 

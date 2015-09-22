@@ -1,9 +1,6 @@
 package com.jetbrains.jetpad.vclang.serialization;
 
-import com.jetbrains.jetpad.vclang.module.ModuleLoader;
-import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
-import com.jetbrains.jetpad.vclang.module.Namespace;
-import com.jetbrains.jetpad.vclang.module.RootModule;
+import com.jetbrains.jetpad.vclang.module.*;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 import com.jetbrains.jetpad.vclang.term.expr.*;
@@ -73,7 +70,7 @@ public class ModuleDeserialization {
         Namespace parentNamespace = (Namespace) parent;
         if (code == ModuleSerialization.NAMESPACE_CODE) {
           ModuleLoadingResult result = myModuleLoader.load((Namespace) parent, name, true);
-          child = result == null || result.classDefinition == null ? parentNamespace.getChild(name1) : result.classDefinition.getNamespace();
+          child = result == null || result.definition == null ? parentNamespace.getChild(name1) : result.definition.namespace;
         } else {
           if (isNew) {
             child = newDefinition(code, name1, parentNamespace);
@@ -96,7 +93,7 @@ public class ModuleDeserialization {
     if (stream.readBoolean()) {
       deserializeClassDefinition(stream, definitionMap, classDefinition);
     }
-    return new ModuleLoadingResult(namespace, classDefinition, false, errorsNumber);
+    return new ModuleLoadingResult(namespace, new DefinitionPair(namespace, null, classDefinition), false, errorsNumber);
   }
 
   public static Definition newDefinition(int code, Utils.Name name, Namespace parent) throws IncorrectFormat {

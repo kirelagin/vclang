@@ -5,7 +5,7 @@ import com.jetbrains.jetpad.vclang.module.ModuleLoader;
 import com.jetbrains.jetpad.vclang.module.ModuleLoadingResult;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 import java.io.File;
 import java.io.FileInputStream;

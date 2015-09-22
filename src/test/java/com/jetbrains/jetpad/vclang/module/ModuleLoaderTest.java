@@ -2,9 +2,9 @@ package com.jetbrains.jetpad.vclang.module;
 
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
-import com.jetbrains.jetpad.vclang.typechecking.error.ListErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -97,9 +97,9 @@ public class ModuleLoaderTest {
     assertNotNull(result);
     assertEquals(0, errorReporter.getErrorList().size());
     assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getMembers().size());
-    assertEquals(1, result.classDefinition.getLocalNamespace().getMembers().size());
-    assertEquals(0, result.classDefinition.getNamespace().getDefinition("C").getNamespace().getMembers().size());
-    assertEquals(2, ((ClassDefinition) result.classDefinition.getNamespace().getDefinition("C")).getLocalNamespace().getMembers().size());
+    assertEquals(1, ((ClassDefinition) result.definition.definition).getLocalNamespace().getMembers().size());
+    assertEquals(0, result.definition.namespace.getDefinition("C").getNamespace().getMembers().size());
+    assertEquals(2, ((ClassDefinition) result.namespace.getDefinition("C")).getLocalNamespace().getMembers().size());
   }
 
   @Test

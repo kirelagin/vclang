@@ -4,10 +4,10 @@ import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveNameVisitor;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
 import com.jetbrains.jetpad.vclang.typechecking.error.NameDefinedError;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
@@ -15,7 +15,7 @@ import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolv
 import java.io.Closeable;
 import java.util.List;
 
-public class StatementResolveNameVisitor implements AbstractStatementVisitor<Void, Void>, Closeable {
+public class StatementResolveNameVisitor implements AbstractStatementVisitor<Void, Object>, Closeable {
   private final ErrorReporter myErrorReporter;
   private final Namespace myStaticNamespace;
   private final Namespace myDynamicNamespace;
@@ -40,16 +40,19 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
   }
 
   @Override
-  public Void visitDefine(Abstract.DefineStatement stat, Void params) {
+  public DefinitionPair visitDefine(Abstract.DefineStatement stat, Void params) {
     if (!stat.isStatic() && myDynamicNamespace == null) {
       myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Non-static definition in a static context", stat, myContext));
+      return null;
     } else
     if (stat.isStatic() && myStaticNamespace == null) {
       myErrorReporter.report(new TypeCheckingError(null, "Static definitions are not allowed in this context", stat, myContext));
+      return null;
     } else {
       stat.getDefinition().accept(new DefinitionResolveNameVisitor(myErrorReporter, myStaticNamespace, stat.isStatic() ? null : myDynamicNamespace, myNameResolver, myContext), null);
       Namespace parentNamespace = stat.isStatic() ? myStaticNamespace : myDynamicNamespace;
-      if (parentNamespace.addAbstractDefinition(stat.getDefinition()) != null) {
+      DefinitionPair result = parentNamespace.addAbstractDefinition(stat.getDefinition());
+      if (result == null) {
         myErrorReporter.report(new NameDefinedError(true, stat, stat.getDefinition().getName(), parentNamespace));
         return null;
       }
@@ -58,8 +61,8 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
           parentNamespace.addAbstractDefinition(constructor);
         }
       }
+      return result;
     }
-    return null;
   }
 
   @Override

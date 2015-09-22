@@ -3,9 +3,9 @@ package com.jetbrains.jetpad.vclang.typechecking.nameresolver;
 import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.module.Namespace;
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.NotInScopeError;
 import com.jetbrains.jetpad.vclang.typechecking.error.NotInStaticScopeError;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 public interface NameResolver {
   DefinitionPair locateName(String name, boolean isStatic);

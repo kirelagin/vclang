@@ -12,7 +12,11 @@ import com.jetbrains.jetpad.vclang.term.expr.arg.TypeArgument;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.*;
 import com.jetbrains.jetpad.vclang.term.pattern.Pattern;
-import com.jetbrains.jetpad.vclang.typechecking.error.*;
+import com.jetbrains.jetpad.vclang.typechecking.error.ArgInferenceError;
+import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
+import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.typechecking.error.TypeMismatchError;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 import java.util.ArrayList;
 import java.util.List;

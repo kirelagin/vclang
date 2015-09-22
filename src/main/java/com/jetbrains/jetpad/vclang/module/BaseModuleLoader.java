@@ -9,22 +9,20 @@ import com.jetbrains.jetpad.vclang.module.source.DummySourceSupplier;
 import com.jetbrains.jetpad.vclang.module.source.Source;
 import com.jetbrains.jetpad.vclang.module.source.SourceSupplier;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
+import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public abstract class BaseModuleLoader implements ModuleLoader {
   private final List<Namespace> myLoadingModules = new ArrayList<>();
   private SourceSupplier mySourceSupplier;
   private OutputSupplier myOutputSupplier;
   private final boolean myRecompile;
-  private final Set<Namespace> myLoadedModules = new HashSet<>();
 
   public BaseModuleLoader(boolean recompile) {
     mySourceSupplier = DummySourceSupplier.getInstance();
@@ -43,6 +41,9 @@ public abstract class BaseModuleLoader implements ModuleLoader {
   @Override
   public ModuleLoadingResult load(Namespace parent, String name, boolean tryLoad) {
     DefinitionPair member = parent.getMember(name);
+    if (member != null && (member.abstractDefinition != null || member.definition != null)) {
+      return null;
+    }
     Namespace module = member == null ? new Namespace(new Utils.Name(name), parent) : member.namespace;
 
     int index = myLoadingModules.indexOf(module);
@@ -50,11 +51,6 @@ public abstract class BaseModuleLoader implements ModuleLoader {
       loadingError(new CycleError(module, new ArrayList<>(myLoadingModules.subList(index, myLoadingModules.size()))));
       return null;
     }
-
-    if (myLoadedModules.contains(module)) {
-      return null;
-    }
-    myLoadedModules.add(module);
 
     Source source = mySourceSupplier.getSource(module);
     Output output = myOutputSupplier.getOutput(module);
@@ -77,8 +73,8 @@ public abstract class BaseModuleLoader implements ModuleLoader {
       ModuleLoadingResult result;
       if (compile) {
         result = source.load();
-        if (result != null && result.errorsNumber == 0 && result.classDefinition != null && output.canWrite()) {
-          output.write(module, result.classDefinition);
+        if (result != null && result.errorsNumber == 0 && result.definition != null && result.definition.definition instanceof ClassDefinition && output.canWrite()) {
+          output.write(module, (ClassDefinition) result.definition.definition);
         }
       } else {
         result = output.read();
@@ -89,12 +85,11 @@ public abstract class BaseModuleLoader implements ModuleLoader {
         error.setLevel(GeneralError.Level.INFO);
         loadingError(error);
       } else {
-        loadingSucceeded(module, result.classDefinition, result.compiled);
+        loadingSucceeded(module, result.definition, result.compiled);
       }
 
-      parent.addChild(module);
-      if (result != null && result.classDefinition != null) {
-        parent.addDefinition(result.classDefinition);
+      if (result != null && result.definition != null) {
+        parent.addMember(result.definition);
       }
       return result;
     } catch (EOFException e) {

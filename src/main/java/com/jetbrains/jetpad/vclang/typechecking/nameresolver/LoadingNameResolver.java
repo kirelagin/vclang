@@ -22,11 +22,7 @@ public class LoadingNameResolver implements NameResolver {
     }
 
     ModuleLoadingResult result = myModuleLoader.load(RootModule.ROOT, name, true);
-    if (result == null) {
-      return null;
-    } else {
-      return new DefinitionPair(result.namespace, result.classDefinition, null); // TODO: return Abstract.Definition
-    }
+    return result == null ? null : result.definition;
   }
 
   @Override
@@ -38,9 +34,9 @@ public class LoadingNameResolver implements NameResolver {
 
     if (member.definition == null && member.abstractDefinition == null) {
       ModuleLoadingResult result = myModuleLoader.load(parent, name, true);
-      if (result != null) {
-        // TODO: return Abstract.Definition
-        member.definition = result.classDefinition;
+      if (result != null && result.definition != null) {
+        member.abstractDefinition = result.definition.abstractDefinition;
+        member.definition = result.definition.definition;
       }
     }
 

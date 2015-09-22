@@ -3,8 +3,8 @@ package com.jetbrains.jetpad.vclang.parser;
 import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 
 import java.util.List;
 
