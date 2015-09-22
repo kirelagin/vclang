@@ -6,6 +6,7 @@ import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
+import com.jetbrains.jetpad.vclang.typechecking.error.NameDefinedError;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
@@ -47,7 +48,16 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
       myErrorReporter.report(new TypeCheckingError(null, "Static definitions are not allowed in this context", stat, myContext));
     } else {
       stat.getDefinition().accept(new DefinitionResolveNameVisitor(myErrorReporter, myStaticNamespace, stat.isStatic() ? null : myDynamicNamespace, myNameResolver, myContext), null);
-      (stat.isStatic() ? myStaticNamespace : myDynamicNamespace).addAbstractDefinition(stat.getDefinition());
+      Namespace parentNamespace = stat.isStatic() ? myStaticNamespace : myDynamicNamespace;
+      if (parentNamespace.addAbstractDefinition(stat.getDefinition()) != null) {
+        myErrorReporter.report(new NameDefinedError(true, stat, stat.getDefinition().getName(), parentNamespace));
+        return null;
+      }
+      if (stat.getDefinition() instanceof Abstract.DataDefinition) {
+        for (Abstract.Constructor constructor : ((Abstract.DataDefinition) stat.getDefinition()).getConstructors()) {
+          parentNamespace.addAbstractDefinition(constructor);
+        }
+      }
     }
     return null;
   }
@@ -77,10 +87,10 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
     Abstract.Identifier identifier = path.get(0);
     DefinitionPair member = null;
     for (Abstract.Identifier aPath : path) {
-      DefinitionPair member1 = member == null ? NameResolver.Helper.locateName(myNameResolver, identifier.getName().name, aPath, true, myErrorReporter) : myNameResolver.getMember(member.namespace, aPath.getName().name);
+      DefinitionPair member1 = member == null ? NameResolver.Helper.locateName(myNameResolver, identifier.getName().name, aPath, false, myErrorReporter) : myNameResolver.getMember(member.namespace, aPath.getName().name);
       if (member1 == null) {
         if (member != null) {
-          myErrorReporter.report(new TypeCheckingError(myStaticNamespace, "Name '" + aPath.getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
+          myErrorReporter.report(new NameDefinedError(false, stat, aPath.getName(), member.namespace));
         }
         return null;
       }
@@ -93,7 +103,7 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
       for (Abstract.Identifier name : names) {
         DefinitionPair member1 = myNameResolver.getMember(member.namespace, name.getName().name);
         if (member1 == null) {
-          myErrorReporter.report(new TypeCheckingError("Name '" + name.getName() + "' " + "does not defined in " + member.namespace, stat, myContext));
+          myErrorReporter.report(new NameDefinedError(false, stat, name.getName(), member.namespace));
         } else {
           processNamespaceCommand(member1, export, remove, stat);
         }
@@ -118,7 +128,7 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
     }
 
     if (!ok) {
-      GeneralError error = new TypeCheckingError(myStaticNamespace, "Name '" + member.namespace.getName() + "' " + (remove ? "does not defined" : "is already in scope"), sourceNode, myContext);
+      GeneralError error = new NameDefinedError(remove, sourceNode, member.namespace.getName(), null);
       error.setLevel(GeneralError.Level.WARNING);
       myErrorReporter.report(error);
     }

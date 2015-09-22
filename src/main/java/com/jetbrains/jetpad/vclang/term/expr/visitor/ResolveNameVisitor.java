@@ -9,7 +9,7 @@ import com.jetbrains.jetpad.vclang.term.definition.Constructor;
 import com.jetbrains.jetpad.vclang.term.expr.arg.Utils;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
+import com.jetbrains.jetpad.vclang.typechecking.error.NameDefinedError;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NamespaceNameResolver;
@@ -51,12 +51,15 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
     } else {
       if (expr.getExpression() != null) {
         if (expr.getExpression() instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr.getExpression()).getExpression() == null) {
+          if (((Abstract.DefCallExpression) expr.getExpression()).getDefinitionPair() == null) {
+            return null;
+          }
           Namespace namespace = ((Abstract.DefCallExpression) expr.getExpression()).getDefinitionPair().namespace;
           DefinitionPair member = myNameResolver.getMember(namespace, expr.getName().name);
           if (member != null) {
             expr.replaceWithDefCall(member);
           } else {
-            myErrorReporter.report(new TypeCheckingError("Name '" + expr.getName() + "' " + "does not defined in " + namespace, expr, myContext));
+            myErrorReporter.report(new NameDefinedError(false, expr, expr.getName(), namespace));
           }
         }
       } else {

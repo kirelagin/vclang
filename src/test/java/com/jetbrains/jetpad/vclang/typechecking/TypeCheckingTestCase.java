@@ -23,7 +23,7 @@ public class TypeCheckingTestCase {
   public static CheckTypeVisitor.Result typeCheckExpr(Concrete.Expression expression, Expression expectedType, int errors) {
     ListErrorReporter errorReporter = new ListErrorReporter();
     CheckTypeVisitor.Result result = typeCheckExpr(expression, expectedType, errorReporter);
-    assertEquals(errors, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
@@ -42,7 +42,7 @@ public class TypeCheckingTestCase {
   public static Definition typeCheckDef(Concrete.Definition definition, int errors) {
     ListErrorReporter errorReporter = new ListErrorReporter();
     Definition result = definition.accept(new DefinitionCheckTypeVisitor(errorReporter), null);
-    assertEquals(errors, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
@@ -57,15 +57,15 @@ public class TypeCheckingTestCase {
   public static ClassDefinition typeCheckClass(Concrete.ClassDefinition classDefinition, int errors) {
     ListErrorReporter errorReporter = new ListErrorReporter();
     ClassDefinition result = new DefinitionCheckTypeVisitor(errorReporter).visitClass(classDefinition, null);
-    assertEquals(errors, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
   public static ClassDefinition typeCheckClass(String text, int errors) {
-    return typeCheckClass(parseClass(text, 0), errors);
+    return typeCheckClass(parseClass("test", text, 0), errors);
   }
 
   public static ClassDefinition typeCheckClass(String text) {
-    return typeCheckClass(parseClass(text, 0), 0);
+    return typeCheckClass(parseClass("test", text, 0), 0);
   }
 }

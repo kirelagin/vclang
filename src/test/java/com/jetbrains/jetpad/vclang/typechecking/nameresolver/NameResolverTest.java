@@ -245,26 +245,26 @@ public class NameResolverTest {
             "\\export C\n" +
           "}\n" +
           "\\class D { \\export B }\n" +
-          "\\function f (b : B) : b.C.z = x + b.y => path (\\lam _ => x + b.y)\n" +
+          "\\function f (b : B) : b.C.z = b.z => path (\\lam _ => b.w + b.y)\n" +
         "}");
     assertNotNull(localNamespace);
     assertNotNull(RootModule.ROOT.getMember("test"));
     Namespace staticNamespace = RootModule.ROOT.getMember("test").namespace;
 
-    assertEquals(2, staticNamespace.getMembers().size());
+    assertTrue(staticNamespace.getMembers().toString(), staticNamespace.getMembers().isEmpty());
     assertNotNull(localNamespace.getMember("A"));
     Abstract.ClassDefinition classA = (Abstract.ClassDefinition) localNamespace.getMember("A").abstractDefinition;
-    assertEquals(4, classA.getStatements().size());
-    assertTrue(localNamespace.getMember("A").namespace.getMembers().isEmpty());
+    assertEquals(classA.getStatements().toString(), 4, classA.getStatements().size());
+    assertTrue(localNamespace.getMember("A").namespace.getMembers().toString(), localNamespace.getMember("A").namespace.getMembers().isEmpty());
     Abstract.ClassDefinition classB = (Abstract.ClassDefinition) getField(classA, "B");
     assertNotNull(classB);
-    assertEquals(3, classB.getStatements().size());
+    assertEquals(classB.getStatements().toString(), 3, classB.getStatements().size());
     Abstract.ClassDefinition classC = (Abstract.ClassDefinition) getField(classB, "C");
     assertNotNull(classC);
-    assertEquals(2, classC.getStatements().size());
+    assertEquals(classC.getStatements().toString(), 2, classC.getStatements().size());
     Abstract.ClassDefinition classD = (Abstract.ClassDefinition) getField(classA, "D");
     assertNotNull(classD);
-    assertEquals(1, classD.getStatements().size());
+    assertEquals(classD.getStatements().toString(), 1, classD.getStatements().size());
   }
 
   private Abstract.Definition getField(Abstract.ClassDefinition classDefinition, String name) {
@@ -274,6 +274,21 @@ public class NameResolverTest {
       }
     }
     return null;
+  }
+
+  @Test
+  public void defineExistingTest() {
+    resolveNamesClass("test", "\\static \\class A { } \\function A => 0");
+  }
+
+  @Test
+  public void defineExistingStaticTestError() {
+    resolveNamesClass("test", "\\static \\class A { } \\static \\function A => 0", 1);
+  }
+
+  @Test
+  public void defineExistingDynamicTestError() {
+    resolveNamesClass("test", "\\class A { } \\function A => 0", 1);
   }
 
   @Test
@@ -309,11 +324,6 @@ public class NameResolverTest {
   @Test
   public void openAbstractTestError2() {
     resolveNamesClass("test", "\\static \\class A { \\function x : Nat \\function y => x } \\open A \\function z => y", 1);
-  }
-
-  @Test
-  public void staticInOnlyStaticTestError() {
-    resolveNamesClass("test", "\\function B : \\Type0 \\static \\class A {} \\static \\class A { \\static \\function s => 0 \\static \\data D (A : Nat) | foo Nat | bar }", 1);
   }
 
   @Test

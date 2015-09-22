@@ -35,7 +35,7 @@ public class ParserTestCase {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     Concrete.Expression result = new BuildVisitor(errorReporter).visitExpr(parse(errorReporter, text).expr());
-    assertEquals(errors, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
@@ -51,20 +51,20 @@ public class ParserTestCase {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     Concrete.Definition definition = new BuildVisitor(errorReporter).visitDefinition(parse(errorReporter, text).definition());
-    assertEquals(errors, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return definition;
   }
 
-  public static Concrete.ClassDefinition parseClass(String text) {
-    return parseClass(text, 0);
+  public static Concrete.ClassDefinition parseClass(String name, String text) {
+    return parseClass(name, text, 0);
   }
 
-  public static Concrete.ClassDefinition parseClass(String text, int errors) {
+  public static Concrete.ClassDefinition parseClass(String name, String text, int errors) {
     RootModule.initialize();
     ListErrorReporter errorReporter = new ListErrorReporter();
     List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(parse(errorReporter, text).statements());
-    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, "test", statements);
-    assertEquals(errors, errorReporter.getErrorList().size());
+    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, name, statements);
+    assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return classDefinition;
   }
 
