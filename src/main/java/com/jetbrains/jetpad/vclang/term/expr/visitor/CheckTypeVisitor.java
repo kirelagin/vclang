@@ -1141,8 +1141,9 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
   }
 
   @Override
-  public Result visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Expression params) {
-    throw new UnsupportedOperationException();
+  public Result visitBinOpSequence(Abstract.BinOpSequenceExpression expr, Expression expectedType) {
+    assert expr.getSequence().isEmpty();
+    return typeCheck(expr.getLeft(), expectedType);
   }
 
   public static class ExpandPatternResult {

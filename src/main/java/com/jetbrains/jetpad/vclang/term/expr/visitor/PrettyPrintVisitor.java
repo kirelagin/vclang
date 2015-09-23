@@ -90,10 +90,10 @@ public class PrettyPrintVisitor implements AbstractExpressionVisitor<Byte, Void>
   }
 
   private Integer getNumber(Abstract.Expression expr) {
-    if (expr instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr).getDefinitionPair().definition == Prelude.ZERO) {
+    if (expr instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) expr).getDefinitionPair() != null && ((Abstract.DefCallExpression) expr).getDefinitionPair().definition == Prelude.ZERO) {
       return 0;
     }
-    if (expr instanceof Abstract.AppExpression && ((Abstract.AppExpression) expr).getFunction() instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) ((Abstract.AppExpression) expr).getFunction()).getDefinitionPair().definition == Prelude.SUC) {
+    if (expr instanceof Abstract.AppExpression && ((Abstract.AppExpression) expr).getFunction() instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) ((Abstract.AppExpression) expr).getFunction()).getDefinitionPair() != null && ((Abstract.DefCallExpression) ((Abstract.AppExpression) expr).getFunction()).getDefinitionPair().definition == Prelude.SUC) {
       Integer result = getNumber(((Abstract.AppExpression) expr).getArgument().getExpression());
       if (result == null) return null;
       return result + 1;

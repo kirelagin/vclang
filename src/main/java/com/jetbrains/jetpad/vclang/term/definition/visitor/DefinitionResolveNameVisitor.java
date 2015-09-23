@@ -14,7 +14,7 @@ import com.jetbrains.jetpad.vclang.typechecking.nameresolver.StaticNameResolver;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<Void, Object> {
+public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<Void, Namespace> {
   private final ErrorReporter myErrorReporter;
   private final Namespace myStaticNamespace;
   private final Namespace myDynamicNamespace;
@@ -79,7 +79,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   }
 
   @Override
-  public Void visitData(Abstract.DataDefinition def, Void params) {
+  public Namespace visitData(Abstract.DataDefinition def, Void params) {
     ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myContext, myDynamicNamespace == null);
 
     try (Utils.CompleteContextSaver<String> saver = new Utils.CompleteContextSaver<>(myContext)) {
@@ -105,7 +105,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<V
   }
 
   @Override
-  public Void visitConstructor(Abstract.Constructor def, Void params) {
+  public Namespace visitConstructor(Abstract.Constructor def, Void params) {
     try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
       ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myContext, myDynamicNamespace == null);
       if (def.getPatterns() != null) {

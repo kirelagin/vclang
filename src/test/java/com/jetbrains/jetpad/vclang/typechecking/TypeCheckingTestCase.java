@@ -1,5 +1,7 @@
 package com.jetbrains.jetpad.vclang.typechecking;
 
+import com.jetbrains.jetpad.vclang.module.Namespace;
+import com.jetbrains.jetpad.vclang.module.RootModule;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.definition.Binding;
 import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
@@ -12,7 +14,8 @@ import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter
 
 import java.util.ArrayList;
 
-import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.*;
+import static com.jetbrains.jetpad.vclang.parser.ParserTestCase.parseClass;
+import static com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolverTestCase.*;
 import static org.junit.Assert.assertEquals;
 
 public class TypeCheckingTestCase {
@@ -28,44 +31,46 @@ public class TypeCheckingTestCase {
   }
 
   public static CheckTypeVisitor.Result typeCheckExpr(String text, Expression expectedType, ErrorReporter errorReporter) {
-    return typeCheckExpr(parseExpr(text, 0), expectedType, errorReporter);
+    return typeCheckExpr(resolveNamesExpr(text), expectedType, errorReporter);
   }
 
   public static CheckTypeVisitor.Result typeCheckExpr(String text, Expression expectedType, int errors) {
-    return typeCheckExpr(parseExpr(text, 0), expectedType, errors);
+    return typeCheckExpr(resolveNamesExpr(text), expectedType, errors);
   }
 
   public static CheckTypeVisitor.Result typeCheckExpr(String text, Expression expectedType) {
-    return typeCheckExpr(parseExpr(text, 0), expectedType, 0);
+    return typeCheckExpr(resolveNamesExpr(text), expectedType, 0);
   }
 
   public static Definition typeCheckDef(Concrete.Definition definition, int errors) {
     ListErrorReporter errorReporter = new ListErrorReporter();
-    Definition result = definition.accept(new DefinitionCheckTypeVisitor(errorReporter), null);
+    Definition result = definition.accept(new DefinitionCheckTypeVisitor(RootModule.ROOT, errorReporter), null);
     assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
   public static Definition typeCheckDef(String text, int errors) {
-    return typeCheckDef(parseDef(text, 0), errors);
+    return typeCheckDef(resolveNamesDef(text), errors);
   }
 
   public static Definition typeCheckDef(String text) {
-    return typeCheckDef(parseDef(text, 0), 0);
+    return typeCheckDef(text, 0);
   }
 
-  public static ClassDefinition typeCheckClass(Concrete.ClassDefinition classDefinition, int errors) {
+  public static ClassDefinition typeCheckClass(Concrete.ClassDefinition classDefinition, Namespace localNamespace, int errors) {
     ListErrorReporter errorReporter = new ListErrorReporter();
-    ClassDefinition result = new DefinitionCheckTypeVisitor(errorReporter).visitClass(classDefinition, null);
+    ClassDefinition result = new DefinitionCheckTypeVisitor(RootModule.ROOT, errorReporter).visitClass(classDefinition, localNamespace);
     assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     return result;
   }
 
   public static ClassDefinition typeCheckClass(String text, int errors) {
-    return typeCheckClass(parseClass("test", text, 0), errors);
+    Concrete.ClassDefinition classDefinition = parseClass("test", text);
+    Namespace localNamespace = resolveNamesClass(classDefinition, 0);
+    return typeCheckClass(classDefinition, localNamespace, errors);
   }
 
   public static ClassDefinition typeCheckClass(String text) {
-    return typeCheckClass(parseClass("test", text, 0), 0);
+    return typeCheckClass(text, 0);
   }
 }

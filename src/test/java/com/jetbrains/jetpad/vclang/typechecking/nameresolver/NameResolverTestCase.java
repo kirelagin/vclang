@@ -27,14 +27,14 @@ public class NameResolverTestCase {
   }
 
   public static Concrete.Expression resolveNamesExpr(String text, int errors, NameResolver nameResolver) {
-    Concrete.Expression result = parseExpr(text, 0);
+    Concrete.Expression result = parseExpr(text);
     Collection<? extends GeneralError> errorList = resolveNamesExpr(result, nameResolver);
     assertEquals(errorList.toString(), errors, errorList.size());
     return result;
   }
 
   public static Concrete.Expression resolveNamesExpr(String text, int errors) {
-    Concrete.Expression result = parseExpr(text, 0);
+    Concrete.Expression result = parseExpr(text);
     Collection<? extends GeneralError> errorList = resolveNamesExpr(result);
     assertEquals(errorList.toString(), errors, errorList.size());
     return result;
@@ -55,7 +55,7 @@ public class NameResolverTestCase {
   }
 
   public static Concrete.Definition resolveNamesDef(String text, int errors) {
-    Concrete.Definition result = parseDef(text, 0);
+    Concrete.Definition result = parseDef(text);
     Collection<? extends GeneralError> errorList = resolveNamesDef(result);
     assertEquals(errorList.toString(), errors, errorList.size());
     return result;
@@ -73,10 +73,10 @@ public class NameResolverTestCase {
   }
 
   public static Namespace resolveNamesClass(String name, String text, int errors) {
-    return resolveNamesClass(parseClass(name, text, 0), errors);
+    return resolveNamesClass(parseClass(name, text), errors);
   }
 
   public static Namespace resolveNamesClass(String name, String text) {
-    return resolveNamesClass(parseClass(name, text, 0), 0);
+    return resolveNamesClass(name, text, 0);
   }
 }
