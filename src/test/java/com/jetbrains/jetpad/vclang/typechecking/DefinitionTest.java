@@ -193,17 +193,17 @@ public class DefinitionTest {
 
   @Test
   public void patternVector() {
-    typeCheckDef("\\data Vec (A : \\Type0) (n : Nat) | Vec _ (zero) => Nil | Vec _ (suc m) => Cons A (Vec A m)");
+    typeCheckDef("\\data Vec (_ : \\Type0) (_ : Nat) | Vec _ (zero) => Nil | Vec A (suc m) => Cons A (Vec A m)");
   }
 
   @Test
   public void patternDepParams() {
-    typeCheckClass("\\data D (n : Nat) (p : n = n) | D (zero) _ => d \\data C {n : Nat} {p : n = n} (D n p) | C {(zero)} (d) => c (p = p)");
+    typeCheckClass("\\data D (n : Nat) (n = n) | D zero _ => d \\data C {n : Nat} {p : n = n} (D n p) | C {zero} {p} d => c (p = p)");
   }
 
   @Test
   public void patternDepParamsError() {
-    typeCheckClass("\\data D (n : Nat) (p : n = n) | D (zero) _ => d \\data C {n : Nat} {p : n = n} (D n p) | C (d) => c (p = p)", 1);
+    typeCheckClass("\\data D (n : Nat) (n = n) | D zero _ => d \\data C {n : Nat} {p : n = n} (D n p) | C {_} {p} d => c (p = p)", 1);
   }
 
   @Test

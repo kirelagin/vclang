@@ -1,5 +1,6 @@
 package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
+import com.jetbrains.jetpad.vclang.module.DefinitionPair;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.Prelude;
@@ -261,7 +262,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
   private Result typeCheckFunctionApps(Abstract.Expression fun, List<Abstract.ArgumentExpression> args, Expression expectedType, Abstract.Expression expression) {
     Result function;
-    if (fun instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) fun).getDefinitionPair().definition instanceof Constructor && !((Constructor) ((Abstract.DefCallExpression) fun).getDefinitionPair().definition).getDataType().getParameters().isEmpty()) {
+    if (fun instanceof Abstract.DefCallExpression && ((Abstract.DefCallExpression) fun).getDefinitionPair() != null && ((Abstract.DefCallExpression) fun).getDefinitionPair().definition instanceof Constructor && !((Constructor) ((Abstract.DefCallExpression) fun).getDefinitionPair().definition).getDataType().getParameters().isEmpty()) {
       function = typeCheckDefCall((Abstract.DefCallExpression) fun, null);
       if (function instanceof OKResult) {
         return typeCheckApps(fun, 0, (OKResult) function, args, expectedType, expression);
@@ -552,7 +553,9 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     ClassDefinition parent = null;
     OKResult result = null;
     if (expr.getDefinitionPair() == null) {
-      assert expr.getExpression() != null;
+      if (expr.getExpression() == null) {
+        return visitVar(expr, expectedType);
+      }
 
       Result exprResult = typeCheck(expr.getExpression(), null);
       if (!(exprResult instanceof OKResult)) return exprResult;
@@ -645,18 +648,23 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
         return null;
       }
     } else {
-      if (expr.getDefinitionPair().definition instanceof FunctionDefinition && ((FunctionDefinition) expr.getDefinitionPair().definition).typeHasErrors() || !(expr.getDefinitionPair().definition instanceof FunctionDefinition) && expr.getDefinitionPair().definition.hasErrors()) {
+      if (expr.getDefinitionPair().definition == null) {
+        if (expr.getDefinitionPair().abstractDefinition == null) {
+          throw new IllegalStateException();
+        }
+        DefinitionPair member = expr.getDefinitionPair().namespace.getParent().getMember(expr.getDefinitionPair().namespace.getName().name);
+        if (member == null) {
+          throw new IllegalStateException();
+        }
+        expr.getDefinitionPair().definition = member.definition;
+      }
+
+      if (expr.getDefinitionPair().definition == null || expr.getDefinitionPair().definition instanceof FunctionDefinition && ((FunctionDefinition) expr.getDefinitionPair().definition).typeHasErrors() || !(expr.getDefinitionPair().definition instanceof FunctionDefinition) && expr.getDefinitionPair().definition.hasErrors()) {
         TypeCheckingError error = new HasErrors(expr.getName(), expr);
         expr.setWellTyped(Error(DefCall(expr.getDefinitionPair().definition), error));
         myErrorReporter.report(error);
         return null;
       }
-
-      /* TODO
-      if (expr.getDefinitionPair().isAbstract()) {
-        myAbstractCalls.add(expr.getDefinitionPair());
-      }
-      */
 
       result = new OKResult(DefCall(expr.getDefinitionPair().definition), expr.getDefinitionPair().definition.getType(), null);
     }
