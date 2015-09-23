@@ -215,7 +215,8 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Nam
       typedDef.setResultType(expectedType);
 
       if (def.getTerm() != null) {
-        CheckTypeVisitor.OKResult termResult = visitor.checkType(def.getResultType(), expectedType);
+        visitor.setSide(CheckTypeVisitor.Side.LHS);
+        CheckTypeVisitor.OKResult termResult = visitor.checkType(def.getTerm(), expectedType);
 
         if (termResult != null) {
           typedDef.setTerm(termResult.expression);

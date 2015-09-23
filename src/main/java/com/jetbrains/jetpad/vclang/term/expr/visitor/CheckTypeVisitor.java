@@ -87,6 +87,10 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     mySide = side;
   }
 
+  public void setSide(Side side) {
+    mySide = side;
+  }
+
   private Result checkResult(Expression expectedType, OKResult result, Abstract.Expression expression) {
     if (result == null) return null;
     if (expectedType == null) {

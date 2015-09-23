@@ -228,10 +228,8 @@ public class ResolveNameVisitor implements AbstractExpressionVisitor<Void, Void>
         con.replacePatternWithConstructor(index);
       } else {
         myContext.add(name);
-        return;
       }
-    }
-
+    } else
     if (pattern instanceof Abstract.ConstructorPattern) {
       List<? extends Abstract.Pattern> patterns = ((Abstract.ConstructorPattern) pattern).getPatterns();
       for (int i = 0; i < patterns.size(); ++i) {
