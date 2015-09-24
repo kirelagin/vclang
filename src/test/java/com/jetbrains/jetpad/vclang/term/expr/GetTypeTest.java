@@ -37,14 +37,14 @@ public class GetTypeTest {
 
   @Test
   public void lambdaTest() {
-    Definition def = typeCheckDef("\\static \\function test => \\lam (f : Nat -> Nat) => f 0");
+    Definition def = typeCheckDef("\\function test => \\lam (f : Nat -> Nat) => f 0");
     assertEquals(Pi(Pi(Nat(), Nat()), Nat()), def.getType());
     assertEquals(Pi(Pi(Nat(), Nat()), Nat()), ((FunctionDefinition) def).getTerm().getType(new ArrayList<Binding>(1)));
   }
 
   @Test
   public void lambdaTest2() {
-    Definition def = typeCheckDef("\\static \\function test => \\lam (A : \\Type0) (x : A) => x");
+    Definition def = typeCheckDef("\\function test => \\lam (A : \\Type0) (x : A) => x");
     assertEquals(Pi(args(Tele(vars("A"), Universe(0)), Tele(vars("x"), Index(0))), Index(1)), def.getType());
     assertEquals(Pi(args(Tele(vars("A"), Universe(0)), Tele(vars("x"), Index(0))), Index(1)), ((FunctionDefinition) def).getTerm().getType(new ArrayList<Binding>(1)));
   }
@@ -61,13 +61,13 @@ public class GetTypeTest {
 
   @Test
   public void tupleTest() {
-    Definition def = typeCheckDef("\\static \\function test : \\Sigma (x y : Nat) (x = y) => (0, 0, path (\\lam _ => 0))");
+    Definition def = typeCheckDef("\\function test : \\Sigma (x y : Nat) (x = y) => (0, 0, path (\\lam _ => 0))");
     assertEquals(Sigma(args(Tele(vars("x", "y"), Nat()), TypeArg(Apps(DefCall(Prelude.PATH_INFIX), Nat(), Index(1), Index(0))))), ((FunctionDefinition) def).getTerm().getType(new ArrayList<Binding>(0)));
   }
 
   @Test
   public void letTest() {
-    Definition def = typeCheckDef("\\static \\function test => \\lam (F : Nat -> \\Type0) (f : \\Pi (x : Nat) -> F x) => \\let | x => 0 \\in f x");
+    Definition def = typeCheckDef("\\function test => \\lam (F : Nat -> \\Type0) (f : \\Pi (x : Nat) -> F x) => \\let | x => 0 \\in f x");
     assertEquals(Pi(args(Tele(vars("F"), Pi(Nat(), Universe())), Tele(vars("f"), Pi(args(Tele(vars("x"), Nat())), Apps(Index(1), Index(0))))), Apps(Index(1), Zero())),
             ((FunctionDefinition) def).getTerm().getType(new ArrayList<Binding>()));
   }
@@ -83,8 +83,8 @@ public class GetTypeTest {
   @Test
   public void patternConstructor2() {
     ClassDefinition def = typeCheckClass(
-        "\\data Vec (A : \\Type0) (n : Nat) | Vec _ (zero) => Nil | Vec _ (suc n) => Cons A (Vec A n)" +
-        "\\data D (n : Nat) (Vec Nat n) | D (zero) _ => dzero | D (suc n) _ => done");
+        "\\data Vec \\Type0 Nat | Vec A zero => Nil | Vec A (suc n) => Cons A (Vec A n)" +
+        "\\data D (n : Nat) (Vec Nat n) | D zero _ => dzero | D (suc n) _ => done");
     DataDefinition vec = (DataDefinition) def.getField("Vec");
     DataDefinition d = (DataDefinition) def.getField("D");
     assertEquals(Apps(DefCall(d), Zero(), Index(0)), d.getConstructor("dzero").getType());

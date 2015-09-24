@@ -644,7 +644,9 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
           error = new TypeCheckingError("Expected an expression of a class type or a data type", expr.getExpression(), getNames(myLocalContext));
         }
         expr.setWellTyped(Error(null, error));
-        myErrorReporter.report(error);
+        if (!notInScope) {
+          myErrorReporter.report(error);
+        }
         return null;
       }
     } else {
@@ -967,7 +969,6 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
     NotInScopeError error = new NotInScopeError(expr, expr.getName());
     expr.setWellTyped(Error(null, error));
-    myErrorReporter.report(error);
     return null;
   }
 

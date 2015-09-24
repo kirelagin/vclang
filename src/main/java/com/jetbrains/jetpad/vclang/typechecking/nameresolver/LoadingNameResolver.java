@@ -16,7 +16,10 @@ public class LoadingNameResolver implements NameResolver {
     DefinitionPair member = myNameResolver.locateName(name, isStatic);
     if (member != null) {
       if (member.definition == null && member.abstractDefinition == null) {
-        myModuleLoader.load(member.namespace.getParent(), member.namespace.getName().name, true);
+        ModuleLoadingResult result = myModuleLoader.load(member.namespace.getParent(), member.namespace.getName().name, true);
+        if (result != null) {
+          return result.definition;
+        }
       }
       return member;
     }

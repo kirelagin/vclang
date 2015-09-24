@@ -12,8 +12,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.parser.VcgrammarParser.*;
-import static com.jetbrains.jetpad.vclang.term.pattern.Utils.ProcessImplicitResult;
-import static com.jetbrains.jetpad.vclang.term.pattern.Utils.processImplicit;
 
 public class BuildVisitor extends VcgrammarBaseVisitor {
   private final ErrorReporter myErrorReporter;
@@ -375,20 +373,6 @@ public class BuildVisitor extends VcgrammarBaseVisitor {
       }
 
       patterns = visitPatterns(wpCtx.patternx());
-
-      ProcessImplicitResult result = processImplicit(patterns, def.getParameters());
-      if (result.patterns == null) {
-        if (result.numExcessive != 0) {
-          myErrorReporter.report(new ParserError(null,
-              tokenPosition(wpCtx.patternx(wpCtx.patternx().size() - result.numExcessive).start), "Too many arguments: " + result.numExcessive + " excessive"));
-        } else if (result.wrongImplicitPosition < patterns.size()) {
-          myErrorReporter.report(new ParserError(null,
-              tokenPosition(wpCtx.patternx(result.wrongImplicitPosition).start), "Unexpected implicit argument"));
-        } else {
-          myErrorReporter.report(new ParserError(null, tokenPosition(wpCtx.name().start), "Too few explicit arguments, expected: " + result.numExplicit));
-        }
-        return;
-      }
     }
 
     List<ConstructorContext> constructorCtxs = ctx instanceof WithPatternsContext ?

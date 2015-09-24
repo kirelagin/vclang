@@ -75,7 +75,7 @@ public class ModuleLoaderTest {
 
     moduleLoader.setSourceSupplier(sourceSupplier);
     moduleLoader.load(RootModule.ROOT, "B", false);
-    assertEquals(1, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 1, errorReporter.getErrorList().size());
   }
 
   @Test
@@ -85,7 +85,7 @@ public class ModuleLoaderTest {
 
     moduleLoader.setSourceSupplier(sourceSupplier);
     moduleLoader.load(RootModule.ROOT, "A", false);
-    assertEquals(1, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 1, errorReporter.getErrorList().size());
   }
 
   @Test
@@ -95,7 +95,7 @@ public class ModuleLoaderTest {
     moduleLoader.setSourceSupplier(sourceSupplier);
     ModuleLoadingResult result = moduleLoader.load(RootModule.ROOT, "A", false);
     assertNotNull(result);
-    assertEquals(0, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 0, errorReporter.getErrorList().size());
     assertEquals(1, RootModule.ROOT.getChild(new Utils.Name("A")).getMembers().size());
     assertEquals(1, ((ClassDefinition) result.definition.definition).getLocalNamespace().getMembers().size());
     assertEquals(0, result.definition.namespace.getDefinition("C").getNamespace().getMembers().size());
@@ -111,7 +111,7 @@ public class ModuleLoaderTest {
 
     moduleLoader.setSourceSupplier(sourceSupplier);
     moduleLoader.load(RootModule.ROOT, "B", false);
-    assertEquals(0, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 0, errorReporter.getErrorList().size());
   }
 
   @Test
@@ -124,7 +124,7 @@ public class ModuleLoaderTest {
 
     moduleLoader.setSourceSupplier(sourceSupplier);
     moduleLoader.load(RootModule.ROOT, "B", false);
-    assertEquals(1, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 1, errorReporter.getErrorList().size());
   }
 
   @Test
@@ -136,6 +136,6 @@ public class ModuleLoaderTest {
 
     moduleLoader.setSourceSupplier(sourceSupplier);
     moduleLoader.load(RootModule.ROOT, "B", false);
-    assertEquals(1, errorReporter.getErrorList().size());
+    assertEquals(errorReporter.getErrorList().toString(), 1, errorReporter.getErrorList().size());
   }
 }

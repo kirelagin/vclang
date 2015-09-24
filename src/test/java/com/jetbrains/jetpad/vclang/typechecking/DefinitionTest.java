@@ -193,7 +193,7 @@ public class DefinitionTest {
 
   @Test
   public void patternVector() {
-    typeCheckDef("\\data Vec (_ : \\Type0) (_ : Nat) | Vec _ (zero) => Nil | Vec A (suc m) => Cons A (Vec A m)");
+    typeCheckDef("\\data Vec \\Type0 Nat | Vec _ (zero) => Nil | Vec A (suc m) => Cons A (Vec A m)");
   }
 
   @Test

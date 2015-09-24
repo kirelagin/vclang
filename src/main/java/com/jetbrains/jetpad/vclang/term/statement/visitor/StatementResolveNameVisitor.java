@@ -48,20 +48,27 @@ public class StatementResolveNameVisitor implements AbstractStatementVisitor<Voi
     if (stat.isStatic() && myStaticNamespace == null) {
       myErrorReporter.report(new TypeCheckingError(null, "Static definitions are not allowed in this context", stat, myContext));
       return null;
+    } else
+    if (stat.isStatic() && stat.getDefinition() instanceof Abstract.FunctionDefinition && ((Abstract.FunctionDefinition) stat.getDefinition()).getArrow() == null) {
+      myErrorReporter.report(new TypeCheckingError(null, "Abstract definitions cannot be static", stat, myContext));
+      return null;
     } else {
-      stat.getDefinition().accept(new DefinitionResolveNameVisitor(myErrorReporter, myStaticNamespace, stat.isStatic() ? null : myDynamicNamespace, myNameResolver, myContext), null);
+      Namespace localNamespace = stat.getDefinition().accept(new DefinitionResolveNameVisitor(myErrorReporter, myStaticNamespace, stat.isStatic() ? null : myDynamicNamespace, myNameResolver, myContext), null);
       Namespace parentNamespace = stat.isStatic() ? myStaticNamespace : myDynamicNamespace;
-      DefinitionPair result = parentNamespace.addAbstractDefinition(stat.getDefinition());
-      if (result == null) {
+      DefinitionPair definitionPair = parentNamespace.addAbstractDefinition(stat.getDefinition());
+      if (definitionPair == null) {
         myErrorReporter.report(new NameDefinedError(true, stat, stat.getDefinition().getName(), parentNamespace));
         return null;
       }
       if (stat.getDefinition() instanceof Abstract.DataDefinition) {
         for (Abstract.Constructor constructor : ((Abstract.DataDefinition) stat.getDefinition()).getConstructors()) {
+          definitionPair.namespace.addAbstractDefinition(constructor);
           parentNamespace.addAbstractDefinition(constructor);
         }
       }
-      return result;
+
+      definitionPair.setLocalNamespace(localNamespace);
+      return definitionPair;
     }
   }
 

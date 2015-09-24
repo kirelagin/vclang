@@ -13,7 +13,6 @@ import com.jetbrains.jetpad.vclang.term.definition.ClassDefinition;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionCheckTypeVisitor;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.CompositeErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.error.NameDefinedError;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.CountingErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.LocalErrorReporter;
@@ -82,10 +81,9 @@ public abstract class ParseSource implements Source {
 
     NameResolver nameResolver = new LoadingNameResolver(myModuleLoader, new DeepNamespaceNameResolver(myModule.getParent(), null));
     List<Concrete.Statement> statements = new BuildVisitor(errorReporter).visitStatements(tree);
-    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(null, myModule.getName().name, statements);
-    Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, myModule, nameResolver).visitClass(classDefinition, null);
-    myErrorReporter.report(new NameDefinedError(true, classDefinition, classDefinition.getName(), myModule.getParent()));
-    ClassDefinition result = new DefinitionCheckTypeVisitor(myModule, errorReporter).visitClass(classDefinition, null);
+    Concrete.ClassDefinition classDefinition = new Concrete.ClassDefinition(new Concrete.Position(0, 0), myModule.getName().name, statements);
+    Namespace localNamespace = new DefinitionResolveNameVisitor(errorReporter, myModule.getParent(), nameResolver).visitClass(classDefinition, null);
+    ClassDefinition result = new DefinitionCheckTypeVisitor(myModule.getParent(), errorReporter).visitClass(classDefinition, localNamespace);
     if (result != null) {
       result.setLocalNamespace(localNamespace);
     }

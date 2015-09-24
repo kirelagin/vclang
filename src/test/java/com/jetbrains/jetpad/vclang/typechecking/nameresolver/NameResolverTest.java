@@ -214,7 +214,7 @@ public class NameResolverTest {
 
   @Test
   public void exportPublicFieldsTest() {
-    Namespace localNamespace = resolveNamesClass("test", "\\static \\class A { \\static \\function x : Nat \\static \\class B { \\static \\function y => x } \\export B } \\static \\function f => A.y");
+    Namespace localNamespace = resolveNamesClass("test", "\\static \\class A { \\static \\function x => 0 \\static \\class B { \\static \\function y => x } \\export B } \\static \\function f => A.y");
     assertNotNull(localNamespace);
     assertNotNull(RootModule.ROOT.getMember("test"));
     Namespace staticNamespace = RootModule.ROOT.getMember("test").namespace;
@@ -339,5 +339,10 @@ public class NameResolverTest {
   @Test
   public void overrideWhere() {
     resolveNamesClass("test", "\\static \\class A { \\function x => 0 } \\static \\function C => A { \\override x => y \\where \\function y => 0 }", 1);
+  }
+
+  @Test
+  public void dataConstructor() {
+    resolveNamesClass("test", "\\data D | d \\function f => D.d");
   }
 }

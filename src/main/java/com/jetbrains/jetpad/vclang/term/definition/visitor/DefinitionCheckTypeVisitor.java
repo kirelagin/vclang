@@ -48,8 +48,8 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Nam
   }
 
   public void typeCheck(DefinitionPair definitionPair) {
-    if (definitionPair.definition == null) {
-      definitionPair.definition = definitionPair.abstractDefinition.accept(this, null);
+    if (definitionPair != null && !definitionPair.isTypeChecked()) {
+      definitionPair.definition = definitionPair.abstractDefinition.accept(this, definitionPair.getLocalNamespace());
     }
   }
 
@@ -448,7 +448,7 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Nam
     for (Abstract.Statement statement : def.getStatements()) {
       if (statement instanceof Abstract.DefineStatement) {
         Namespace parentNamespace = ((Abstract.DefineStatement) statement).isStatic() ? typedDef.getNamespace() : localNamespace;
-        typeCheck(parentNamespace.getMember(((Abstract.DefineStatement) statement).getDefinition().getName().name));
+        new DefinitionCheckTypeVisitor(myContext, parentNamespace, myErrorReporter).typeCheck(parentNamespace.getMember(((Abstract.DefineStatement) statement).getDefinition().getName().name));
       }
     }
     return typedDef;

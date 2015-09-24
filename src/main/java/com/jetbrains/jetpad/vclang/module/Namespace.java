@@ -137,8 +137,14 @@ public class Namespace implements NamespaceMember {
       myMembers = new HashMap<>();
     } else {
       DefinitionPair oldMember = myMembers.get(member.namespace.getName().name);
-      if (oldMember != null && (oldMember.definition != null || oldMember.abstractDefinition != null)) {
-        return oldMember;
+      if (oldMember != null) {
+        if (oldMember.definition != null || oldMember.abstractDefinition != null) {
+          return oldMember;
+        } else {
+          oldMember.abstractDefinition = member.abstractDefinition;
+          oldMember.definition = member.definition;
+          return null;
+        }
       }
     }
 
