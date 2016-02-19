@@ -17,6 +17,7 @@ import java.util.List;
 
 import static com.jetbrains.jetpad.vclang.term.context.param.DependentLink.Helper.size;
 import static com.jetbrains.jetpad.vclang.term.context.param.DependentLink.Helper.toContext;
+import static com.jetbrains.jetpad.vclang.term.context.param.DependentLink.Helper.toNames;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.Apps;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.Reference;
 import static com.jetbrains.jetpad.vclang.term.pattern.Utils.toPatterns;
@@ -111,6 +112,7 @@ class PatternsExpander {
       List<Pattern> anyPatterns = new ArrayList<>(Collections.<Pattern>nCopies(size(constructor.getParameters()), new NamePattern(EmptyDependentLink.getInstance())));
       List<Integer> indices = new ArrayList<>();
       List<List<Pattern>> nestedPatterns = new ArrayList<>();
+      List<String> names = null;
 
       boolean hasConstructor = false;
       for (int j = 0; j < patterns.size(); j++) {
@@ -126,25 +128,28 @@ class PatternsExpander {
           hasConstructor = true;
           indices.add(j);
           nestedPatterns.add(toPatterns(((ConstructorPattern) patterns.get(j)).getArguments()));
-        }
-      }
-      if (!hasConstructor) {
-        return null;
-      }
 
-      List<String> names = null;
-      for (int i : indices) {
-        if (nestedPatterns.get(i) instanceof ConstructorPattern) {
-          names = new ArrayList<>(((ConstructorPattern) nestedPatterns.get(i)).getArguments().size());
-          for (PatternArgument patternArg : ((ConstructorPattern) nestedPatterns.get(i)).getArguments()) {
-            if (patternArg.getPattern() instanceof NamePattern) {
-              names.add(((NamePattern) patternArg.getPattern()).getName());
-            } else {
-              names.add(null);
+          if (names == null) {
+            names = new ArrayList<>(((ConstructorPattern) patterns.get(j)).getArguments().size());
+            for (PatternArgument patternArg : ((ConstructorPattern) patterns.get(j)).getArguments()) {
+              if (patternArg.getPattern() instanceof NamePattern) {
+                names.add(((NamePattern) patternArg.getPattern()).getName());
+              } else {
+                names.add(null);
+              }
             }
           }
         }
       }
+
+      if (!hasConstructor) {
+        return null;
+      }
+
+      if (names == null) {
+        names = toNames(constructor.getParameters());
+      }
+
       return new MatchingPatterns(indices, nestedPatterns, names);
     }
   }
