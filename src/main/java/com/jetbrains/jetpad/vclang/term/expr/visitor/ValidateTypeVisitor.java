@@ -253,17 +253,15 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
       return null;
     }
     DependentLink param = tupleTypeSigma.getParameters();
-    int i;
-    for (i = 0; i < expr.getField(); i++) {
-      if (!param.hasNext()) {
-        break;
-      }
-      param = param.getNext();
-    }
-    if (i == expr.getField()) {
-      validateType(param.getType(), expectedType, expr);
-    } else {
+    DependentLink fieldParam = DependentLink.Helper.get(param, expr.getField());
+    if (!fieldParam.hasNext()) {
       myErrorReporter.addError(tuple, "Too few fields (at least " + (expr.getField() + 1) + " expected)");
+    } else {
+      Substitution subst = new Substitution();
+      for (int i = 0; param != fieldParam; param = param.getNext()) {
+        subst.add(param, Proj(tuple, i));
+      }
+      validateType(param.getType().subst(subst), expectedType, expr);
     }
     return null;
   }

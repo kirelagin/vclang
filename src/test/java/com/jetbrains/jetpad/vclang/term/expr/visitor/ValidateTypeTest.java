@@ -83,7 +83,7 @@ public class ValidateTypeTest {
     ok(expr);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testProjTooLargeIndex() {
     DependentLink link = params(param("x", Nat()), param("y", Nat()), param("z", Nat()));
     Expression expr = Proj(Tuple(Sigma(link), Zero(), Zero(), Zero()), 3);
@@ -264,6 +264,19 @@ public class ValidateTypeTest {
             "\\static \\function qinv {A B : \\Type0} (f : A -> B) <= \\Sigma (g : B -> A) (g `o` f ~ id) (f `o` g ~ id)\n" +
             "\\static \\function qinv-to-equiv {A B : \\Type0} (f : A -> B) (x : qinv f) : isequiv f => \n" +
             "  ((x.1, x.2), (x.1, x.3))\n");
+  }
+
+  @Test
+  public void testSigma2() {
+    checkFunction("linv-to-linv", "" +
+            "\\static \\function id {X : \\Type0} (x : X) => x\n" +
+            "\\static \\function \\infixr 8\n" +
+            "o {X Y Z : \\Type0} (g : Y -> Z) (f : X -> Y) (x : X) => g (f x)\n" +
+            "\\static \\function \\infix 2\n" +
+            "(~) {A B : \\Type0} (f : A -> B) (g : A -> B) <= \\Pi (x : A) -> f x = g x\n" +
+            "\\static \\function linv {A B : \\Type0} (f : A -> B) <= \\Sigma (g : B -> A) (g `o` f ~ id)\n" +
+            "\\static \\function linv-to-linv {A B : \\Type0} (f : A -> B) (x : linv f) : linv f => \n" +
+            "  (x.1, x.2)\n");
   }
 
   @Test
