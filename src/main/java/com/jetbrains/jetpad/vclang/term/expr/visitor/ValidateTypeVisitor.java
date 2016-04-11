@@ -293,7 +293,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
     Collection<ConstructorClause> clauses = branchNode.getConstructorClauses();
     for (ConstructorClause clause : clauses) {
       Substitution subst = clause.getSubst();
-      Expression expectedTypeHere = expectedType.subst(subst).normalize(NormalizeVisitor.Mode.NF);
+      Expression expectedTypeHere = expectedType == null ? null : expectedType.subst(subst).normalize(NormalizeVisitor.Mode.NF);
       clause.getChild().subst(subst).accept(this, expectedTypeHere);
     }
     OtherwiseClause otherwiseClause = branchNode.getOtherwiseClause();

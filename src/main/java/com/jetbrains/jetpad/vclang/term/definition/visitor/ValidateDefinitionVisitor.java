@@ -23,7 +23,6 @@ public class ValidateDefinitionVisitor implements DefinitionVisitor<Void, Valida
 
   @Override
   public ValidateTypeVisitor.ErrorReporter visitClassDefinition(ClassDefinition def, Void params) {
-    def.getType().accept(myValidateTypeVisitor, null);
     return myValidateTypeVisitor.myErrorReporter;
   }
 
@@ -45,7 +44,12 @@ public class ValidateDefinitionVisitor implements DefinitionVisitor<Void, Valida
 
   @Override
   public ValidateTypeVisitor.ErrorReporter visitDataDefinition(DataDefinition def, Void params) {
-    def.getType().accept(myValidateTypeVisitor, null);
+    for (DependentLink link = def.getParameters(); link.hasNext(); link = link.getNext()) {
+      link.getType().accept(myValidateTypeVisitor, null);
+    }
+    for (Condition cond : def.getConditions()) {
+      cond.getElimTree().accept(myValidateTypeVisitor, null);
+    }
     return myValidateTypeVisitor.myErrorReporter;
   }
 }
