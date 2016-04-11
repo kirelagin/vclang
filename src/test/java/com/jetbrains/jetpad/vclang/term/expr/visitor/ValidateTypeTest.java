@@ -1,7 +1,6 @@
 package com.jetbrains.jetpad.vclang.term.expr.visitor;
 
 import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
-import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.context.binding.Binding;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
@@ -22,13 +21,13 @@ import static org.junit.Assert.*;
 public class ValidateTypeTest {
 
   private ValidateTypeVisitor.ErrorReporter fail(Expression expr) {
-    ValidateTypeVisitor.ErrorReporter res = expr.checkType();
+    ValidateTypeVisitor.ErrorReporter res = expr.validateType();
     assertTrue(res.errors() > 0);
     return res;
   }
 
   private ValidateTypeVisitor.ErrorReporter ok(Expression expr) {
-    ValidateTypeVisitor.ErrorReporter res = expr.checkType();
+    ValidateTypeVisitor.ErrorReporter res = expr.validateType();
     assertTrue(res.errors() == 0);
     return res;
   }
@@ -330,6 +329,43 @@ public class ValidateTypeTest {
     checkFunction("idpOver", "" +
             "\\function\n" +
             "idpOver (A : I -> \\Type0) (a : A left) : Path A a (coe A a right) => path (coe A a)\n"
+    );
+  }
+
+  @Test
+  public void testCompose() {
+    NamespaceMember member = typeCheckClass("" +
+            "\\static \\function id {X : \\Type0} (x : X) : X => x" +
+            "\\static \\function \\infixr 8\n" +
+            "o {X2 Y Z : \\Type0} (g : Y -> Z) (f : X2 -> Y) (x : X2) => g (f x)\n" +
+            "\\static \\function test-compose {A B : \\Type0} (f : A -> B) : A -> B =>\n" +
+            "  (id `o` f) \n"
+    );
+    FunctionDefinition equivSymm2 = (FunctionDefinition) member.namespace.getMember("test-compose").definition;
+    Expression e = ((LeafElimTreeNode)equivSymm2.getElimTree()).getExpression();
+    Expression type1 = e.getType();
+    Expression type2 = e.normalize(NormalizeVisitor.Mode.NF).getType();
+    Assert.assertEquals(type1, type2);
+  }
+
+  @Test
+  public void testPmap1() {
+    checkFunction("pmap1", "" +
+            "\\static \\function\n" +
+            "pmap1 {A B : \\Type1} (f : A -> B) {a a' : A} (p : a == a')\n" +
+            "    => path1 (\\lam i => f (p @@ i))\n"
+    );
+  }
+
+  @Test
+  public void ofHlevel() {
+    checkFunction("ofHlevel", "" +
+            "\\static \\function\n" +
+            "isContr (A : \\Type0) => \\Sigma (a : A) (\\Pi (a' : A) -> a = a')\n" +
+            "\\static \\function\n" +
+            "ofHlevel (n : Nat) (A : \\Type0) : \\Type0 <= \\elim n\n" +
+            "    | zero => isContr A\n" +
+            "    | suc n => \\Pi (a a' : A) -> ofHlevel n (a = a')\n"
     );
   }
 }

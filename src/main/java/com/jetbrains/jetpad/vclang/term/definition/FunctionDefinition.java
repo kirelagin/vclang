@@ -5,11 +5,13 @@ import com.jetbrains.jetpad.vclang.naming.ResolvedName;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.FunCallExpression;
 import com.jetbrains.jetpad.vclang.term.pattern.elimtree.ElimTreeNode;
 
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.FunCall;
+import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.vars;
 
 public class FunctionDefinition extends Definition implements Function {
   private DependentLink myParameters;
@@ -21,6 +23,11 @@ public class FunctionDefinition extends Definition implements Function {
     super(rn, precedence);
     myTypeHasErrors = true;
     myParameters = EmptyDependentLink.getInstance();
+  }
+
+  @Override
+  public <P, R> R accept(DefinitionVisitor<? super P, ? extends R> visitor, P params) {
+    return visitor.visitFunction(this, params);
   }
 
   public FunctionDefinition(ResolvedName rn, Abstract.Definition.Precedence precedence, DependentLink parameters, Expression resultType, ElimTreeNode elimTree) {

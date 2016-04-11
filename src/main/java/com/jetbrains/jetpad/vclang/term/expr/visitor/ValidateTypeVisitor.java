@@ -50,7 +50,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
     this.myErrorReporter = errorReporter;
   }
 
-  private void checkType(Expression actualType, Expression expectedType, Expression comment) {
+  private void validateType(Expression actualType, Expression expectedType, Expression comment) {
     if (expectedType == null) {
       return;
     }
@@ -62,13 +62,13 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   }
 
-  private void checkExprType(Expression expr, Expression expectedType) {
-    checkType(expr.getType(), expectedType, expr);
+  private void validateExprType(Expression expr, Expression expectedType) {
+    validateType(expr.getType(), expectedType, expr);
   }
 
   @Override
   public Void visitDefCall(DefCallExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     return null;
   }
 
@@ -136,7 +136,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitApp(AppExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     List<? extends Expression> args = expr.getArguments();
     List<? extends EnumSet<AppExpression.Flag>> flags = expr.getFlags();
     Expression fun = expr.getFunction();
@@ -148,23 +148,22 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitReference(ReferenceExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     return null;
   }
 
   @Override
   public Void visitLam(LamExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     visitDependentLink(expr.getParameters());
-    Expression normType = expectedType.normalize(NormalizeVisitor.Mode.NF);
-    PiExpression normTypePi = normType.toPi();
-    if (normTypePi == null) {
-      myErrorReporter.addError(expr, "Expected type " + normType + " is expected to be Pi-type");
+    PiExpression normTypePi = expectedType == null ? null : expectedType.normalize(NormalizeVisitor.Mode.NF).toPi();
+    if (expectedType != null && normTypePi == null) {
+      myErrorReporter.addError(expr, "Expected type " + expectedType + " is expected to be Pi-type");
     } else {
       ArrayList<DependentLink> params = new ArrayList<>();
       expr.getLamParameters(params);
       ArrayList<DependentLink> piParams = new ArrayList<>();
-      Expression cod = normTypePi.getPiParameters(piParams, true, false);
+      Expression cod = (normTypePi == null ? expr.getType() : normTypePi).getPiParameters(piParams, true, false);
       if (params.size() > piParams.size()) {
         myErrorReporter.addError(expr, "Type " + expectedType + " has less Pi-abstractions than term's Lam abstractions");
       }
@@ -184,15 +183,15 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   private void visitDependentLink(DependentLink link) {
     if (link.hasNext()) {
-      // TODO use proper Universe
-      link.getType().accept(this, Universe(0));
+      Expression type = link.getType();
+      type.accept(this, type.getType());
       visitDependentLink(link.getNext());
     }
   }
 
   @Override
   public Void visitPi(PiExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     visitDependentLink(expr.getParameters());
     expr.getCodomain().accept(this, expectedType);
     return null;
@@ -200,7 +199,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitSigma(SigmaExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     visitDependentLink(expr.getParameters());
     return null;
   }
@@ -218,7 +217,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitTuple(TupleExpression expr, Expression expectedType) {
-    checkExprType(expr, expectedType);
+    validateExprType(expr, expectedType);
     SigmaExpression type = expr.getType();
     type = type.normalize(NormalizeVisitor.Mode.NF).toSigma();
     if (type == null) {
@@ -248,8 +247,6 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
     Expression tuple = expr.getExpression();
     Expression tupleType = tuple.getType();
     tuple.accept(this, tupleType);
-    // TODO figure out how to check field type
-    /*
     SigmaExpression tupleTypeSigma = tupleType.normalize(NormalizeVisitor.Mode.NF).toSigma();
     if (tupleTypeSigma == null) {
       myErrorReporter.addError(expr, "Tuple type is not Sigma: " + tupleType);
@@ -264,11 +261,10 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
       param = param.getNext();
     }
     if (i == expr.getField()) {
-      checkType(param.getType(), expectedType, expr);
+      validateType(param.getType(), expectedType, expr);
     } else {
       myErrorReporter.addError(tuple, "Too few fields (at least " + (expr.getField() + 1) + " expected)");
     }
-    */
     return null;
   }
 
@@ -280,7 +276,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitLet(LetExpression letExpression, Expression expectedType) {
-    checkExprType(letExpression, expectedType);
+    validateExprType(letExpression, expectedType);
     for (LetClause clause : letExpression.getClauses()) {
       clause.getElimTree().accept(this, clause.getResultType());
     }
@@ -311,7 +307,12 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
 
   @Override
   public Void visitLeaf(LeafElimTreeNode leafNode, Expression expectedType) {
-    leafNode.getExpression().accept(this, expectedType);
+    Expression expression = leafNode.getExpression();
+    // TODO it should not be there
+    if (expression instanceof OfTypeExpression) {
+      expression = ((OfTypeExpression) expression).getExpression();
+    }
+    expression.accept(this, expectedType);
     return null;
   }
 

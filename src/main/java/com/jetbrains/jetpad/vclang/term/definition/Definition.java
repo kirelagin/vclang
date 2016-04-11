@@ -4,6 +4,7 @@ import com.jetbrains.jetpad.vclang.naming.Namespace;
 import com.jetbrains.jetpad.vclang.naming.ResolvedName;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.context.binding.NamedBinding;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.DefCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 
@@ -36,6 +37,8 @@ public abstract class Definition extends NamedBinding implements BaseDefinition 
   public Namespace getParentNamespace() {
     return myResolvedName.getParent() == null ? null : myResolvedName.getParent().toNamespace();
   }
+
+  public abstract <P, R> R accept(DefinitionVisitor<? super P, ? extends R> visitor, P params);
 
   public abstract DefCallExpression getDefCall();
 

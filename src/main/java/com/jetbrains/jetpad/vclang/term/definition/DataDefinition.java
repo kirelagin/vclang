@@ -5,6 +5,7 @@ import com.jetbrains.jetpad.vclang.naming.ResolvedName;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.ConCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.DataCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
@@ -24,6 +25,11 @@ public class DataDefinition extends Definition {
     super(rn, precedence);
     myConstructors = new ArrayList<>();
     myParameters = EmptyDependentLink.getInstance();
+  }
+
+  @Override
+  public <P, R> R accept(DefinitionVisitor<? super P, ? extends R> visitor, P params) {
+    return visitor.visitDataDefinition(this, params);
   }
 
   public DataDefinition(ResolvedName rn, Abstract.Definition.Precedence precedence, Universe universe, DependentLink parameters) {

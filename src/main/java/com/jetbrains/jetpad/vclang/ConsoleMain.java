@@ -7,8 +7,9 @@ import com.jetbrains.jetpad.vclang.module.utils.FileOperations;
 import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.definition.Definition;
-import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
+import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
+import com.jetbrains.jetpad.vclang.term.definition.*;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.ValidateDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ValidateTypeVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.TypecheckedReporter;
 import com.jetbrains.jetpad.vclang.typechecking.TypecheckingOrdering;
@@ -35,8 +36,9 @@ public class ConsoleMain {
     cmdOptions.addOption(Option.builder("o").longOpt("output").hasArg().argName("dir").desc("output directory").build());
     cmdOptions.addOption(Option.builder("L").hasArg().argName("dir").desc("add <dir> to the list of directories searched for libraries").build());
     cmdOptions.addOption(Option.builder().longOpt("recompile").desc("recompile files").build());
+    cmdOptions.addOption(Option.builder("V").longOpt("validate").desc("validate typechecked definitions").build());
     CommandLineParser cmdParser = new DefaultParser();
-    CommandLine cmdLine;
+    final CommandLine cmdLine;
     try {
       cmdLine = cmdParser.parse(cmdOptions, args);
     } catch (ParseException e) {
@@ -54,7 +56,7 @@ public class ConsoleMain {
     File outputDir = outputDirStr == null ? sourceDir : new File(outputDirStr);
     boolean recompile = cmdLine.hasOption("recompile");
 
-    List<File> libDirs = new ArrayList<>();
+    final List<File> libDirs = new ArrayList<>();
     String workingDir = System.getenv("AppData");
     File workingPath = null;
     if (workingDir != null) {
@@ -139,14 +141,13 @@ public class ConsoleMain {
     TypecheckingOrdering.typecheck(modulesToTypeCheck, errorReporter, new TypecheckedReporter() {
       @Override
       public void typecheckingSucceeded(Abstract.Definition abstractDefinition, Definition definition) {
-        if (definition instanceof FunctionDefinition) {
-          ValidateTypeVisitor visitor = new ValidateTypeVisitor();
-          ((FunctionDefinition) definition).getElimTree().accept(visitor, ((FunctionDefinition) definition).getResultType());
-          if (visitor.myErrorReporter.errors() > 0) {
-            System.err.println("Checking " + definition.getName());
-            System.err.println(((FunctionDefinition) definition).getElimTree());
-            System.err.println(visitor.myErrorReporter);
-          }
+        if (!cmdLine.hasOption("validate"))
+          return;
+        ValidateDefinitionVisitor visitor = new ValidateDefinitionVisitor();
+        ValidateTypeVisitor.ErrorReporter errorReporter = definition.accept(visitor, null);
+        if (errorReporter.errors() > 0) {
+          System.err.println("[VALIDATION_ERROR] During validate of " + definition.getResolvedName());
+          System.err.println("\t" + errorReporter);
         }
       }
 

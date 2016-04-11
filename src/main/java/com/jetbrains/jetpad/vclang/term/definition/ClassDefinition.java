@@ -2,6 +2,7 @@ package com.jetbrains.jetpad.vclang.term.definition;
 
 import com.jetbrains.jetpad.vclang.naming.ResolvedName;
 import com.jetbrains.jetpad.vclang.term.Abstract;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.ClassCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.UniverseExpression;
@@ -24,6 +25,11 @@ public class ClassDefinition extends Definition {
   @Override
   public Expression getType() {
     return new UniverseExpression(getUniverse());
+  }
+
+  @Override
+  public <P, R> R accept(DefinitionVisitor<? super P, ? extends R> visitor, P params) {
+    return visitor.visitClassDefinition(this, params);
   }
 
   @Override
