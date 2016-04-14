@@ -8,8 +8,7 @@ import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.DefCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 
-public abstract class Definition extends NamedBinding implements BaseDefinition {
-  private final Abstract.Definition.Fixity myFixity;
+public abstract class Definition extends NamedBinding implements Referable {
   private Abstract.Definition.Precedence myPrecedence;
   private Universe myUniverse;
   private boolean myHasErrors;
@@ -19,14 +18,9 @@ public abstract class Definition extends NamedBinding implements BaseDefinition 
   public Definition(ResolvedName resolvedName, Abstract.Definition.Precedence precedence) {
     super(resolvedName.getName());
     myResolvedName = resolvedName;
-    myFixity = new Name(resolvedName.getName()).fixity;
     myPrecedence = precedence;
     myUniverse = new Universe.Type(0, Universe.Type.PROP);
     myHasErrors = true;
-  }
-
-  public Abstract.Definition.Fixity getFixity() {
-    return myFixity;
   }
 
   @Override
