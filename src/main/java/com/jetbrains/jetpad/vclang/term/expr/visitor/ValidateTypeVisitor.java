@@ -161,7 +161,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
       myErrorReporter.addError(expr, "Expected type " + expectedType + " is expected to be Pi-type");
     } else {
       ArrayList<DependentLink> params = new ArrayList<>();
-      expr.getLamParameters(params);
+      Expression body = expr.getLamParameters(params);
       ArrayList<DependentLink> piParams = new ArrayList<>();
       Expression cod = (normTypePi == null ? expr.getType() : normTypePi).getPiParameters(piParams, true, false);
       if (params.size() > piParams.size()) {
@@ -176,7 +176,7 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
       Expression expectedBodyType = cod
               .fromPiParameters(piParams.subList(size, piParams.size()))
               .subst(subst);
-      expr.getBody().accept(this, expectedBodyType);
+      body.accept(this, expectedBodyType);
     }
     return null;
   }

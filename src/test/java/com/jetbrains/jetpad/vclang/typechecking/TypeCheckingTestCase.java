@@ -7,8 +7,11 @@ import com.jetbrains.jetpad.vclang.term.Concrete;
 import com.jetbrains.jetpad.vclang.term.context.binding.Binding;
 import com.jetbrains.jetpad.vclang.term.definition.Definition;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionCheckTypeVisitor;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.ValidateDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CheckTypeVisitor;
+import com.jetbrains.jetpad.vclang.term.expr.visitor.ValidateTypeVisitor;
+import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ListErrorReporter;
 
@@ -21,6 +24,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class TypeCheckingTestCase {
+  private static void validateDef(Definition def) {
+    assertEquals("Validation errors", 0, def.accept(new ValidateDefinitionVisitor(), null).errors());
+  }
+
+  private static void validateExpr(Expression expr) {
+    if (expr == null)
+      return;
+    assertEquals("Validation errors", 0, expr.validateType().errors());
+  }
+
   public static CheckTypeVisitor.Result typeCheckExpr(List<Binding> context, Concrete.Expression expression, Expression expectedType, ErrorReporter errorReporter) {
     return new CheckTypeVisitor.Builder(context, errorReporter).build().checkType(expression, expectedType);
   }
@@ -36,6 +49,10 @@ public class TypeCheckingTestCase {
       assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     } else {
       assertFalse(errorReporter.getErrorList().toString(), errorReporter.getErrorList().isEmpty());
+    }
+    if (errors == 0) {
+      validateExpr(result.expression);
+      validateExpr(result.type);
     }
     return result;
   }
@@ -77,6 +94,9 @@ public class TypeCheckingTestCase {
       assertEquals(errorReporter.getErrorList().toString(), errors, errorReporter.getErrorList().size());
     } else {
       assertFalse(errorReporter.getErrorList().toString(), errorReporter.getErrorList().isEmpty());
+    }
+    if (errors == 0) {
+      validateDef(result);
     }
     return result;
   }
