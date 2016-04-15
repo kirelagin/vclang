@@ -20,11 +20,11 @@ import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.TypedDependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.UntypedDependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.*;
+import com.jetbrains.jetpad.vclang.term.definition.visitor.ValidateDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.*;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ValidateTypeVisitor;
 import com.jetbrains.jetpad.vclang.term.pattern.*;
 import com.jetbrains.jetpad.vclang.term.pattern.elimtree.ElimTreeDeserialization;
-import com.jetbrains.jetpad.vclang.term.pattern.elimtree.ElimTreeNode;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
 
 import java.io.*;
@@ -37,9 +37,14 @@ public class ModuleDeserialization {
   private SerializableModuleID myModuleID;
   private List<Binding> myBindingMap;
   private final ElimTreeDeserialization myElimTreeDeserialization;
+  private boolean myValidationEnabled = true;
 
   public ModuleDeserialization() {
     myElimTreeDeserialization = new ElimTreeDeserialization(this);
+  }
+
+  public void setValidationEnabled(boolean myValidationEnabled) {
+    this.myValidationEnabled = myValidationEnabled;
   }
 
   public ModuleLoader.Result readFile(File file, SerializableModuleID module) throws IOException {
@@ -182,16 +187,6 @@ public class ModuleDeserialization {
 
     if (definition instanceof FunctionDefinition) {
       deserializeFunctionDefinition(stream, definitionMap, (FunctionDefinition) definition);
-      ValidateTypeVisitor.ErrorReporter errorReporter = new ValidateTypeVisitor.ErrorReporter();
-      ValidateTypeVisitor visitor = new ValidateTypeVisitor(errorReporter);
-      ElimTreeNode elimTreeNode = ((FunctionDefinition) definition).getElimTree();
-      if (elimTreeNode != null) {
-        System.err.println("Checking " + elimTreeNode);
-        elimTreeNode.accept(visitor, null);
-      }
-      if (errorReporter.errors() > 0) {
-        System.err.println(errorReporter.getExpressions() + ", " + errorReporter.getReasons());
-      }
     } else if (definition instanceof DataDefinition) {
       deserializeDataDefinition(stream, definitionMap, (DataDefinition) definition);
     } else if (definition instanceof ClassDefinition) {
@@ -199,6 +194,15 @@ public class ModuleDeserialization {
     } else {
       throw new IncorrectFormat();
     }
+
+    if (myValidationEnabled) {
+      ValidateDefinitionVisitor visitor = new ValidateDefinitionVisitor();
+      ValidateTypeVisitor.ErrorReporter errorReporter = definition.accept(visitor, null);
+      if (errorReporter.errors() > 0) {
+        System.err.println(errorReporter.getExpressions() + ", " + errorReporter.getReasons());
+      }
+    }
+
     return definition;
   }
 

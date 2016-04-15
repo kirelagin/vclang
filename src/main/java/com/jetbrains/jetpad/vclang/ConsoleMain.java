@@ -7,7 +7,6 @@ import com.jetbrains.jetpad.vclang.module.utils.FileOperations;
 import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
 import com.jetbrains.jetpad.vclang.serialization.ModuleDeserialization;
 import com.jetbrains.jetpad.vclang.term.Abstract;
-import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.*;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.ValidateDefinitionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ValidateTypeVisitor;
@@ -106,6 +105,7 @@ public class ConsoleMain {
 
     final ListErrorReporter errorReporter = new ListErrorReporter();
     ModuleDeserialization moduleDeserialization = new ModuleDeserialization();
+    moduleDeserialization.setValidationEnabled(cmdOptions.hasOption("validate"));
     moduleLoader.setSourceSupplier(new FileSourceSupplier(moduleLoader, errorReporter, sourceDir));
     moduleLoader.setOutputSupplier(new FileOutputSupplier(moduleDeserialization, outputDir, libDirs));
 
