@@ -62,6 +62,10 @@ public abstract class Expression implements PrettyPrintable {
     return accept(new NormalizeVisitor(new EvalNormalizer()), mode);
   }
 
+  public static boolean compare(Expression expr1, Expression expr2, Equations.CMP cmp, Equations equations) {
+    return CompareVisitor.compare(equations, cmp, expr1, expr2, null);
+  }
+
   public static boolean compare(Expression expr1, Expression expr2, Equations.CMP cmp) {
     return CompareVisitor.compare(DummyEquations.getInstance(), cmp, expr1, expr2, null);
   }

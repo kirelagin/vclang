@@ -24,6 +24,7 @@ import com.jetbrains.jetpad.vclang.typechecking.error.NotInScopeError;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeCheckingError;
 import com.jetbrains.jetpad.vclang.typechecking.error.TypeMismatchError;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
+import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.DummyEquations;
 
 import java.util.*;
 
@@ -399,13 +400,10 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
         if (universe == null) {
           universe = argUniverse;
         } else {
-          Universe.CompareResult cmp = universe.compare(argUniverse);
-          if (cmp == null) {
-            String error = "Universe " + argUniverse + " of " + ordinal(index) + " argument is not compatible with universe " + universe + " of previous arguments";
+          if (!universe.equals(argUniverse, DummyEquations.getInstance())) {
+            String error = "Universe " + argUniverse + " of " + ordinal(index) + " argument is not equal to the universe " + universe + " of previous arguments";
             myErrorReporter.report(new TypeCheckingError(myNamespaceMember.getResolvedName(), error, def));
             return typedDef;
-          } else {
-            universe = cmp.MaxUniverse;
           }
         }
       } else {
@@ -428,13 +426,10 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
     if (universe == null) {
       universe = resultTypeUniverse;
     } else {
-      Universe.CompareResult cmp = universe.compare(resultTypeUniverse);
-      if (cmp == null) {
-        String error = "Universe " + resultTypeUniverse + " of the result type is not compatible with universe " + universe + " of arguments";
+      if (!universe.equals(resultTypeUniverse, DummyEquations.getInstance())) {
+        String error = "Universe " + resultTypeUniverse + " of the result type is not equal to the universe " + universe + " of arguments";
         myErrorReporter.report(new TypeCheckingError(myNamespaceMember.getResolvedName(), error, def));
         return typedDef;
-      } else {
-        universe = cmp.MaxUniverse;
       }
     }
 
@@ -513,26 +508,19 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
       }
       member.definition = typedConstructor;
 
-      Universe.CompareResult cmp = inferredUniverse.compare(typedConstructor.getUniverse());
-      if (cmp == null) {
-        String msg = "Universe " + typedConstructor.getUniverse() + " of constructor '" + constructor.getName() + "' is not compatible with universe " + inferredUniverse + " of previous constructors";
+      if (!inferredUniverse.equals(typedConstructor.getUniverse(), DummyEquations.getInstance())) {
+        String msg = "Universe " + typedConstructor.getUniverse() + " of constructor '" + constructor.getName() + "' is not equal to the universe " + inferredUniverse + " of previous constructors";
         myErrorReporter.report(new TypeCheckingError(msg, null));
-      } else {
-        inferredUniverse = cmp.MaxUniverse;
       }
     }
 
     if (userUniverse != null) {
-      Universe.CompareResult cmp = inferredUniverse.compare(userUniverse);
-      if (cmp == null || cmp.Result == Universe.Cmp.GREATER) {
+      if (!inferredUniverse.equals(userUniverse, DummyEquations.getInstance())) {
         myErrorReporter.report(new TypeMismatchError(new UniverseExpression(userUniverse), new UniverseExpression(inferredUniverse), null));
-        dataDefinition.setUniverse(inferredUniverse);
-      } else {
-        dataDefinition.setUniverse(cmp.MaxUniverse);
       }
-    } else {
-      dataDefinition.setUniverse(inferredUniverse);
     }
+
+    dataDefinition.setUniverse(inferredUniverse);
 
     context.clear();
     if (def.getConditions() != null) {
@@ -719,13 +707,10 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
         if (universe == null) {
           universe = argUniverse;
         } else {
-          Universe.CompareResult cmp = universe.compare(argUniverse);
-          if (cmp == null) {
-            String error = "Universe " + argUniverse + " of " + ordinal(index) + " argument is not compatible with universe " + universe + " of previous arguments";
+          if (!universe.equals(argUniverse, DummyEquations.getInstance())) {
+            String error = "Universe " + argUniverse + " of " + ordinal(index) + " argument is not equal to the universe " + universe + " of previous arguments";
             myErrorReporter.report(new TypeCheckingError(dataDefinition.getParentNamespace().getResolvedName(), error, def));
             ok = false;
-          } else {
-            universe = cmp.MaxUniverse;
           }
         }
 
@@ -860,7 +845,7 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
               Universe newUniverse = field.getUniverse();
               Universe.CompareResult cmp = oldUniverse.compare(newUniverse);
               if (cmp == null) {
-                String error = "UniverseOld " + newUniverse + " of abstract definition '" + field.getName() + "' is not compatible with universe " + oldUniverse + " of previous abstract definitions";
+                String error = "Universe " + newUniverse + " of abstract definition '" + field.getName() + "' is not compatible with universe " + oldUniverse + " of previous abstract definitions";
                 myErrorReporter.report(new TypeCheckingError(myNamespaceMember.getResolvedName(), error, definition));
               } else {
                 classDefinition.setUniverse(cmp.MaxUniverse);

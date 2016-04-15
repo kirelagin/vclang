@@ -1,6 +1,7 @@
 package com.jetbrains.jetpad.vclang.term.definition;
 
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
+import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.DummyEquations;
 import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.Equations;
 
 public abstract class BaseUniverse<U extends Universe, L extends Universe.Level<L>> implements Universe, Universe.LeveledUniverseFactory<U, L>  {
@@ -45,10 +46,19 @@ public abstract class BaseUniverse<U extends Universe, L extends Universe.Level<
   }
 
   @Override
+  public boolean equals(Universe other, Equations equations) {
+    if (getClass() != other.getClass()) return false;
+    L otherLevel = ((BaseUniverse<U, L>) other).getLevel();
+    if (myLevel == null || otherLevel == null) {
+      return myLevel == otherLevel;
+    }
+    return myLevel.equals(otherLevel, equations);
+  }
+
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof Universe)) return false;
-    CompareResult cmp = compare((Universe) other);
-    return cmp != null && cmp.Result == Cmp.EQUALS;
+    return equals((Universe) other, DummyEquations.getInstance());
   }
 
 }

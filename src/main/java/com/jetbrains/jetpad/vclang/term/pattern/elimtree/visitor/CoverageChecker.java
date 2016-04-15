@@ -36,13 +36,11 @@ public class CoverageChecker implements ElimTreeNodeVisitor<Substitution, Boolea
 
     boolean result = true;
     for (ConCallExpression conCall : ftype.getDefinition().getMatchedConstructors(parameters)) {
-      Universe.CompareResult cmpProp = myResultType.getType().toUniverse().getUniverse().compare(TypeUniverse.PROP);
-      Universe.CompareResult cmpSet = myResultType.getType().toUniverse().getUniverse().compare(TypeUniverse.SET);
-      if (cmpProp != null && cmpProp.Result == Universe.Cmp.EQUALS) {
+      if (myResultType.getType().toUniverse().getUniverse().equals(TypeUniverse.PROP)) {
         if (Prelude.isTruncP(conCall.getDefinition())) {
           continue;
         }
-      } else if (cmpSet != null && cmpSet.isLessOrEquals()) {
+      } else if (myResultType.getType().toUniverse().getUniverse().equals(TypeUniverse.SET)) {
         if (Prelude.isTruncS(conCall.getDefinition())) {
           continue;
         }

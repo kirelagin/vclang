@@ -1,8 +1,10 @@
 package com.jetbrains.jetpad.vclang.term.expr;
 
+import com.jetbrains.jetpad.vclang.term.Preprelude;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.UntypedDependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
+import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.DummyEquations;
 
 public abstract class DependentTypeExpression extends Expression {
   private final DependentLink myLink;
@@ -20,15 +22,13 @@ public abstract class DependentTypeExpression extends Expression {
     Universe universe = null;
 
     while (link.hasNext()) {
-      if (!(link instanceof UntypedDependentLink)) {
+      if (!(link instanceof UntypedDependentLink) && !Preprelude.isIntervalOrLevel(link.getType())) {
         UniverseExpression type = link.getType().getType().toUniverse();
         if (type == null) return null;
         if (universe == null) {
           universe = type.getUniverse();
         } else {
-          Universe.CompareResult cmp = universe.compare(type.getUniverse());
-          if (cmp == null) return null;
-          universe = cmp.MaxUniverse;
+          if (!universe.equals(type.getUniverse())) return null;
         }
       }
       link = link.getNext();

@@ -558,33 +558,34 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
     Universe universe = null;
     for (int i = 0; i < domainTypes.length; ++i) {
+      if (Preprelude.isIntervalOrLevel(domainTypes[i])) {
+        continue;
+      }
       Universe argUniverse = domainTypes[i].normalize(NormalizeVisitor.Mode.NF).toUniverse().getUniverse();
       if (universe == null) {
         universe = argUniverse;
         continue;
       }
-      Universe.CompareResult cmp = universe.compare(argUniverse);
-      if (cmp == null) {
-        String msg = "Universe " + argUniverse + " of " + ordinal(i + 1) + " argument is not compatible with universe " + universe + " of previous arguments";
+      if (!universe.equals(argUniverse, argsResult.getEquations())) {
+        String msg = "Universe " + argUniverse + " of " + ordinal(i + 1) + " argument is not equal to the universe " + universe + " of previous arguments";
         TypeCheckingError error = new TypeCheckingError(msg, expr);
         expr.setWellTyped(myContext, Error(null, error));
         myErrorReporter.report(error);
         return null;
       }
-      universe = cmp.MaxUniverse;
     }
     if (codomainResult != null) {
       Universe codomainUniverse = codomainResult.type.normalize(NormalizeVisitor.Mode.NF).toUniverse().getUniverse();
       if (universe != null) {
-        Universe.CompareResult cmp = universe.compare(codomainUniverse);
-        if (cmp == null) {
-          String msg = "Universe " + codomainUniverse + " the codomain is not compatible with universe " + universe + " of arguments";
+        if (codomainUniverse.equals(TypeUniverse.PROP)) {
+          universe = TypeUniverse.PROP;
+        } else if (!universe.equals(codomainUniverse, argsResult.getEquations())) {
+          String msg = "Universe " + codomainUniverse + " the codomain is not equal to the universe " + universe + " of arguments";
           TypeCheckingError error = new TypeCheckingError(msg, expr);
           expr.setWellTyped(myContext, Error(null, error));
           myErrorReporter.report(error);
           return null;
         }
-        universe = codomainUniverse.equals(TypeUniverse.PROP) ? TypeUniverse.PROP : cmp.MaxUniverse;
       } else {
         universe = codomainUniverse;
       }

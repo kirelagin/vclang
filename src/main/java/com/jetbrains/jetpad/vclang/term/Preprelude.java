@@ -9,6 +9,9 @@ import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.*;
+import com.jetbrains.jetpad.vclang.term.expr.ClassCallExpression;
+import com.jetbrains.jetpad.vclang.term.expr.DataCallExpression;
+import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import com.jetbrains.jetpad.vclang.term.pattern.elimtree.ElimTreeNode;
 
 import java.util.Collection;
@@ -44,6 +47,8 @@ public class Preprelude extends Namespace {
   public static FunctionDefinition MAX_NAT;
   public static FunctionDefinition MAX_CNAT;
   public static FunctionDefinition SUC_CNAT;
+  public static FunctionDefinition SUC_LEVEL;
+  public static FunctionDefinition MAX_LEVEL;
 
   public static ClassDefinition LEVEL;
   public static ClassField PLEVEL;
@@ -141,6 +146,16 @@ public class Preprelude extends Namespace {
     PRE_PRELUDE.getChild(LEVEL.getName()).addDefinition(PLEVEL);
     PRE_PRELUDE.getChild(LEVEL.getName()).addDefinition(HLEVEL);
 
+    DependentLink sucLevelParameter = param(ClassCall(LEVEL));
+    SUC_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "sucLev"), Abstract.Definition.DEFAULT_PRECEDENCE, sucLevelParameter, ClassCall(LEVEL), sucCNatElimTree, null);
+    PRE_PRELUDE.addDefinition(SUC_LEVEL);
+
+    DependentLink maxLevelParameter1 = param(ClassCall(LEVEL));
+    DependentLink maxLevelParameter2 = param(ClassCall(LEVEL));
+    maxLevelParameter1.setNext(maxLevelParameter2);
+    MAX_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "maxLev"), Abstract.Definition.DEFAULT_PRECEDENCE, maxLevelParameter1, ClassCall(LEVEL), null, null);
+    PRE_PRELUDE.addDefinition(MAX_LEVEL);
+
     INTERVAL = new DataDefinition(new DefinitionResolvedName(PRE_PRELUDE, "I"), Abstract.Definition.DEFAULT_PRECEDENCE, null, EmptyDependentLink.getInstance());
     Namespace intervalNamespace = PRE_PRELUDE.getChild(INTERVAL.getName());
     LEFT = new Constructor(new DefinitionResolvedName(intervalNamespace, "left"), Abstract.Definition.DEFAULT_PRECEDENCE, null, EmptyDependentLink.getInstance(), INTERVAL);
@@ -166,6 +181,8 @@ public class Preprelude extends Namespace {
     LEVEL.setUniverse(TypeUniverse.SetOfLevel(0));
     PLEVEL.setUniverse(TypeUniverse.SetOfLevel(0));
     HLEVEL.setUniverse(TypeUniverse.SetOfLevel(0));
+    MAX_LEVEL.setUniverse(TypeUniverse.SetOfLevel(0));
+    SUC_LEVEL.setUniverse(TypeUniverse.SetOfLevel(0));
     INTERVAL.setUniverse(TypeUniverse.PROP);
     LEFT.setUniverse(TypeUniverse.PROP);
     RIGHT.setUniverse(TypeUniverse.PROP);
@@ -179,5 +196,14 @@ public class Preprelude extends Namespace {
   @Override
   public Collection<NamespaceMember> getMembers() {
     throw new IllegalStateException();
+  }
+
+  public static boolean isIntervalOrLevel(Expression type) {
+    DataCallExpression mbInterval = type.toDataCall();
+    if (mbInterval != null) {
+      return mbInterval.getDefinition() == INTERVAL;
+    }
+    ClassCallExpression mbLevel = type.toClassCall();
+    return mbLevel != null && mbLevel.getDefinition() == LEVEL;
   }
 }

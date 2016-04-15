@@ -6,6 +6,7 @@ import com.jetbrains.jetpad.vclang.term.definition.TypeUniverse;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ExpressionVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.NormalizeVisitor;
+import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.DummyEquations;
 
 import java.util.Collections;
 import java.util.Map;
@@ -63,8 +64,7 @@ public class ClassCallExpression extends DefCallExpression {
             myUniverse = fieldUniverse;
             continue;
           }
-          myUniverse = myUniverse.compare(fieldUniverse).MaxUniverse;
-          assert expr != null;
+          assert myUniverse.equals(fieldUniverse);
         }
       }
     }
