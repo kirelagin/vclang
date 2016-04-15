@@ -306,10 +306,6 @@ public class ValidateTypeVisitor extends BaseExpressionVisitor<Expression, Void>
   @Override
   public Void visitLeaf(LeafElimTreeNode leafNode, Expression expectedType) {
     Expression expression = leafNode.getExpression();
-    // TODO it should not be there
-    if (expression instanceof OfTypeExpression) {
-      expression = ((OfTypeExpression) expression).getExpression();
-    }
     expression.accept(this, expectedType);
     return null;
   }
