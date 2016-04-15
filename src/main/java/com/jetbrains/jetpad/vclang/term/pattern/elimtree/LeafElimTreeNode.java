@@ -30,7 +30,7 @@ public class LeafElimTreeNode extends ElimTreeNode {
   }
 
   public void setExpression(Expression expression) {
-    myExpression = expression.strip();
+    myExpression = expression;
   }
 
   public Abstract.Definition.Arrow getArrow() {

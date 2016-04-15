@@ -131,7 +131,7 @@ public class TypeCheckingElim {
     }
   }
 
-  public Result typeCheckElim(final Abstract.ElimCaseExpression expr, DependentLink eliminatingArgs, Expression expectedType, boolean isCase) {
+  public Result typeCheckElim(final Abstract.ElimCaseExpression expr, DependentLink eliminatingArgs, Expression expectedType, boolean isCase, boolean fromDefinitionCheckTypeVisitor) {
     TypeCheckingError error = null;
     if (expectedType == null) {
       error = new TypeCheckingError("Cannot infer type of the expression", expr);
@@ -204,7 +204,12 @@ public class TypeCheckingElim {
         }
 
         if (clause.getExpression() != null) {
-          CheckTypeVisitor.Result clauseResult = myVisitor.typeCheck(clause.getExpression(), clauseExpectedType);
+          final CheckTypeVisitor.Result clauseResult;
+          if (fromDefinitionCheckTypeVisitor) {
+            clauseResult = myVisitor.checkType(clause.getExpression(), clauseExpectedType);
+          } else {
+            clauseResult = myVisitor.typeCheck(clause.getExpression(), clauseExpectedType);
+          }
           if (clauseResult == null) {
             wasError = true;
             continue;

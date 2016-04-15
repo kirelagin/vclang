@@ -607,7 +607,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
     }
     letBinding.setParameters(list.getFirst());
 
-    TypeCheckingElim.Result elimResult = myTypeCheckingElim.typeCheckElim(expr, list.getFirst(), expectedType, true);
+    TypeCheckingElim.Result elimResult = myTypeCheckingElim.typeCheckElim(expr, list.getFirst(), expectedType, true, false);
     if (elimResult == null) return null;
     if (!elimResult.getEquations().isEmpty()) {
       for (DependentLink link = list.getFirst(); link != EmptyDependentLink.getInstance(); link = link.getNext()) {
@@ -803,7 +803,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
 
       if (clause.getTerm() instanceof Abstract.ElimExpression)  {
         myContext.subList(myContext.size() - size(links.getFirst()), myContext.size()).clear();
-        TypeCheckingElim.Result elimResult = myTypeCheckingElim.typeCheckElim((Abstract.ElimExpression) clause.getTerm(), clause.getArrow() == Abstract.Definition.Arrow.LEFT ? links.getFirst() : null, expectedType, false);
+        TypeCheckingElim.Result elimResult = myTypeCheckingElim.typeCheckElim((Abstract.ElimExpression) clause.getTerm(), clause.getArrow() == Abstract.Definition.Arrow.LEFT ? links.getFirst() : null, expectedType, false, false);
         if (elimResult == null)
           return null;
         if (!elimResult.getEquations().isEmpty()) {
