@@ -3,6 +3,7 @@ package com.jetbrains.jetpad.vclang.term.statement.visitor;
 import com.jetbrains.jetpad.vclang.module.ModulePath;
 import com.jetbrains.jetpad.vclang.naming.Namespace;
 import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
+import com.jetbrains.jetpad.vclang.naming.NewNameResolver;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.definition.visitor.DefinitionResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.GeneralError;
@@ -23,23 +24,14 @@ import static com.jetbrains.jetpad.vclang.naming.NamespaceMember.toNamespaceMemb
 
 public class StatementResolveNameVisitor implements AbstractStatementVisitor<StatementResolveNameVisitor.Flag, Object>, AutoCloseable {
   private final ErrorReporter myErrorReporter;
-  private final Namespace myNamespace;
-  private final MultiNameResolver myPrivateNameResolver;
-  private final CompositeNameResolver myNameResolver;
-  private final ModuleResolver myModuleResolver;
+  private final NewNameResolver myNameResolver;
   private final List<String> myContext;
   private ResolveListener myResolveListener;
 
-  public StatementResolveNameVisitor(ErrorReporter errorReporter, Namespace namespace, CompositeNameResolver nameResolver, ModuleResolver moduleResolver, List<String> context) {
-    myErrorReporter = errorReporter;
-    myNamespace = namespace;
-    myModuleResolver = moduleResolver;
-    myContext = context;
-
-    myPrivateNameResolver = new MultiNameResolver();
-    myNameResolver = nameResolver;
-    myNameResolver.pushNameResolver(new NamespaceNameResolver(namespace));
-    myNameResolver.pushNameResolver(myPrivateNameResolver);
+  public StatementResolveNameVisitor(ErrorReporter myErrorReporter, NewNameResolver myNameResolver, List<String> myContext) {
+    this.myErrorReporter = myErrorReporter;
+    this.myNameResolver = myNameResolver;
+    this.myContext = myContext;
   }
 
   public enum Flag { MUST_BE_STATIC, MUST_BE_DYNAMIC }

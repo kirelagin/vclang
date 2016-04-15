@@ -1,47 +1,32 @@
 package com.jetbrains.jetpad.vclang.term.definition.visitor;
 
-import com.jetbrains.jetpad.vclang.naming.Namespace;
 import com.jetbrains.jetpad.vclang.module.Root;
+import com.jetbrains.jetpad.vclang.naming.Namespace;
+import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
+import com.jetbrains.jetpad.vclang.naming.NewNameResolver;
 import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.context.Utils;
-import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.ResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.term.statement.visitor.StatementResolveNameVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.error.reporter.ErrorReporter;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.CompositeNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.MultiNameResolver;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.NameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.SingleNameResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.listener.ResolveListener;
-import com.jetbrains.jetpad.vclang.typechecking.nameresolver.module.CompositeModuleResolver;
 import com.jetbrains.jetpad.vclang.typechecking.nameresolver.module.ModuleResolver;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<Boolean, Void> {
   private final ErrorReporter myErrorReporter;
-  private final Namespace myNamespace;
-  private final CompositeNameResolver myNameResolver;
-  private final ModuleResolver myModuleResolver;
-  private List<String> myContext;
+  private final NewNameResolver myNameResolver;
+  private final List<String> myContext;
   private ResolveListener myResolveListener;
 
-  public DefinitionResolveNameVisitor(ErrorReporter errorReporter, Namespace namespace, NameResolver nameResolver, ModuleResolver moduleResolver) {
-    this(errorReporter, namespace, new CompositeNameResolver(),
-        moduleResolver == null ? Root.rootModuleResolver : new CompositeModuleResolver(Root.rootModuleResolver, moduleResolver), new ArrayList<String>());
-    if (nameResolver != null) {
-      myNameResolver.pushNameResolver(nameResolver);
-    }
-  }
-
-  public DefinitionResolveNameVisitor(ErrorReporter errorReporter, Namespace namespace, CompositeNameResolver nameResolver, ModuleResolver moduleResolver, List<String> context) {
-    myErrorReporter = errorReporter;
-    myNamespace = namespace;
-    myNameResolver = nameResolver;
-    myModuleResolver = moduleResolver;
-    myContext = context;
+  public DefinitionResolveNameVisitor(ErrorReporter myErrorReporter, NewNameResolver myNameResolver, List<String> myContext) {
+    this.myErrorReporter = myErrorReporter;
+    this.myNameResolver = myNameResolver;
+    this.myContext = myContext;
   }
 
   public void setResolveListener(ResolveListener resolveListener) {
@@ -55,7 +40,7 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<B
       visitFunction(def);
       return null;
     } else {
-      try (StatementResolveNameVisitor visitor = new StatementResolveNameVisitor(myErrorReporter, myNamespace.getChild(def.getName()), myNameResolver, myModuleResolver, myContext)) {
+      try (StatementResolveNameVisitor visitor = new StatementResolveNameVisitor(myErrorReporter, myNameResolver, myContext)) {
         visitor.setResolveListener(myResolveListener);
         for (Abstract.Statement statement : statements) {
           statement.accept(visitor, isStatic ? StatementResolveNameVisitor.Flag.MUST_BE_STATIC : null);
@@ -63,6 +48,40 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<B
         visitFunction(def);
       }
       return null;
+    }
+  }
+
+  private void visitFunction(Abstract.FunctionDefinition def) {
+    if (myResolveListener == null) {
+      return;
+    }
+
+    //ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myModuleResolver, myContext, myResolveListener);
+    try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
+      for (Abstract.Argument argument : def.getArguments()) {
+        if (argument instanceof Abstract.TypeArgument) {
+          //((Abstract.TypeArgument) argument).getType().accept(visitor, null);
+        }
+        if (argument instanceof Abstract.TelescopeArgument) {
+          myContext.addAll(((Abstract.TelescopeArgument) argument).getNames());
+        } else
+        if (argument instanceof Abstract.NameArgument) {
+          myContext.add(((Abstract.NameArgument) argument).getName());
+        }
+      }
+
+      Abstract.Expression resultType = def.getResultType();
+      if (resultType != null) {
+        //resultType.accept(visitor, null);
+      }
+
+      Abstract.Expression term = def.getTerm();
+      if (term != null) {
+        String name = def.getName();
+        myNameResolver.pushNameResolver(new SingleNameResolver(name, new NamespaceMember(myNamespace.getChild(name), def, null)));
+        //term.accept(visitor, null);
+        myNameResolver.popNameResolver();
+      }
     }
   }
 
@@ -92,40 +111,6 @@ public class DefinitionResolveNameVisitor implements AbstractDefinitionVisitor<B
       }
     }
     return null;
-  }
-
-  private void visitFunction(Abstract.FunctionDefinition def) {
-    if (myResolveListener == null) {
-      return;
-    }
-
-    ResolveNameVisitor visitor = new ResolveNameVisitor(myErrorReporter, myNameResolver, myModuleResolver, myContext, myResolveListener);
-    try (Utils.ContextSaver ignored = new Utils.ContextSaver(myContext)) {
-      for (Abstract.Argument argument : def.getArguments()) {
-        if (argument instanceof Abstract.TypeArgument) {
-          ((Abstract.TypeArgument) argument).getType().accept(visitor, null);
-        }
-        if (argument instanceof Abstract.TelescopeArgument) {
-          myContext.addAll(((Abstract.TelescopeArgument) argument).getNames());
-        } else
-        if (argument instanceof Abstract.NameArgument) {
-          myContext.add(((Abstract.NameArgument) argument).getName());
-        }
-      }
-
-      Abstract.Expression resultType = def.getResultType();
-      if (resultType != null) {
-        resultType.accept(visitor, null);
-      }
-
-      Abstract.Expression term = def.getTerm();
-      if (term != null) {
-        String name = def.getName();
-        myNameResolver.pushNameResolver(new SingleNameResolver(name, new NamespaceMember(myNamespace.getChild(name), def, null)));
-        term.accept(visitor, null);
-        myNameResolver.popNameResolver();
-      }
-    }
   }
 
   @Override
