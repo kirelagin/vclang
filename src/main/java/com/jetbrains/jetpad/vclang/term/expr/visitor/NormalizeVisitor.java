@@ -140,9 +140,16 @@ public class NormalizeVisitor extends BaseExpressionVisitor<NormalizeVisitor.Mod
     DependentLink excessiveParams;
     int numberOfRequiredArgs = func.getNumberOfRequiredArguments();
     if (numberOfRequiredArgs > args.size()) {
-      excessiveParams = DependentLink.Helper.subst(DependentLink.Helper.get(func.getParameters(), args.size()), new Substitution());
+      Substitution substitution = new Substitution();
+      DependentLink link = func.getParameters();
+      for (Expression arg : args) {
+        substitution.add(link, arg);
+        link = link.getNext();
+      }
+      excessiveParams = DependentLink.Helper.subst(link, substitution);
+
       List<Expression> requiredArgs1 = new ArrayList<>();
-      for (DependentLink link = excessiveParams; link.hasNext(); link = link.getNext()) {
+      for (link = excessiveParams; link.hasNext(); link = link.getNext()) {
         requiredArgs1.add(Reference(link));
       }
       List<Expression> requiredArgs2 = new ArrayList<>(args.size() + requiredArgs1.size());
