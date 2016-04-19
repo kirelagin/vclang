@@ -1,10 +1,14 @@
 package com.jetbrains.jetpad.vclang.typechecking.normalization;
 
+import com.jetbrains.jetpad.vclang.term.Abstract;
 import com.jetbrains.jetpad.vclang.term.Prelude;
 import com.jetbrains.jetpad.vclang.term.Preprelude;
+import com.jetbrains.jetpad.vclang.term.context.LinkList;
 import com.jetbrains.jetpad.vclang.term.context.binding.Binding;
 import com.jetbrains.jetpad.vclang.term.context.binding.TypedBinding;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
+import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
+import com.jetbrains.jetpad.vclang.term.context.param.TypedDependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.Function;
 import com.jetbrains.jetpad.vclang.term.definition.FunctionDefinition;
 import com.jetbrains.jetpad.vclang.term.expr.*;
@@ -72,6 +76,33 @@ public class EvalNormalizer implements Normalizer {
 
       if (result != null) {
         return Apps(result, otherArguments, otherFlags).normalize(mode);
+      }
+    } else if (fun instanceof FunctionDefinition && Preprelude.isLift((FunctionDefinition) fun)) {
+      Expression liftArg = arguments.get(1).normalize(NormalizeVisitor.Mode.NF);
+      if (liftArg instanceof PiExpression) {
+        PiExpression pi = liftArg.toPi();
+        LinkList list = new LinkList();
+        for (DependentLink link = pi.getParameters(); link.hasNext(); link = link.getNext()) {
+          link.setType(FunCall((FunctionDefinition)fun).addArgument(arguments.get(0), EnumSet.noneOf(AppExpression.Flag.class)).addArgument(link.getType(), AppExpression.DEFAULT));
+          list.append(link);
+        }
+        return Pi(list.getFirst(), FunCall((FunctionDefinition)fun).addArgument(arguments.get(0), EnumSet.noneOf(AppExpression.Flag.class)).addArgument(pi.getCodomain(), AppExpression.DEFAULT));
+      } else if (liftArg.getFunction() instanceof DefCallExpression) {
+        Expression mbPath = liftArg;
+        DefCallExpression defCall = mbPath.getFunction().toDefCall();
+        if (Prelude.isPath(defCall.getDefinition())) {
+          List<? extends Expression> pathArgs = mbPath.getArguments();
+          Expression result = defCall;
+          int liftNum = Preprelude.getLiftNum((FunctionDefinition) fun);
+          result = result.addArgument(Preprelude.applyNumberOfSuc(pathArgs.get(0), Preprelude.SUC_LEVEL, liftNum), EnumSet.noneOf(AppExpression.Flag.class));
+          TypedDependentLink binding = new TypedDependentLink(true, "i", DataCall(Preprelude.INTERVAL), EmptyDependentLink.getInstance());
+          Expression normExpr = Apps(pathArgs.get(1), Reference(binding)).normalize(NormalizeVisitor.Mode.NF);
+          LamExpression liftedLam = Lam(binding, FunCall((FunctionDefinition) fun).addArgument(arguments.get(0), EnumSet.noneOf(AppExpression.Flag.class)).addArgument(normExpr, AppExpression.DEFAULT));
+          result = result.addArgument(liftedLam, EnumSet.noneOf(AppExpression.Flag.class));
+          result = result.addArgument(pathArgs.get(2), AppExpression.DEFAULT);
+          result = result.addArgument(pathArgs.get(3), AppExpression.DEFAULT);
+          return result.normalize(mode);
+        }
       }
     }
 

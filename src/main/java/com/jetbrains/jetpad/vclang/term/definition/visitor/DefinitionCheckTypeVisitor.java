@@ -120,6 +120,7 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
     }
     */
 
+    ArrayList<Universe.TypeUniPair> liftedTypes = new ArrayList<>();
     List<? extends Abstract.Argument> arguments = def.getArguments();
     final List<Binding> context = new ArrayList<>();
     CheckTypeVisitor visitor = new CheckTypeVisitor.Builder(context, myErrorReporter).build();
@@ -181,17 +182,27 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
 
     // int numberOfArgs = index;
     int index = 0;
+    ArrayList<Integer> argMult = new ArrayList<>();
     for (Abstract.Argument argument : arguments) {
       DependentLink param;
       if (argument instanceof Abstract.TypeArgument) {
+        int bindInd = context.size() - index;
+        for (int i = 0; i < liftedTypes.size(); ++i) {
+          for (int j = 0; j < argMult.get(i); ++j) {
+            ((DependentLink)context.get(bindInd)).setType(liftedTypes.get(i).Type);
+            ++bindInd;
+          }
+        }
         CheckTypeVisitor.Result result = visitor.checkType(((Abstract.TypeArgument) argument).getType(), Universe());
         if (result == null) return typedDef;
+        if (!Universe.Lifts.equalize(liftedTypes, new Universe.TypeUniPair(result.expression, result.type.toUniverse().getUniverse()), DummyEquations.getInstance())) return typedDef;
 
         // boolean ok = true;
         if (argument instanceof Abstract.TelescopeArgument) {
           List<String> names = ((Abstract.TelescopeArgument) argument).getNames();
           param = param(argument.getExplicit(), names, result.expression);
           index += names.size();
+          argMult.add(names.size());
         /*
         if (splitArgs != null) {
           List<CompareVisitor.Equation> equations = new ArrayList<>(0);
@@ -217,6 +228,7 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
           // if (ok) {
           param = param(argument.getExplicit(), (String) null, result.expression);
           index++;
+          argMult.add(1);
           // }
         }
         list.append(param);
@@ -264,7 +276,6 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
     if (resultType != null) {
       CheckTypeVisitor.Result typeResult = visitor.checkType(resultType, Universe());
       if (typeResult != null) {
-        expectedType = typeResult.expression;
       /*
       if (overriddenResultType != null) {
         List<CompareVisitor.Equation> equations = new ArrayList<>(0);
@@ -275,6 +286,8 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
         }
       }
       */
+        if (!Universe.Lifts.equalize(liftedTypes, new Universe.TypeUniPair(typeResult.expression, typeResult.type.toUniverse().getUniverse()), DummyEquations.getInstance())) return typedDef;
+        expectedType = liftedTypes.get(liftedTypes.size() - 1).Type;
       }
     }
 
@@ -283,6 +296,18 @@ public class DefinitionCheckTypeVisitor implements AbstractDefinitionVisitor<Voi
       expectedType = overriddenResultType;
     }
     */
+
+    DependentLink param = list.getFirst();
+    for (int i = 0; i < arguments.size(); ++i) {
+      int args = 1;
+      if (arguments.get(i) instanceof Abstract.TelescopeArgument) {
+        args = ((Abstract.TelescopeArgument) arguments.get(i)).getNames().size();
+      }
+      for (int j = 0; j < args; ++j) {
+        param.setType(liftedTypes.get(i).Type);
+        param = param.getNext();
+      }
+    }
 
     typedDef.setParameters(list.getFirst());
     typedDef.setResultType(expectedType);

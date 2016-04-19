@@ -9,12 +9,14 @@ import com.jetbrains.jetpad.vclang.naming.NamespaceMember;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.EmptyDependentLink;
 import com.jetbrains.jetpad.vclang.term.definition.*;
-import com.jetbrains.jetpad.vclang.term.expr.ClassCallExpression;
-import com.jetbrains.jetpad.vclang.term.expr.DataCallExpression;
-import com.jetbrains.jetpad.vclang.term.expr.Expression;
+import com.jetbrains.jetpad.vclang.term.expr.*;
 import com.jetbrains.jetpad.vclang.term.pattern.elimtree.ElimTreeNode;
+import com.jetbrains.jetpad.vclang.term.pattern.elimtree.EmptyElimTreeNode;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
 
@@ -53,6 +55,8 @@ public class Preprelude extends Namespace {
   public static ClassDefinition LEVEL;
   public static ClassField PLEVEL;
   public static ClassField HLEVEL;
+
+  private static Map<Integer, FunctionDefinition> LIFTS = new HashMap<>();
 
   static {
     PRE_PRELUDE_CLASS = new ClassDefinition(new ModuleResolvedName(moduleID), null);
@@ -147,13 +151,13 @@ public class Preprelude extends Namespace {
     PRE_PRELUDE.getChild(LEVEL.getName()).addDefinition(HLEVEL);
 
     DependentLink sucLevelParameter = param(ClassCall(LEVEL));
-    SUC_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "sucLev"), Abstract.Definition.DEFAULT_PRECEDENCE, sucLevelParameter, ClassCall(LEVEL), sucCNatElimTree, null);
+    SUC_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "sucLev"), Abstract.Definition.DEFAULT_PRECEDENCE, sucLevelParameter, ClassCall(LEVEL), EmptyElimTreeNode.getInstance(), null);
     PRE_PRELUDE.addDefinition(SUC_LEVEL);
 
     DependentLink maxLevelParameter1 = param(ClassCall(LEVEL));
     DependentLink maxLevelParameter2 = param(ClassCall(LEVEL));
     maxLevelParameter1.setNext(maxLevelParameter2);
-    MAX_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "maxLev"), Abstract.Definition.DEFAULT_PRECEDENCE, maxLevelParameter1, ClassCall(LEVEL), null, null);
+    MAX_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "maxLev"), Abstract.Definition.DEFAULT_PRECEDENCE, maxLevelParameter1, ClassCall(LEVEL), EmptyElimTreeNode.getInstance(), null);
     PRE_PRELUDE.addDefinition(MAX_LEVEL);
 
     INTERVAL = new DataDefinition(new DefinitionResolvedName(PRE_PRELUDE, "I"), Abstract.Definition.DEFAULT_PRECEDENCE, null, EmptyDependentLink.getInstance());
@@ -193,6 +197,52 @@ public class Preprelude extends Namespace {
     super(moduleID);
   }
 
+  private static FunctionDefinition addLift(int lift) {
+    DependentLink liftParameter1 = param(false, "l", ClassCall(LEVEL));
+    DependentLink liftParameter2 = param("A", Universe(Reference(liftParameter1)));
+    liftParameter1.setNext(liftParameter2);
+    FunctionDefinition liftDef = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "lift" + lift), Abstract.Definition.DEFAULT_PRECEDENCE, liftParameter1, Universe(applyNumberOfSuc(Reference(liftParameter1), SUC_LEVEL, lift)), EmptyElimTreeNode.getInstance(), null);
+    PRE_PRELUDE.addDefinition(liftDef);
+    LIFTS.put(lift, liftDef);
+    return liftDef;
+  }
+
+  @Override
+  public NamespaceMember getMember(String name) {
+    NamespaceMember result = super.getMember(name);
+    if (result != null)
+      return result;
+    if (name.startsWith("lift")) {
+      try {
+        int lift = Integer.parseInt(name.substring("lift".length(), name.length()));
+        return addLift(lift).getResolvedName().toNamespaceMember();
+      } catch (Exception e) {
+        return null;
+      }
+    }
+    /*
+    int indexOfMinusSign = name.indexOf('-');
+    if (indexOfMinusSign == -1) {
+      return null;
+    }
+    if (name.substring(indexOfMinusSign + 1, indexOfMinusSign + 1 + "lift".length()).equals("lift")) {
+      try {
+        int homLift = Integer.parseInt(name.substring(0, indexOfMinusSign));
+        int predLift = Integer.parseInt(name.substring(indexOfMinusSign + "-lift".length(), name.length()));
+
+        DependentLink liftParameter1 = param("l", ClassCall(LEVEL));
+        DependentLink liftParameter2 = param("A", Universe(Reference(liftParameter1)));
+        liftParameter1.setNext(liftParameter2);
+        SUC_LEVEL = new FunctionDefinition(new DefinitionResolvedName(PRE_PRELUDE, "sucLev"), Abstract.Definition.DEFAULT_PRECEDENCE, liftParameter1, ClassCall(LEVEL), null, null);
+
+        return getMember(name);
+      } catch (Exception e) {
+        return null;
+      }
+    } /**/
+    return null;
+  }
+
   @Override
   public Collection<NamespaceMember> getMembers() {
     throw new IllegalStateException();
@@ -205,5 +255,67 @@ public class Preprelude extends Namespace {
     }
     ClassCallExpression mbLevel = type.toClassCall();
     return mbLevel != null && mbLevel.getDefinition() == LEVEL;
+  }
+
+  public static boolean isLift(FunctionDefinition fun) {
+    return fun.getResolvedName().getName().startsWith("lift");
+  }
+
+  public static int getLiftNum(FunctionDefinition fun) {
+    String name = fun.getResolvedName().getName();
+    return Integer.parseInt(name.substring("lift".length(), name.length()));
+  }
+
+  public static Expression applyNumberOfSuc(Expression expr, FunctionDefinition suc, int num) {
+    if (num <= 0) {
+      return expr;
+    }
+    return FunCall(suc).addArgument(applyNumberOfSuc(expr, suc, num - 1), EnumSet.noneOf(AppExpression.Flag.class));
+  }
+
+  public static Expression applyNumberOfSuc(Expression expr, Constructor suc, int num) {
+    if (num <= 0) {
+      return expr;
+    }
+    return ConCall(suc).addArgument(applyNumberOfSuc(expr, suc, num - 1), EnumSet.noneOf(AppExpression.Flag.class));
+  }
+
+  public static class SucExtrResult {
+    public int NumSuc;
+    public Expression Arg;
+
+    public SucExtrResult(int numSuc, Expression arg) {
+      NumSuc = numSuc;
+      Arg = arg;
+    }
+
+    public SucExtrResult incr() {
+      return new SucExtrResult(NumSuc + 1, Arg);
+    }
+  }
+
+  public static SucExtrResult extractSuc(Expression expr, Constructor suc) {
+    Expression fun = expr.getFunction();
+    if (fun.toConCall() != null && fun.toConCall().getDefinition() == suc &&
+            expr.getArguments().size() == 1) {
+      return extractSuc(expr.getArguments().get(0), suc).incr();
+    }
+    return new SucExtrResult(0, expr);
+  }
+
+  public static SucExtrResult extractSuc(Expression expr, FunctionDefinition suc) {
+    Expression fun = expr.getFunction();
+    if (fun.toFunCall() != null && fun.toFunCall().getDefinition() == suc &&
+            expr.getArguments().size() == 1) {
+      return extractSuc(expr.getArguments().get(0), suc).incr();
+    }
+    return new SucExtrResult(0, expr);
+  }
+
+  public static FunctionDefinition getLift(int lift) {
+    if (!LIFTS.containsKey(lift)) {
+      return addLift(lift);
+    }
+    return LIFTS.get(lift);
   }
 }

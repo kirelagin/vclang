@@ -35,6 +35,9 @@ public class PiExpression extends DependentTypeExpression {
     Universe codomainUniverse = type.toUniverse().getUniverse();
     if (codomainUniverse == null) return null;
     if (codomainUniverse.equals(TypeUniverse.PROP)) return TypeUniverse.PROP;
+    if (universe.equals(TypeUniverse.PROP) || universe.equals(TypeUniverse.SET)) {
+      return codomainUniverse;
+    }
     if (!universe.equals(codomainUniverse)) return null;
     return universe;
   }

@@ -3,6 +3,7 @@ package com.jetbrains.jetpad.vclang.term.expr;
 import com.jetbrains.jetpad.vclang.term.Preprelude;
 import com.jetbrains.jetpad.vclang.term.context.param.DependentLink;
 import com.jetbrains.jetpad.vclang.term.context.param.UntypedDependentLink;
+import com.jetbrains.jetpad.vclang.term.definition.TypeUniverse;
 import com.jetbrains.jetpad.vclang.term.definition.Universe;
 import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.DummyEquations;
 
@@ -20,11 +21,21 @@ public abstract class DependentTypeExpression extends Expression {
   public Universe getUniverse() {
     DependentLink link = myLink;
     Universe universe = null;
+    boolean hasSetArgs = false;
 
     while (link.hasNext()) {
-      if (!(link instanceof UntypedDependentLink) && !Preprelude.isIntervalOrLevel(link.getType())) {
+      if (!(link instanceof UntypedDependentLink)) {
         UniverseExpression type = link.getType().getType().toUniverse();
         if (type == null) return null;
+        if (type.getUniverse().equals(TypeUniverse.PROP)) {
+          link = link.getNext();
+          continue;
+        }
+        if (type.getUniverse().equals(TypeUniverse.SET)) {
+          hasSetArgs = true;
+          link = link.getNext();
+          continue;
+        }
         if (universe == null) {
           universe = type.getUniverse();
         } else {
@@ -34,7 +45,7 @@ public abstract class DependentTypeExpression extends Expression {
       link = link.getNext();
     }
 
-    return universe;
+    return universe == null ? hasSetArgs ? TypeUniverse.SetOfLevel(0) : TypeUniverse.PROP : universe;
   }
 
   @Override

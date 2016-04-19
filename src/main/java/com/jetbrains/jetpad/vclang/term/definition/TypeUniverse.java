@@ -1,8 +1,12 @@
 package com.jetbrains.jetpad.vclang.term.definition;
 
+import com.jetbrains.jetpad.vclang.term.Preprelude;
+import com.jetbrains.jetpad.vclang.term.expr.AppExpression;
+import com.jetbrains.jetpad.vclang.term.expr.ClassCallExpression;
 import com.jetbrains.jetpad.vclang.term.expr.Expression;
 import static com.jetbrains.jetpad.vclang.term.expr.ExpressionFactory.*;
 
+import com.jetbrains.jetpad.vclang.term.expr.NewExpression;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.CompareVisitor;
 import com.jetbrains.jetpad.vclang.term.expr.visitor.NormalizeVisitor;
 import com.jetbrains.jetpad.vclang.typechecking.exprorder.CNatOrder;
@@ -11,13 +15,25 @@ import com.jetbrains.jetpad.vclang.typechecking.exprorder.LevelOrder;
 import com.jetbrains.jetpad.vclang.typechecking.exprorder.StandardOrder;
 import com.jetbrains.jetpad.vclang.typechecking.implicitargs.equations.Equations;
 
-public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLevel> {
+import java.util.EnumSet;
+
+public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TwoIntDiff, TypeUniverse.TypeLevel> {
   public static final TypeUniverse PROP = new TypeUniverse(new TypeLevel(HomotopyLevel.PROP, true));
   public static final TypeUniverse SET = new TypeUniverse(new TypeLevel(HomotopyLevel.SET, true));
 
   public static TypeUniverse SetOfLevel(int level) { return new TypeUniverse(new TypeLevel(level, 0)); }
 
-  public static class PredicativeLevel implements Universe.Level<PredicativeLevel> {
+  public static class TwoIntDiff {
+    public int PredDiff;
+    public int HomDiff;
+
+    public TwoIntDiff(int predDiff, int homDiff) {
+      PredDiff = predDiff;
+      HomDiff = homDiff;
+    }
+  }
+
+  public static class PredicativeLevel implements Universe.Level<PredicativeLevel, Integer> {
     private Expression myLevel;
 
     public PredicativeLevel() {
@@ -42,6 +58,16 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
     @Override
     public boolean equals(Object other) {
       return (other instanceof PredicativeLevel) && compare((PredicativeLevel) other) == Cmp.EQUALS;
+    }
+
+    @Override
+    public Integer getDiff(PredicativeLevel other, Equations equations) {
+      Preprelude.SucExtrResult thisSuc = Preprelude.extractSuc(getValue(), Preprelude.SUC_LVL);
+      Preprelude.SucExtrResult otherSuc = Preprelude.extractSuc(other.getValue(), Preprelude.SUC_LVL);
+      if (Expression.compare(thisSuc.Arg, otherSuc.Arg, Equations.CMP.EQ, equations)) {
+        return thisSuc.NumSuc - otherSuc.NumSuc;
+      }
+      return null;
     }
 
     @Override
@@ -71,7 +97,7 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
     }
   }
 
-  public static class HomotopyLevel implements Universe.Level<HomotopyLevel> {
+  public static class HomotopyLevel implements Universe.Level<HomotopyLevel, Integer> {
     private Expression myLevel;
 
     public static final HomotopyLevel NOT_TRUNCATED = new HomotopyLevel(Inf());
@@ -110,6 +136,16 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
     }
 
     @Override
+    public Integer getDiff(HomotopyLevel other, Equations equations) {
+      Preprelude.SucExtrResult thisSuc = Preprelude.extractSuc(getValue(), Preprelude.SUC_CNAT);
+      Preprelude.SucExtrResult otherSuc = Preprelude.extractSuc(other.getValue(), Preprelude.SUC_CNAT);
+      if (Expression.compare(thisSuc.Arg, otherSuc.Arg, Equations.CMP.EQ, equations)) {
+        return thisSuc.NumSuc - otherSuc.NumSuc;
+      }
+      return null;
+    }
+
+    @Override
     public Cmp compare(HomotopyLevel other) {
       Expression otherLevel = other.myLevel;
       myLevel = myLevel.normalize(NormalizeVisitor.Mode.NF);
@@ -131,7 +167,7 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
     }
   }
 
-  public static class TypeLevel implements Universe.Level<TypeLevel> {
+  public static class TypeLevel implements Universe.Level<TypeLevel, TwoIntDiff> {
     private PredicativeLevel myPLevel;
     private HomotopyLevel myHLevel;
     private boolean myIgnorePLevel = false;
@@ -230,11 +266,42 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
         }
         return new TypeLevel(getPLevel(), getHLevel().succ());
       }
-      return new TypeLevel(getPLevel().succ(), getHLevel().succ());
+      //return new TypeLevel(getPLevel().succ(), getHLevel().succ());
+      return new TypeLevel(SucLevel(getValue()));
+    }
+
+    @Override
+    public TwoIntDiff getDiff(TypeLevel other, Equations equations) {
+      Preprelude.SucExtrResult thisSuc = Preprelude.extractSuc(getValue(), Preprelude.SUC_LEVEL);
+      Preprelude.SucExtrResult otherSuc = Preprelude.extractSuc(other.getValue(), Preprelude.SUC_LEVEL);
+      int levelDiff = thisSuc.NumSuc - otherSuc.NumSuc;
+      NewExpression new1 = thisSuc.Arg.toNew();
+      NewExpression new2 = otherSuc.Arg.toNew();
+      if (new1 != null) {
+        if (new2 != null) {
+          Integer plevelDiff = getPLevel().getDiff(other.getPLevel(), equations);
+          Integer hlevelDiff = getHLevel().getDiff(other.getHLevel(), equations);
+
+          if (plevelDiff == null || hlevelDiff == null) {
+            return null;
+          }
+
+          return new TwoIntDiff(plevelDiff + levelDiff, hlevelDiff + levelDiff);
+        }
+      }
+
+      if (Expression.compare(thisSuc.Arg, otherSuc.Arg, Equations.CMP.EQ, equations)) {
+        return new TwoIntDiff(levelDiff, levelDiff);
+      }
+
+      return null;
     }
 
     @Override
     public boolean equals(TypeLevel other, Equations equations) {
+      if (myIgnorePLevel || other.myIgnorePLevel) {
+        return Expression.compare(getHLevel().getValue(), other.getHLevel().getValue(), Equations.CMP.EQ, equations);
+      }
       return Expression.compare(getValue(), other.getValue(), Equations.CMP.EQ, equations);
     }
 
@@ -248,6 +315,28 @@ public class TypeUniverse extends BaseUniverse<TypeUniverse, TypeUniverse.TypeLe
 
   public TypeUniverse(TypeLevel typeLevel) {
     super(typeLevel);
+  }
+
+  @Override
+  protected Lifts diffToLift(final TwoIntDiff diff, final TypeUniverse uni1, final TypeUniverse uni2) {
+    assert diff.PredDiff == diff.HomDiff;
+    if (diff.PredDiff == 0) {
+      return new Lifts();
+    }
+    if (diff.PredDiff < 0) {
+      return new Lifts(new Lifts.LiftApplier() {
+        @Override
+        public Expression apply(Expression type) {
+          return FunCall(Preprelude.getLift(-diff.PredDiff)).addArgument(uni1.getLevel().getValue(), EnumSet.noneOf(AppExpression.Flag.class)).addArgument(type, AppExpression.DEFAULT);
+        }
+      }, null, uni2);
+    }
+    return new Lifts(null, new Lifts.LiftApplier() {
+      @Override
+      public Expression apply(Expression type) {
+        return FunCall(Preprelude.getLift(diff.PredDiff)).addArgument(uni2.getLevel().getValue(), EnumSet.noneOf(AppExpression.Flag.class)).addArgument(type, AppExpression.DEFAULT);
+      }
+    }, uni1);
   }
 
   @Override

@@ -235,6 +235,8 @@ public class ExpressionFactory {
 
   public static Expression SucCNat(Expression expr) { return Apps(FunCall(Preprelude.SUC_CNAT), expr); }
 
+  public static Expression SucLevel(Expression expr) { return Apps(FunCall(Preprelude.SUC_LEVEL), expr); }
+
   public static Expression MaxCNat(Expression expr1, Expression expr2) { return Apps(FunCall(Preprelude.MAX_CNAT), expr1, expr2); }
 
   public static ClassCallExpression Level() { return new ClassCallExpression(Preprelude.LEVEL); }

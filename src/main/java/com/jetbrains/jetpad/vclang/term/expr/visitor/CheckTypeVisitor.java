@@ -161,6 +161,7 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       return result;
     }
 
+    //expectedType.normalize(NormalizeVisitor.Mode.NF);
     if (compare(result, expectedType, Equations.CMP.GE, expression)) {
       expression.setWellTyped(myContext, result.expression);
       return result;
@@ -520,25 +521,24 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
   }
 
   public Result visitArguments(List<? extends Abstract.TypeArgument> arguments, Abstract.Expression codomain, Abstract.Expression expr) {
-    Expression[] domainTypes = new Expression[arguments.size()];
+    Result[] domainResults = new Result[arguments.size()];
     Result argsResult = new Result(null, null);
     LinkList list = new LinkList();
     Result codomainResult = null;
+    Universe universe = null;
 
     try (Utils.ContextSaver saver = new Utils.ContextSaver(myContext)) {
-      for (int i = 0; i < domainTypes.length; i++) {
+      for (int i = 0; i < domainResults.length; i++) {
         Result result = typeCheck(arguments.get(i).getType(), Universe());
         if (result == null) return null;
-        domainTypes[i] = result.type;
+        domainResults[i] = result;
         argsResult.add(result);
 
         if (arguments.get(i) instanceof Abstract.TelescopeArgument) {
-          DependentLink link = param(arguments.get(i).getExplicit(), ((Abstract.TelescopeArgument) arguments.get(i)).getNames(), result.expression);
-          list.append(link);
+          DependentLink link = param(arguments.get(i).getExplicit(), ((Abstract.TelescopeArgument) arguments.get(i)).getNames(), result.expression);;
           myContext.addAll(DependentLink.Helper.toContext(link));
         } else {
           DependentLink link = param(arguments.get(i).getExplicit(), (String) null, result.expression);
-          list.append(link);
           myContext.add(link);
         }
       }
@@ -556,38 +556,43 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<Expression, C
       }
     }
 
-    Universe universe = null;
-    for (int i = 0; i < domainTypes.length; ++i) {
-      if (Preprelude.isIntervalOrLevel(domainTypes[i])) {
-        continue;
-      }
-      Universe argUniverse = domainTypes[i].normalize(NormalizeVisitor.Mode.NF).toUniverse().getUniverse();
-      if (universe == null) {
-        universe = argUniverse;
-        continue;
-      }
-      if (!universe.equals(argUniverse, argsResult.getEquations())) {
+    ArrayList<Universe.TypeUniPair> liftedTypes = new ArrayList<>();
+
+    for (int i = 0; i < domainResults.length; ++i) {
+      Universe argUniverse = domainResults[i].type.normalize(NormalizeVisitor.Mode.NF).toUniverse().getUniverse();
+      if (!Universe.Lifts.equalize(liftedTypes, new Universe.TypeUniPair(domainResults[i].expression, argUniverse), argsResult.getEquations())) {
         String msg = "Universe " + argUniverse + " of " + ordinal(i + 1) + " argument is not equal to the universe " + universe + " of previous arguments";
         TypeCheckingError error = new TypeCheckingError(msg, expr);
         expr.setWellTyped(myContext, Error(null, error));
         myErrorReporter.report(error);
         return null;
       }
+      universe = liftedTypes.get(0).Uni;
     }
+
     if (codomainResult != null) {
       Universe codomainUniverse = codomainResult.type.normalize(NormalizeVisitor.Mode.NF).toUniverse().getUniverse();
       if (universe != null) {
-        if (codomainUniverse.equals(TypeUniverse.PROP)) {
-          universe = TypeUniverse.PROP;
-        } else if (!universe.equals(codomainUniverse, argsResult.getEquations())) {
-          String msg = "Universe " + codomainUniverse + " the codomain is not equal to the universe " + universe + " of arguments";
-          TypeCheckingError error = new TypeCheckingError(msg, expr);
-          expr.setWellTyped(myContext, Error(null, error));
-          myErrorReporter.report(error);
-          return null;
+        if (!codomainUniverse.equals(TypeUniverse.PROP)) {
+          if (!Universe.Lifts.equalize(liftedTypes, new Universe.TypeUniPair(codomainResult.expression, codomainUniverse), argsResult.getEquations())) {
+            String msg = "Universe " + codomainUniverse + " of the codomain is not equal to the universe " + universe + " of arguments";
+            TypeCheckingError error = new TypeCheckingError(msg, expr);
+            expr.setWellTyped(myContext, Error(null, error));
+            myErrorReporter.report(error);
+            return null;
+          }
         }
+      }
+      universe = codomainUniverse;
+    }/**/
+
+    for (int i = 0; i < domainResults.length; ++i) {
+      if (arguments.get(i) instanceof Abstract.TelescopeArgument) {
+        DependentLink link = param(arguments.get(i).getExplicit(), ((Abstract.TelescopeArgument) arguments.get(i)).getNames(), liftedTypes.get(i).Type);
+        list.append(link);
       } else {
-        universe = codomainUniverse;
+        DependentLink link = param(arguments.get(i).getExplicit(), (String) null, liftedTypes.get(i).Type);
+        list.append(link);
       }
     }
 

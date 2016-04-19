@@ -264,7 +264,7 @@ public class ToAbstractVisitor extends BaseExpressionVisitor<Void, Abstract.Expr
         Integer pNum = getPNum(pStat.term);
         Integer hNum = getHNum(hStat.term);
         if (pNum != null && hNum != null) {
-          return myFactory.makeUniverse(pNum, hNum);
+          return myFactory.makeUniverse(pNum, hNum - 1);
         }
       }
     }
