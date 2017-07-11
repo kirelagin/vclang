@@ -379,6 +379,12 @@ public class PrettyPrintVisitor implements AbstractExpressionVisitor<Byte, Void>
   }
 
   @Override
+  public Void visitIncomplete(Abstract.IncompleteExpression expr, Byte prec) {
+    myBuilder.append("<incomplete>");
+    return null;
+  }
+
+  @Override
   public Void visitTuple(Abstract.TupleExpression expr, Byte prec) {
     myBuilder.append('(');
 

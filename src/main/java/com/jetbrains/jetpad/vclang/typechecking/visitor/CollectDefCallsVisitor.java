@@ -103,6 +103,11 @@ public class CollectDefCallsVisitor implements AbstractExpressionVisitor<Void, V
   }
 
   @Override
+  public Void visitIncomplete(Abstract.IncompleteExpression expr, Void ignore) {
+    return null;
+  }
+
+  @Override
   public Void visitTuple(Abstract.TupleExpression expr, Void ignore) {
     for (Abstract.Expression comp : expr.getFields()) {
       comp.accept(this, null);

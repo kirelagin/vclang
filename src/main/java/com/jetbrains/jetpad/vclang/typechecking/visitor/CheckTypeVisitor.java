@@ -759,6 +759,15 @@ public class CheckTypeVisitor implements AbstractExpressionVisitor<ExpectedType,
   }
 
   @Override
+  public Result visitIncomplete(Abstract.IncompleteExpression expr, ExpectedType expectedType) {
+    LocalTypeCheckingError error = expr.toError();
+    Expression result = new ErrorExpression(null, error);
+    expr.setWellTyped(myContext, result);
+    myErrorReporter.report(error);
+    return new Result(result, result);
+  }
+
+  @Override
   public Result visitInferHole(Abstract.InferHoleExpression expr, ExpectedType expectedType) {
     if (expectedType instanceof Expression) {
       return new Result(new InferenceReferenceExpression(new ExpressionInferenceVariable((Expression) expectedType, expr), myEquations), (Expression) expectedType);

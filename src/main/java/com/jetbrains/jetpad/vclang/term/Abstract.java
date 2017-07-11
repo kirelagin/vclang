@@ -4,6 +4,7 @@ import com.jetbrains.jetpad.vclang.core.context.binding.Binding;
 import com.jetbrains.jetpad.vclang.core.context.binding.inference.InferenceLevelVariable;
 import com.jetbrains.jetpad.vclang.core.context.binding.inference.InferenceVariable;
 import com.jetbrains.jetpad.vclang.module.ModulePath;
+import com.jetbrains.jetpad.vclang.typechecking.error.local.LocalTypeCheckingError;
 
 import java.util.Collection;
 import java.util.List;
@@ -197,6 +198,10 @@ public final class Abstract {
   public interface ErrorExpression extends Expression {
     byte PREC = 12;
     Expression getExpr();
+  }
+
+  public interface IncompleteExpression extends Expression {
+    LocalTypeCheckingError toError();
   }
 
   public interface CaseExpression extends Expression {

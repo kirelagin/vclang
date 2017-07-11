@@ -156,6 +156,11 @@ public class ExpressionResolveNameVisitor implements AbstractExpressionVisitor<V
   }
 
   @Override
+  public Void visitIncomplete(Abstract.IncompleteExpression expr, Void params) {
+    return null;
+  }
+
+  @Override
   public Void visitTuple(Abstract.TupleExpression expr, Void params) {
     for (Abstract.Expression expression : expr.getFields()) {
       expression.accept(this, null);

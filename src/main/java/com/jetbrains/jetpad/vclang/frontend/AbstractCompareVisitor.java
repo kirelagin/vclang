@@ -132,6 +132,11 @@ public class AbstractCompareVisitor implements AbstractExpressionVisitor<Abstrac
   }
 
   @Override
+  public Boolean visitIncomplete(Abstract.IncompleteExpression expr1, Abstract.Expression expr2) {
+    return expr2 instanceof Abstract.IncompleteExpression;
+  }
+
+  @Override
   public Boolean visitTuple(Abstract.TupleExpression expr1, Abstract.Expression expr2) {
     if (!(expr2 instanceof Abstract.TupleExpression)) return false;
     Abstract.TupleExpression tupleExpr2 = (Abstract.TupleExpression) expr2;
